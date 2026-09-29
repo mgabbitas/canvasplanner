@@ -1,0 +1,14 @@
+{
+  "name": "canvasplanner",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "start": "web-ext run --firefox-profile \"$HOME/.cache/canvasplanner-firefox\" --profile-create-if-missing --keep-profile-changes --start-url https://byui.instructure.com --devtools",
+    "lint": "web-ext lint"
+  },
+  "devDependencies": {
+    "web-ext": "^10.7.0"
+  }
+}

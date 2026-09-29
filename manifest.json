@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Canvas Planner",
+  "version": "0.0.1",
+  "description": "Plans self-assigned target dates for Canvas assignments.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "canvasplanner@local",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://byui.instructure.com/*"
+  ],
+  "background": {
+    "scripts": [
+      "src/sync/spike.js"
+    ],
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Canvas Planner: run sync spike"
+  }
+}
