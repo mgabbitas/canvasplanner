@@ -1,0 +1,5 @@
+node_modules/
+.web-ext-artifacts/
+
+# Real Canvas data (grades, course info). Local only, never commit.
+test/fixtures/*.json
