@@ -170,11 +170,12 @@ schema, confirm before replacing), Reset to defaults, Clear all data. Validate a
 clamp every value, and fall back to the last valid setting on bad input.
 
 ## 9. Extension architecture
-- Firefox only. Choose Manifest V2 or V3 during M0 and explain the choice. Prefer V3 if
-  everything needed works.
+- Firefox only, Manifest V3 (M0: Firefox 156 supports everything needed; background
+  runs as an event page, host permissions are granted at install).
 - New tab override (`chrome_url_overrides.newtab`) hosts the planner page.
 - Permissions per CLAUDE.md. The Canvas host is hardcoded in the manifest.
-- Sync entry point: decided by the M0 spike (see below).
+- Sync entry point: background script, `fetch` with `credentials: 'include'`. Confirmed
+  in M0 (2026-09-29): 200 JSON, all 9 courses, no content script needed.
 
 ## 10. Milestones
 Each one ends with `npm test` passing, a commit, and a short walkthrough.
@@ -220,7 +221,6 @@ is the previous day.
 - `pending_review` and `excused` count as done (both states confirmed to occur).
 - Week starts Monday; capacity is the same for every weekday by default.
 - Overdue items are shown and scheduled today until I dismiss them.
-- Session-cookie fetch works from a background script in Firefox (M0 answers this).
 
 **Open questions:** exact behavior of pull-by-size when several sizes tie; whether the
 forecast should include not-yet-unlocked items (default: yes).

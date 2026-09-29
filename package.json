@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "start": "web-ext run --firefox-profile \"$HOME/.cache/canvasplanner-firefox\" --profile-create-if-missing --keep-profile-changes --start-url https://byui.instructure.com --devtools",
+    "start": "firefox --no-remote --profile \"$HOME/.cache/canvasplanner-firefox\" \"about:debugging#/runtime/this-firefox\"",
     "lint": "web-ext lint"
   },
   "devDependencies": {

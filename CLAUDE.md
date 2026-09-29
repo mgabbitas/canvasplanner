@@ -40,8 +40,9 @@ file and SPEC.md disagree, stop and ask me.
 
 ## Commands
 - `npm test`: run all tests. They must pass before you call anything done.
-- `npx web-ext run`: launch Firefox with the extension loaded. Use a persistent dev
-  profile so I stay logged into Canvas between runs.
+- `npm start`: open Firefox on the persistent dev profile (`~/.cache/canvasplanner-firefox`)
+  at `about:debugging`, then Load Temporary Add-on > `manifest.json`. `web-ext run`
+  does not work here: CachyOS locks `devtools.debugger.remote-enabled` to false.
 - `npx web-ext lint`: lint the manifest (from milestone M2 on).
 
 ## Layout
