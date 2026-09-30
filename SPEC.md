@@ -15,6 +15,12 @@ export/import.
 ratings, LLM time estimates (keep the `estimate.source` field for this), homelab or
 phone sync, notifications, other Canvas sites, anything that writes to Canvas.
 
+**Planned direction (after v1):** time tracking. I log how long each assignment
+actually took, and the tool learns averages by course, type and keyword (e.g. "Course
+A reports take 25 min on average") and uses them as estimates. Keep estimates
+explainable by `estimate.source` and keep course, type and title on every item so
+logged times can be grouped later.
+
 ## 3. Canvas data
 Sync uses my existing logged-in browser session. No access token (student tokens are
 disabled at my school).
@@ -55,7 +61,10 @@ Sync behavior:
 ## 4. Data model and storage
 Everything in `browser.storage.local`, with a `schemaVersion` and a migration function.
 Keys: `settings`, `items` (map by Canvas assignment id), `meta` (`lastSyncAt`,
-`lastError`), `weekState` (keyed by week start date: `{ extraDays }`).
+`lastError`), `weekState` (keyed by week start date: `{ extraDays }`), `courses`
+(map by course id: `{ name }`, Canvas names from the last sync).
+
+Derived item fields set by sync: `canvasDone`, `nonSubmittable`, `prevDueAt`, `hidden`.
 
 Item, Canvas-owned fields (overwritten on every sync): `id`, `courseId`, `title`,
 `type`, `dueAt`, `unlockAt`, `lockAt`, `points`, `canvasStatus`, `submittedAt`,
@@ -99,11 +108,12 @@ Definitions:
 - `dueDate` = local date of `dueAt`, minus one day if the local due time is before
   17:00 (a 9 AM item must be finished the day before).
 - In scope: not done, not dismissed, course included, has a `dueAt`, not excluded by
-  the non-submittable setting, and (due date is within the planning week OR
-  `pulledIn`).
+  the non-submittable setting, and (due date is within the planning week, OR before
+  the planning week (carried-over overdue), OR `pulledIn`).
 - No due date: never scheduled, never pulled, never in the forecast. Returned as
   `noDueDate` and shown in a small list.
-- Overdue: in scope, due date before today. Scheduled first, on today, flagged.
+- Overdue: in scope, due date before today, including earlier weeks. Scheduled
+  first, on today, flagged, until done or dismissed (each has a Dismiss action).
 
 Algorithm:
 1. Each item's eligible window: from `max(today, local date of unlockAt)` to
@@ -159,11 +169,17 @@ below are guesses, not measurements: I'll edit them.
 | Blocked weekdays (never scheduled) | none |
 | Minutes per size: XS / S / M / L | 5 / 20 / 45 / 120 |
 | Type defaults: quiz / discussion / upload / external tool / other | S / M / M / XS / M |
-| Title keyword rules (add, delete, reorder) | report, essay, paper, project, exam, midterm, final: L. evaluation, feedback, survey: XS. quiz, reading: S |
+| Estimate rules (add, delete, reorder), see below | report, essay, paper, project, exam, midterm, final: L. evaluation, feedback, survey: XS. quiz, reading: S |
+| Stated-time scale (instructor-stated minutes x this %) | 100% |
 | Per-course: include toggle, display name | all included, Canvas name |
 | Auto-sync interval, minutes | 60 (min 15) |
 | Gate pull-next-week on completion | on |
 | Include non-submittable items (`none`, `on_paper`) | on |
+
+Estimate rules replace plain title keyword rules. Each rule has an optional course,
+an optional type and an optional title keyword (at least one), and gives either a size
+or exact minutes. First matching rule in list order wins, so specific rules go above
+general ones (e.g. "Course A + report: 25 min" above "report: L").
 
 Also: Export (one JSON file of settings and user-owned data), Import (validate the
 schema, confirm before replacing), Reset to defaults, Clear all data. Validate and
@@ -198,8 +214,11 @@ Each one ends with `npm test` passing, a commit, and a short walkthrough.
   9. Sync merge keeps `manualDone`, size override and pin, and flags a moved due date.
   10. Stray whitespace in titles is collapsed.
 - **M2. Extension shell.** Manifest, sync, storage merge, new-tab page that shows the
-  plan and the done checkboxes. `web-ext lint` clean.
-- **M3. Settings GUI.** Everything in section 8, plus export/import.
+  plan and the done checkboxes. Prototype extras: banners, add/remove a day, dismiss
+  for overdue items. `web-ext lint` clean. Sync runs from the new-tab page (extension
+  pages have the same host permission as the background script).
+- **M3. Settings GUI.** Everything in section 8 (including estimate rules by course,
+  type and keyword, and the stated-time scale), plus export/import.
 - **M4. Interactions.** Add/remove a day, pull next week, size chip, pin, forecast
   strip, banners.
 - **M5. Polish.** Error states, dark mode, keyboard access, and instructions for
@@ -220,7 +239,15 @@ is the previous day.
 **Assumptions. Verify or ask before relying on them:**
 - `pending_review` and `excused` count as done (both states confirmed to occur).
 - Week starts Monday; capacity is the same for every weekday by default.
-- Overdue items are shown and scheduled today until I dismiss them.
 
-**Open questions:** none open. Decided 2026-09-30: pull-by-size orders by due date,
+Decided 2026-09-30: overdue items from earlier weeks carry over until done or
+dismissed; estimates become editable per course, type and keyword (M3); time tracking
+is the planned direction after v1.
+
+**Open questions:**
+- (M3) Where estimate rules sit relative to instructor-stated times: should a matching
+  rule beat a stated time, only course-specific rules beat it, or should stated
+  (scaled) always win?
+
+Decided 2026-09-30: pull-by-size orders by due date,
 then smallest first; the forecast includes not-yet-unlocked items.

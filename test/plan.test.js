@@ -184,6 +184,16 @@ test('overdue items are scheduled today and flagged', () => {
   assert.equal(dateOf(p, late.id), '2026-09-30');
 });
 
+test('overdue items from earlier weeks carry over until done or dismissed', () => {
+  const lastWeek = mk({ due: '2026-09-24', sizeOverride: 'S' });
+  const p = run([lastWeek]);
+  assert.deepEqual(p.overdue.map((e) => e.id), [lastWeek.id]);
+  assert.equal(dateOf(p, lastWeek.id), '2026-09-28');
+  assert.equal(p.pull.enabled, false); // still undone, so the gate stays closed
+  assert.equal(run([{ ...lastWeek, dismissed: true }]).overdue.length, 0);
+  assert.equal(run([{ ...lastWeek, manualDone: true }]).overdue.length, 0);
+});
+
 test('due before 5 PM must be done the day before', () => {
   const morning = mk({ due: '2026-10-01 09:00', sizeOverride: 'S' });
   const p = run([...many(6, { due: '2026-09-29' }), morning], { now: '2026-09-29 08:00' });

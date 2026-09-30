@@ -65,7 +65,8 @@ export function plan({ items, settings, weekState = {}, now }) {
   const entries = all.filter((i) => isActive(i, settings)).map((i) => toEntry(i, settings, today));
 
   const inWeek = (d) => d >= week.start && d <= week.end;
-  const scoped = entries.filter((e) => e.dueDay && (inWeek(e.dueDay) || e.pulledIn));
+  // This week's items, carried-over overdue items from earlier weeks, and pulled items.
+  const scoped = entries.filter((e) => e.dueDay && (e.dueDay <= week.end || e.pulledIn));
   const noDueDate = entries.filter((e) => !e.dueDay);
   const behind = today > week.cutoff;
 
