@@ -127,7 +127,7 @@ Pull next week:
 - Enabled only when nothing is left undone in the current week, unless the
   `gatePullOnCompletion` setting is off.
 - Modes: next day's worth (all undone items due on the earliest upcoming day after this
-  week) or by size (choose XS/S/M/L; earliest-due first).
+  week) or by size (choose XS/S/M/L; earliest-due first, ties smallest first).
 - Pulled items set `pulledIn` and are planned by the same algorithm. Each has a "send
   back" action. Items that aren't unlocked yet are listed as "not open yet".
 
@@ -222,5 +222,5 @@ is the previous day.
 - Week starts Monday; capacity is the same for every weekday by default.
 - Overdue items are shown and scheduled today until I dismiss them.
 
-**Open questions:** exact behavior of pull-by-size when several sizes tie; whether the
-forecast should include not-yet-unlocked items (default: yes).
+**Open questions:** none open. Decided 2026-09-30: pull-by-size orders by due date,
+then smallest first; the forecast includes not-yet-unlocked items.
