@@ -20,13 +20,7 @@
   "host_permissions": [
     "https://byui.instructure.com/*"
   ],
-  "background": {
-    "scripts": [
-      "src/sync/spike.js"
-    ],
-    "type": "module"
-  },
-  "action": {
-    "default_title": "Canvas Planner: run sync spike"
+  "chrome_url_overrides": {
+    "newtab": "src/ui/planner.html"
   }
 }
