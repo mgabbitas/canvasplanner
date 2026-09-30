@@ -1,0 +1,252 @@
+process.env.TZ = 'America/Denver';
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { plan } from '../src/planner/plan.js';
+import { DEFAULT_SETTINGS as S, USER_FIELD_DEFAULTS } from '../src/storage/defaults.js';
+import { normalizeAssignment } from '../src/sync/normalize.js';
+import { mergeCourse } from '../src/storage/merge.js';
+import { fixture, needsFixture, findRaw } from './helpers.js';
+
+// Local 'YYYY-MM-DD HH:MM' -> UTC ISO, the way Canvas sends it.
+const iso = (local) => {
+  const [d, t = '23:59'] = local.split(' ');
+  const [y, m, day] = d.split('-').map(Number);
+  const [h, min] = t.split(':').map(Number);
+  return new Date(y, m - 1, day, h, min).toISOString();
+};
+
+let nextId = 1;
+const mk = (over = {}) => {
+  const { due, unlock, ...rest } = over;
+  const id = String(nextId++);
+  return {
+    id, courseId: '1', title: `Item ${id.padStart(3, '0')}`, type: 'upload', nonSubmittable: false,
+    dueAt: due === null ? null : iso(due ?? '2026-10-03'), unlockAt: unlock ? iso(unlock) : null,
+    lockAt: null, points: 100, canvasStatus: 'unsubmitted', canvasDone: false, submittedAt: null,
+    descriptionText: '', url: null, prevDueAt: null, hidden: false,
+    ...USER_FIELD_DEFAULTS, sizeOverride: 'S', ...rest,
+  };
+};
+const many = (n, over) => Array.from({ length: n }, () => mk(over));
+
+const MON = '2026-09-28 08:00';
+const run = (items, over = {}) =>
+  plan({ items, settings: { ...S, ...over.settings }, weekState: over.weekState ?? {}, now: iso(over.now ?? MON) });
+const placedOn = (p) => Object.fromEntries(p.days.map((d) => [d.date, d.items.map((e) => e.id)]));
+const dateOf = (p, id) => p.days.find((d) => d.items.some((e) => e.id === id))?.date ?? null;
+
+test('scenario 1: sixteen items due Saturday are spread within capacity by Wednesday', () => {
+  const p = run(many(16, { due: '2026-10-03 23:59', sizeOverride: 'S' })); // 16 x 20 min
+  assert.equal(p.week.cutoff, '2026-09-30');
+  assert.deepEqual(p.days.map((d) => [d.date, d.load]), [
+    ['2026-09-28', 120], ['2026-09-29', 120], ['2026-09-30', 80],
+  ]);
+  assert.equal(p.overflow.length, 0);
+  assert.ok(p.days.every((d) => !d.over));
+});
+
+test('scenario 2: overflow appears, then Add a day resolves it', () => {
+  const items = many(7, { due: '2026-10-03', sizeOverride: 'M' }); // 7 x 45 min, 2 fit per day
+  const before = run(items);
+  assert.equal(before.overflow.length, 1);
+  assert.equal(before.overflowMinutes, 45);
+  assert.equal(before.week.canAddDay, true);
+
+  const after = run(items, { weekState: { '2026-09-28': { extraDays: 1 } } });
+  assert.equal(after.week.cutoff, '2026-10-01');
+  assert.equal(after.overflow.length, 0);
+  assert.equal(after.days.at(-1).date, '2026-10-01');
+  assert.equal(after.week.canRemoveDay, true);
+
+  // Can't go past the end of the planning week.
+  const max = run(items, { weekState: { '2026-09-28': { extraDays: 9 } } });
+  assert.equal(max.week.cutoff, '2026-10-04');
+  assert.equal(max.week.canAddDay, false);
+});
+
+test('scenario 3: Wednesday passed, items flagged behind and scheduled ASAP', () => {
+  const items = many(10, { due: '2026-10-03', sizeOverride: 'M' });
+  const p = run(items, { now: '2026-10-01 09:00' }); // Thursday
+  assert.equal(p.behind, true);
+  assert.deepEqual(p.days.map((d) => [d.date, d.items.length]), [
+    ['2026-10-01', 2], ['2026-10-02', 2], ['2026-10-03', 2],
+  ]);
+  assert.ok(p.days.flatMap((d) => d.items).every((e) => e.behind));
+  assert.equal(p.atRisk.length, 4);
+  assert.equal(p.overflow.length, 0);
+});
+
+test('scenario 4: a locked item is never scheduled before its unlock date', () => {
+  const opensWed = mk({ due: '2026-10-03', unlock: '2026-09-30 00:00' });
+  const opensThu = mk({ due: '2026-10-03', unlock: '2026-10-01 00:00' });
+  const p = run([opensWed, opensThu]);
+  assert.equal(dateOf(p, opensWed.id), '2026-09-30');
+  // Unlocks after the cutoff: window is unlock date through due date.
+  assert.equal(dateOf(p, opensThu.id), '2026-10-01');
+  assert.equal(p.days.find((d) => d.date === '2026-10-01').items[0].notOpenYet, true);
+});
+
+test('scenario 5: graded with null submitted_at is done, not planned', () => {
+  const graded = mk({ canvasStatus: 'graded', canvasDone: true, submittedAt: null });
+  const p = run([graded]);
+  assert.equal(p.days.flatMap((d) => d.items).length, 0);
+  assert.deepEqual(p.done.map((e) => [e.id, e.canUncheck]), [[graded.id, false]]);
+});
+
+test('scenario 6: DST change on 1 Nov 2026', () => {
+  // Week of Mon 26 Oct. Clocks fall back at 2 AM Sunday 1 Nov.
+  const evalItem = mk({
+    dueAt: '2026-11-02T06:59:59Z', // 11:59:59 PM Sun 1 Nov MST
+    unlockAt: '2026-10-26T06:00:00Z', // 12:00 AM Mon 26 Oct MDT
+    sizeOverride: 'XS',
+  });
+  const lateOpen = mk({ due: '2026-11-01 23:59', unlock: '2026-10-31 00:00' });
+  const p = run([evalItem, lateOpen], { now: '2026-10-26 10:00' });
+  assert.equal(p.week.start, '2026-10-26');
+  assert.equal(p.week.end, '2026-11-01');
+  assert.equal(dateOf(p, evalItem.id), '2026-10-26');
+  assert.equal(dateOf(p, lateOpen.id), '2026-10-31');
+
+  // Behind plan on Sunday 1 Nov itself: still schedulable that day.
+  const sun = run([evalItem], { now: '2026-11-01 20:00' });
+  assert.equal(sun.week.start, '2026-10-26');
+  assert.equal(dateOf(sun, evalItem.id), '2026-11-01');
+  assert.equal(sun.overdue.length, 0);
+
+  // Monday 2 Nov is a new week; the item is no longer in scope.
+  assert.equal(run([evalItem], { now: '2026-11-02 08:00' }).week.start, '2026-11-02');
+});
+
+test('scenario 7a: blocked weekday is never used', () => {
+  const p = run(many(3, { sizeOverride: 'L' }), { settings: { blockedWeekdays: [2] } }); // no Tuesdays
+  assert.deepEqual(placedOn(p)['2026-09-29'], []);
+  assert.equal(p.days.find((d) => d.date === '2026-09-29').blocked, true);
+  assert.equal(p.overflow.length, 1);
+});
+
+test('scenario 7b: oversized item goes on an empty day, flagged over capacity', () => {
+  const big = mk({ descriptionText: 'It should take about 3 hours.', sizeOverride: null });
+  const small = mk({ sizeOverride: 'S' });
+  const p = run([big, small]);
+  const mon = p.days[0];
+  assert.deepEqual(mon.items.map((e) => e.id), [big.id]);
+  assert.equal(mon.load, 180);
+  assert.equal(mon.over, true);
+  assert.equal(dateOf(p, small.id), '2026-09-29');
+});
+
+test('scenario 7c: pinned item sits on its due date and counts toward load', () => {
+  const pinned = mk({ due: '2026-09-30', pinned: true, sizeOverride: 'L' });
+  const other = mk({ due: '2026-09-30', sizeOverride: 'S' });
+  const p = run([pinned, other]);
+  assert.equal(dateOf(p, pinned.id), '2026-09-30');
+  assert.equal(dateOf(p, other.id), '2026-09-28');
+  const tight = run([pinned, mk({ due: '2026-09-30', sizeOverride: 'S' })], { now: '2026-09-30 08:00' });
+  assert.equal(tight.overflow.length, 1); // Wed is full with the pinned 120 min
+});
+
+test('scenario 8: pull next week, by day and by size', () => {
+  const doneThisWeek = mk({ canvasDone: true, canvasStatus: 'submitted' });
+  const monA = mk({ due: '2026-10-05', sizeOverride: 'M' });
+  const monB = mk({ due: '2026-10-05', sizeOverride: 'XS' });
+  const tue = mk({ due: '2026-10-06', sizeOverride: 'S' });
+  const locked = mk({ due: '2026-10-07', unlock: '2026-10-05 00:00', sizeOverride: 'S' });
+  const items = [doneThisWeek, monA, monB, tue, locked];
+
+  const p = run(items);
+  assert.equal(p.pull.enabled, true);
+  assert.equal(p.pull.nextDay.date, '2026-10-05');
+  assert.deepEqual(p.pull.nextDay.entries.map((e) => e.id), [monB.id, monA.id]);
+  // Budgets: earliest due first, ties smallest first, stop at the first that doesn't fit.
+  assert.deepEqual(p.pull.bySize.XS.map((e) => e.id), [monB.id]); // 5
+  assert.deepEqual(p.pull.bySize.S.map((e) => e.id), [monB.id]); // 5, then 45 doesn't fit 20
+  assert.deepEqual(p.pull.bySize.L.map((e) => e.id), [monB.id, monA.id, tue.id, locked.id]); // 5+45+20+20
+
+  // Gate: undone work this week disables it unless the setting is off.
+  const busy = [...items, mk()];
+  assert.equal(run(busy).pull.enabled, false);
+  assert.equal(run(busy, { settings: { gatePullOnCompletion: false } }).pull.enabled, true);
+
+  // Pulled items are planned by the same algorithm; not-yet-open ones are marked.
+  const pulled = [doneThisWeek, monA, monB, { ...tue, pulledIn: true }, { ...locked, pulledIn: true }];
+  const q = run(pulled);
+  assert.equal(dateOf(q, tue.id), '2026-09-28');
+  // Opens Mon 5 Oct, after the cutoff: window is unlock date through due date.
+  assert.equal(dateOf(q, locked.id), '2026-10-05');
+  assert.equal(q.days.at(-1).items[0].notOpenYet, true);
+  assert.equal(q.pull.nextDay.date, '2026-10-05');
+});
+
+test('overdue items are scheduled today and flagged', () => {
+  const late = mk({ due: '2026-09-29', sizeOverride: 'S' });
+  const p = run([late], { now: '2026-09-30 08:00' });
+  assert.deepEqual(p.overdue.map((e) => e.id), [late.id]);
+  assert.equal(dateOf(p, late.id), '2026-09-30');
+});
+
+test('due before 5 PM must be done the day before', () => {
+  const morning = mk({ due: '2026-10-01 09:00', sizeOverride: 'S' });
+  const p = run([...many(6, { due: '2026-09-29' }), morning], { now: '2026-09-29 08:00' });
+  // Tue is full (6 x 20), Wed is the last day for a 9 AM Thursday item.
+  assert.equal(dateOf(p, morning.id), '2026-09-30');
+  // On Thursday at 8 AM it can still be done that morning, and isn't overdue.
+  const thu = run([morning], { now: '2026-10-01 08:00' });
+  assert.equal(dateOf(thu, morning.id), '2026-10-01');
+  assert.equal(thu.overdue.length, 0);
+});
+
+test('filters: no due date, dismissed, hidden, excluded course, non-submittable', () => {
+  const noDue = mk({ due: null });
+  const items = [
+    noDue,
+    mk({ dismissed: true }),
+    mk({ hidden: true }),
+    mk({ courseId: '2' }),
+    mk({ nonSubmittable: true }),
+  ];
+  const p = run(items, { settings: { courses: { 2: { include: false } } } });
+  assert.deepEqual(p.noDueDate.map((e) => e.id), [noDue.id]);
+  assert.deepEqual(p.days.flatMap((d) => d.items).map((e) => e.item.nonSubmittable), [true]);
+  const off = run(items, { settings: { includeNonSubmittable: false, courses: { 2: { include: false } } } });
+  assert.equal(off.days.flatMap((d) => d.items).length, 0);
+  assert.ok(p.forecast.every((f) => f.count === (f.date === '2026-10-03' ? 1 : 0)));
+});
+
+test('forecast: 14 days of due load, including items not open yet', () => {
+  const p = run([
+    ...many(7, { due: '2026-10-03', sizeOverride: 'S' }),
+    mk({ due: '2026-10-05', unlock: '2026-10-04 00:00', sizeOverride: 'XS' }),
+  ]);
+  assert.equal(p.forecast.length, 14);
+  assert.equal(p.forecast[0].date, '2026-09-28');
+  assert.equal(p.forecast.at(-1).date, '2026-10-11');
+  const sat = p.forecast.find((f) => f.date === '2026-10-03');
+  assert.deepEqual(sat, { date: '2026-10-03', count: 7, minutes: 140, over: true });
+  assert.equal(p.forecast.find((f) => f.date === '2026-10-05').count, 1);
+});
+
+test('fixture: plan invariants hold on real data', needsFixture, () => {
+  let items = {};
+  for (const c of fixture) {
+    items = mergeCourse(items, c.course.id, c.assignments.map((a) => normalizeAssignment(a, c.course.id)));
+  }
+  for (const now of ['2026-09-28 08:00', '2026-09-30 12:00', '2026-10-02 18:00', '2026-10-29 07:00']) {
+    const p = plan({ items, settings: S, weekState: {}, now: iso(now) });
+    for (const day of p.days) {
+      for (const e of day.items) {
+        assert.ok(day.date >= p.today, `${e.item.title} scheduled in the past`);
+        if (!e.overdue && !e.pinned) {
+          assert.ok(!e.unlockDate || day.date >= e.unlockDate, `${e.item.title} before unlock`);
+          assert.ok(day.date <= e.lastDay, `${e.item.title} after its due date`);
+        }
+        assert.ok(!e.item.canvasDone);
+      }
+      if (day.items.length > 1) assert.ok(!day.over || day.items.some((e) => e.overdue || e.pinned));
+    }
+  }
+  // The W07 evaluation across the DST change comes from real data.
+  const { raw, courseId } = findRaw('W07 Evaluation');
+  const w07 = mergeCourse({}, courseId, [normalizeAssignment(raw, courseId)]);
+  const p = plan({ items: w07, settings: S, weekState: {}, now: iso('2026-10-26 10:00') });
+  assert.equal(p.days[0].items[0]?.item.title, 'W07 Evaluation');
+});
