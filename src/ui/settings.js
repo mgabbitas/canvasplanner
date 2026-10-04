@@ -258,10 +258,6 @@ function appearanceSection(ctx) {
     field('Theme', radios('theme', 'Theme', [['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], s.theme)),
     field('Accent color', swatches('accent', 'Accent color', Object.keys(ACCENTS), s.accent,
       (k) => ACCENT_SWATCH[k], (accent) => updateSettings(ctx, { accent }))),
-    field('Layout', radios('layout', 'Layout', [['day', 'Day'], ['week', 'Week']], s.layout),
-      'Day shows one day at a time with a tab per day. Week shows every day at once.'),
-    field('Order within a day', radios('daySort', 'Order within a day', [['plan', 'Planned'], ['class', 'By class']], s.daySort),
-      'Planned keeps the scheduler\'s order (earliest due first). By class groups each day\'s items by class.'),
     el('p', { className: 'hint' }, 'Class colors are set in the Classes tab.'),
   );
 }

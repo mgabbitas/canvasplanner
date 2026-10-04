@@ -17,13 +17,12 @@ test('class colors: stable by course id, picked color wins', () => {
 });
 
 test('appearance settings validate and fall back', () => {
-  const s = validateSettings({ theme: 'neon', accent: 'gold', daySort: 'random', courses: { 1: { color: 'chartreuse' } } });
+  const s = validateSettings({ theme: 'neon', accent: 'gold', courses: { 1: { color: 'chartreuse' } } });
   assert.equal(s.theme, 'system');
   assert.equal(s.accent, 'blue');
-  assert.equal(s.daySort, 'plan');
   assert.equal(s.courses['1'].color, null);
-  const ok = validateSettings({ theme: 'dark', accent: 'teal', daySort: 'class' });
-  assert.deepEqual([ok.theme, ok.accent, ok.daySort], ['dark', 'teal', 'class']);
+  const ok = validateSettings({ theme: 'dark', accent: 'teal' });
+  assert.deepEqual([ok.theme, ok.accent], ['dark', 'teal']);
   // Schema's accent list matches the UI's.
   for (const a of Object.keys(ACCENTS)) assert.equal(validateSettings({ accent: a }).accent, a);
   for (const c of Object.keys(CLASS_COLORS)) assert.equal(validateSettings({ courses: { 1: { color: c } } }).courses['1'].color, c);

@@ -25,8 +25,9 @@ the same Saturday. Canvas Planner does, and spreads them out before that happens
 ### Available now
 - **Your week, planned.** Replaces the new-tab page with a day-by-day plan from today
   to your target day. Each day has a load bar showing planned minutes against the
-  time you have. Switch between **Week** (every day at once) and **Day** (one day at
-  a time, with a tab per day showing its load, and today's next item highlighted).
+  time you have. A tab per day shows its item count and minutes (plus a **Week** tab
+  for every day at once); each day groups its items by class, and today's most urgent
+  item is marked **up next**. The header shows what's left today.
 - **Sync from Canvas.** Pulls all active classes and their assignments using your
   browser login. Syncs on its own when the data is stale, or on demand with
   **Sync now**. If you're logged out, it says so and changes nothing.
@@ -87,8 +88,7 @@ the same Saturday. Canvas Planner does, and spreads them out before that happens
   content in it), plus reset and clear-all.
 - **Looks.** A sidebar for navigation (a ☰ menu on narrow windows) and an overview
   column on wide screens. System, light or dark theme, six accent colors, and a color
-  per class (shown as a stripe and dot beside the class name). Each day's items can be
-  ordered as planned or grouped by class.
+  per class (shown as a stripe and dot beside the class name).
 
 ### Coming next
 - **Polish:** better error states, a keyboard and accessibility review, and a

@@ -176,7 +176,7 @@ function pinButton(item) {
 }
 
 /** One item. kind: 'plan' (this week), 'next' (next week), 'done', 'dismissed'. */
-function itemRow(entry, kind = 'plan', { upNext = false } = {}) {
+function itemRow(entry, kind = 'plan', { upNext = false, showCourse = true } = {}) {
   const { item } = entry;
   const done = kind === 'done';
   const checkbox = el('input', {
@@ -241,7 +241,7 @@ function itemRow(entry, kind = 'plan', { upNext = false } = {}) {
     title,
     el('div', { className: 'right' }, actions),
     el('div', { className: 'sub' },
-      el('span', { className: 'course' }, el('span', { className: 'dot', 'aria-hidden': 'true' }), courseName(item.courseId)),
+      showCourse ? el('span', { className: 'course' }, el('span', { className: 'dot', 'aria-hidden': 'true' }), courseName(item.courseId)) : null,
       item.dueAt ? el('span', {}, `due ${dueLabel(item.dueAt)}`) : null,
       ...chips,
     ),
@@ -300,52 +300,52 @@ function renderSidebar() {
   ];
 }
 
+const homework = (entries) => entries.filter((e) => !e.inClass);
+const itemCount = (entries) => {
+  const n = homework(entries).length;
+  return `${n} item${n === 1 ? '' : 's'}`;
+};
+
 function renderHeader(p) {
   const v = view();
   const week = p.week;
   const weekView = v === 'this' || v === 'next';
   const title = v === 'settings' ? 'Settings' : v === 'stats' ? 'Your stats'
     : `Week of ${dayLabel(week.start, { month: 'long', day: 'numeric' })}`;
-  const subtitle = !weekView ? null
-    : v === 'next' ? `Projected plan · target ${dayLabel(week.cutoff, { weekday: 'long' })}`
-      : `Finish by ${dayLabel(week.cutoff, { weekday: 'long', month: 'short', day: 'numeric' })}`;
 
   const menuBtn = el('button', {
     className: 'icon-btn menu-btn', 'aria-label': 'Menu', 'aria-expanded': String(navOpen), 'data-key': 'menu',
     onclick: () => setNavOpen(!navOpen),
   }, icon('menu'));
 
-  const seg = (label, options, value, onPick) => el('div', { className: 'seg', role: 'group', 'aria-label': label },
-    options.map(([key, text]) => el('button', {
-      'aria-pressed': String(value === key), className: value === key ? 'on' : '', 'data-key': `${label}-${key}`,
-      onclick: () => { if (value !== key) onPick(key); },
-    }, text)));
-
-  return [
-    el('div', { className: 'title-row' },
-      menuBtn,
-      el('div', {}, el('h1', {}, title), subtitle ? el('p', { className: 'subtitle' }, subtitle) : null),
-    ),
-    !weekView ? null : el('div', { className: 'toolbar' },
-      seg('Layout', [['day', 'Day'], ['week', 'Week']], state.settings.layout, (layout) => {
-        selectedDay = null;
-        saveState({ settings: { ...state.settings, layout } });
-      }),
-      seg('Order', [['plan', 'Planned'], ['class', 'By class']], state.settings.daySort,
-        (daySort) => saveState({ settings: { ...state.settings, daySort } })),
+  let subtitle = null;
+  if (v === 'settings') subtitle = el('p', { className: 'subtitle' }, 'Changes save automatically.');
+  if (v === 'stats') subtitle = el('p', { className: 'subtitle' }, 'How long your work actually takes, from the times you log.');
+  if (weekView) {
+    const today = v === 'this' ? p.days.find((d) => d.date === p.today) : null;
+    const parts = [];
+    if (today) parts.push(el('strong', {}, `Today: ${itemCount(today.items)} · ${minutesLabel(today.load)}`));
+    if (v === 'next') parts.push(el('span', {}, 'Projected plan'));
+    subtitle = el('div', { className: 'subtitle-row' },
+      el('p', { className: 'subtitle' }, ...parts.flatMap((x, i) => (i ? [' · ', x] : [x]))),
       el('div', { className: 'target' },
-        el('span', { className: 'muted' }, 'Target'),
+        el('span', { className: 'muted' }, 'Finish by'),
         el('button', {
-          disabled: !week.canRemoveDay, 'aria-label': 'Remove a day', 'data-key': 'remove-day',
+          disabled: !week.canRemoveDay, 'aria-label': 'Target one day earlier', 'data-key': 'remove-day',
           title: 'Target one day earlier', onclick: () => changeExtraDays(week.start, -1),
         }, '−'),
-        el('strong', {}, dayLabel(week.cutoff, { weekday: 'short' })),
+        el('strong', {}, dayLabel(week.cutoff, { weekday: 'short', month: 'short', day: 'numeric' })),
         el('button', {
-          disabled: !week.canAddDay, 'aria-label': 'Add a day', 'data-key': 'add-day',
+          disabled: !week.canAddDay, 'aria-label': 'Give yourself one more day', 'data-key': 'add-day',
           title: 'Give yourself one more day', onclick: () => changeExtraDays(week.start, 1),
         }, '+'),
       ),
-    ),
+    );
+  }
+
+  return [
+    el('div', { className: 'title-row' }, menuBtn, el('h1', {}, title)),
+    subtitle,
   ];
 }
 
@@ -380,25 +380,26 @@ function pullBlockedText(pull, minutes) {
   return `Only ${minutesLabel(pull.remainingMinutes)} of pull room left${minutes ? ` (this needs ${minutesLabel(minutes)})` : ''}. Finish some pulled work, or raise the limit in Settings.`;
 }
 
-function renderPullBar() {
+function renderPullCard() {
   const { pull } = thisWeekPlan;
   const day = pull.nextDay;
   const bySize = pull.bySize[pullSize] ?? [];
   const pullAll = (entries) => updateItems(entries.map((e) => e.id), { pulledIn: true });
-  return el('section', { className: 'panel pullbar' },
+  const cap = pull.capMinutes ?? 0;
+  const pct = cap ? Math.min(100, (pull.pulledMinutes / cap) * 100) : 0;
+  return el('section', { className: 'panel pullcard' },
     el('h2', {}, 'Pull into this week'),
-    el('p', { className: 'hint' },
-      `Unfinished pulled work: ${minutesLabel(pull.pulledMinutes)} of ${minutesLabel(pull.capMinutes)} allowed.`),
-    el('div', { className: 'row' },
-      el('button', {
-        disabled: !pull.enabled || !day.fits, 'data-key': 'pull-day',
-        title: pull.enabled && !day.fits && day.entries.length ? pullBlockedText(pull, sumMinutes(day.entries)) : '',
-        onclick: () => pullAll(day.entries),
-      }, day.date
-        ? `Pull ${dayLabel(day.date, { weekday: 'long', month: 'short', day: 'numeric' })}'s items (${day.entries.length} · ${minutesLabel(sumMinutes(day.entries))})`
-        : 'Nothing left to pull'),
-      el('span', { className: 'or' }, 'or'),
-      select(SIZES.map((z) => [z, `about ${minutesLabel(state.settings.sizeMinutes[z])}`]), pullSize, {
+    el('div', { className: 'meter', 'aria-hidden': 'true' }, el('span', { style: `width:${pct}%` })),
+    el('p', { className: 'hint' }, `${minutesLabel(pull.pulledMinutes)} of ${minutesLabel(cap)} pulled and unfinished`),
+    el('button', {
+      className: 'wide', disabled: !pull.enabled || !day.fits, 'data-key': 'pull-day',
+      title: pull.enabled && !day.fits && day.entries.length ? pullBlockedText(pull, sumMinutes(day.entries)) : '',
+      onclick: () => pullAll(day.entries),
+    }, day.date
+      ? `Pull ${dayLabel(day.date, { weekday: 'long' })}'s ${day.entries.length} (${minutesLabel(sumMinutes(day.entries))})`
+      : 'Nothing left to pull'),
+    el('div', { className: 'pull-amount' },
+      select(SIZES.map((z) => [z, `About ${minutesLabel(state.settings.sizeMinutes[z])}`]), pullSize, {
         'aria-label': 'Amount of work to pull', 'data-key': 'pull-size',
         onchange: (e) => { pullSize = e.target.value; render(); },
       }),
@@ -406,10 +407,10 @@ function renderPullBar() {
         disabled: !pull.enabled || !bySize.length, 'data-key': 'pull-size-btn',
         title: 'Earliest due first, smallest first when due the same day',
         onclick: () => pullAll(bySize),
-      }, `Pull ${plural(bySize.length, 'item')} (${minutesLabel(sumMinutes(bySize))})`),
+      }, `Pull ${bySize.length}`),
     ),
     pull.enabled
-      ? el('p', { className: 'hint' }, 'Or pull single items below. Pulled items can be sent back from this week.')
+      ? el('p', { className: 'hint' }, 'Or use Pull → on any item. Pulled items can be sent back from This week.')
       : el('p', { className: 'warn-text' }, pullBlockedText(pull)),
   );
 }
@@ -474,63 +475,89 @@ function capacityControl(day) {
   ];
 }
 
-/** Day layout: a tab per day (with its load), then the selected day in full. */
+/** Tabs: Week (every day) then one per day, each with its count and load. */
 function renderDayLayout(p, kind) {
   const days = p.days;
-  const sel = days.find((d) => d.date === selectedDay) ?? days[0];
-  const pick = (date) => {
-    selectedDay = date;
+  const ids = ['week', ...days.map((d) => d.date)];
+  const selected = ids.includes(selectedDay) ? selectedDay : days[0].date;
+  const pick = (id) => {
+    selectedDay = id;
     render();
-    document.querySelector(`[data-key="daytab-${CSS.escape(date)}"]`)?.focus();
+    document.querySelector(`[data-key="daytab-${CSS.escape(id)}"]`)?.focus();
   };
-  const tabs = el('div', { className: 'day-tabs', role: 'tablist', 'aria-label': 'Days' }, days.map((d, i) => {
-    const active = d.date === sel.date;
-    const pct = d.capacity ? Math.min(100, (d.load / d.capacity) * 100) : 0;
-    const name = d.date === p.today && kind === 'plan' ? 'Today' : dayLabel(d.date, { weekday: 'short' });
+  const tab = (id, i, { name, date, items, load, capacity, over, blocked }) => {
+    const active = id === selected;
+    const pct = capacity ? Math.min(100, (load / capacity) * 100) : 0;
     return el('button', {
-      role: 'tab', 'aria-selected': String(active), tabIndex: active ? 0 : -1,
-      className: `day-tab${active ? ' active' : ''}${d.over ? ' over' : ''}${d.blocked ? ' blocked' : ''}`,
-      'data-key': `daytab-${d.date}`,
-      'aria-label': `${dayLabel(d.date)}: ${minutesLabel(d.load)} planned of ${minutesLabel(d.capacity)}, ${d.items.length} item${d.items.length === 1 ? '' : 's'}`,
-      onclick: () => pick(d.date),
+      role: 'tab', 'aria-selected': String(active), tabIndex: active ? 0 : -1, 'data-key': `daytab-${id}`,
+      className: `day-tab${active ? ' active' : ''}${over ? ' over' : ''}${blocked ? ' blocked' : ''}${id === 'week' ? ' week' : ''}`,
+      'aria-label': `${name}, ${date}: ${itemCount(items)}, ${minutesLabel(load)} planned of ${minutesLabel(capacity)}`,
+      onclick: () => pick(id),
       onkeydown: (e) => {
         const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
-        if (step) { e.preventDefault(); pick(days[(i + step + days.length) % days.length].date); }
-        if (e.key === 'Home') { e.preventDefault(); pick(days[0].date); }
-        if (e.key === 'End') { e.preventDefault(); pick(days.at(-1).date); }
+        if (step) { e.preventDefault(); pick(ids[(i + step + ids.length) % ids.length]); }
+        if (e.key === 'Home') { e.preventDefault(); pick(ids[0]); }
+        if (e.key === 'End') { e.preventDefault(); pick(ids.at(-1)); }
       },
     },
       el('span', { className: 'dt-name' }, name),
-      el('span', { className: 'dt-date' }, dayLabel(d.date, { month: 'short', day: 'numeric' })),
+      el('span', { className: 'dt-date' }, date),
       el('span', { className: 'dt-bar', 'aria-hidden': 'true' }, el('span', { style: `width:${pct}%` })),
-      el('span', { className: 'dt-load' }, d.capacity === 0 ? 'day off' : `${minutesLabel(d.load)} / ${minutesLabel(d.capacity)}`),
+      el('span', { className: 'dt-count' }, itemCount(items)),
+      el('span', { className: 'dt-load' }, capacity === 0 && id !== 'week' ? 'day off' : `${minutesLabel(load)} / ${minutesLabel(capacity)}`),
     );
-  }));
-  const upNext = kind === 'plan' && sel.date === p.today;
-  return [tabs, renderDay(sel, p.today, kind, { upNext, role: 'tabpanel' })];
+  };
+  const short = (d) => dayLabel(d, { month: 'short', day: 'numeric' });
+  const all = days.flatMap((d) => d.items);
+  const weekLoad = days.reduce((s, d) => s + d.load, 0);
+  const weekCap = days.reduce((s, d) => s + d.capacity, 0);
+  const tabs = el('div', { className: 'day-tabs', role: 'tablist', 'aria-label': 'Days' },
+    tab('week', 0, {
+      name: 'Week', date: `${short(days[0].date)} – ${short(days.at(-1).date)}`,
+      items: all, load: weekLoad, capacity: weekCap, over: weekLoad > weekCap, blocked: false,
+    }),
+    days.map((d, i) => tab(d.date, i + 1, {
+      name: d.date === p.today && kind === 'plan' ? 'Today' : dayLabel(d.date, { weekday: 'short' }),
+      date: short(d.date), items: d.items, load: d.load, capacity: d.capacity, over: d.over, blocked: d.blocked,
+    })),
+  );
+  const shown = selected === 'week' ? days : [days.find((d) => d.date === selected)];
+  return [tabs, el('div', { role: 'tabpanel', className: 'day-panel' },
+    shown.map((d) => renderDay(d, p.today, kind, { upNext: kind === 'plan' && d.date === p.today })))];
 }
 
-function renderDay(day, today, kind, { upNext = false, role = null } = {}) {
-  // "Up next": the first homework item (not an in-class activity) on today.
+/** One day: header with count and load, then items grouped by class. */
+function renderDay(day, today, kind, { upNext = false } = {}) {
+  // "Up next": the most urgent homework item today (the planner's first pick).
   const nextId = upNext ? day.items.find((e) => !e.inClass)?.id : null;
-  // "By class" groups a day's items by class; within a class, planned order is kept.
-  const items = state.settings.daySort === 'class'
-    ? day.items.map((e, i) => [e, i])
-      .sort(([a, i], [b, j]) => courseName(a.item.courseId).localeCompare(courseName(b.item.courseId)) || i - j)
-      .map(([e]) => e)
-    : day.items;
+  const groups = new Map();
+  for (const e of day.items) {
+    if (!groups.has(e.item.courseId)) groups.set(e.item.courseId, []);
+    groups.get(e.item.courseId).push(e);
+  }
+  const ordered = [...groups].sort(([a], [b]) => courseName(a).localeCompare(courseName(b)));
   const pct = day.capacity ? Math.min(100, (day.load / day.capacity) * 100) : 0;
   const heading = dayLabel(day.date) + (day.date === today && kind === 'plan' ? ' · Today' : '');
-  return el('section', { className: `day${day.over ? ' over' : ''}${day.blocked ? ' blocked' : ''}`, role },
+  return el('section', { className: `day${day.over ? ' over' : ''}${day.blocked ? ' blocked' : ''}` },
     el('div', { className: 'day-head' },
       el('h2', {}, heading),
       el('span', { className: 'load' },
-        day.blocked && day.capacity > 0 ? 'blocked · ' : `${minutesLabel(day.load)} / `,
+        day.blocked && day.capacity > 0 ? 'blocked · ' : `${itemCount(day.items)} · ${minutesLabel(day.load)} of `,
         ...capacityControl(day)),
     ),
     day.blocked ? null : el('div', { className: 'bar' }, el('div', { style: `width:${pct}%` })),
-    items.length
-      ? el('ul', { className: 'items' }, items.map((e) => itemRow(e, kind, { upNext: e.id === nextId })))
+    ordered.length
+      ? ordered.map(([courseId, entries]) => el('div', {
+        className: 'class-group', style: `--course:${courseColor(courseId, state.settings, state.courses)}`,
+      },
+        el('div', { className: 'class-head' },
+          el('span', { className: 'dot', 'aria-hidden': 'true' }),
+          el('span', { className: 'class-name' }, courseName(courseId)),
+          el('span', { className: 'muted' }, homework(entries).length
+            ? `${itemCount(entries)} · ${minutesLabel(sumMinutes(entries))}` : 'in class'),
+        ),
+        el('ul', { className: 'items' }, entries.map((e) => itemRow(e, kind, { upNext: e.id === nextId, showCourse: false }))),
+      ))
       : el('p', { className: 'empty' }, day.blocked ? 'No work planned on this day.' : 'Nothing planned.'),
   );
 }
@@ -576,9 +603,7 @@ function render() {
   $('sidebar').replaceChildren(...renderSidebar().filter(Boolean));
   $('header').replaceChildren(...renderHeader(p).filter(Boolean));
   const fill = (id, nodes) => $(id).replaceChildren(...nodes.filter(Boolean));
-  const days = (kind) => (state.settings.layout === 'day'
-    ? renderDayLayout(p, kind)
-    : p.days.map((d) => renderDay(d, p.today, kind)));
+  const days = (kind) => renderDayLayout(p, kind);
   let rail = [];
   if (v === 'settings') {
     fill('banners', []);
@@ -589,10 +614,10 @@ function render() {
     fill('days', renderStats({ state, saveState, courseName, finishDay, openLog: (i) => openLog(i) }));
     fill('extras', []);
   } else if (v === 'next') {
-    fill('banners', [renderPullBar(), ...renderBanners(p)]);
+    fill('banners', renderBanners(p));
     fill('days', days('next'));
     fill('extras', [panel("Won't fit by next week's target day", p.overflow, 'next', true)]);
-    rail = [renderForecast(thisWeekPlan)];
+    rail = [renderPullCard(), renderForecast(thisWeekPlan)];
   } else {
     fill('banners', renderBanners(p));
     fill('days', days('plan'));

@@ -129,9 +129,3 @@ test('in-class: rule value and item flag validate; new settings have defaults', 
   assert.equal(s.showForecast, true);
   assert.equal(validateSettings({}).pullCapMinutes, 180);
 });
-
-test('layout setting: week or day, else the last valid value', () => {
-  assert.equal(validateSettings({}).layout, 'week');
-  assert.equal(validateSettings({ layout: 'day' }).layout, 'day');
-  assert.equal(validateSettings({ layout: 'month' }, validateSettings({ layout: 'day' })).layout, 'day');
-});

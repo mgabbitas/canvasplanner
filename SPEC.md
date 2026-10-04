@@ -169,12 +169,15 @@ independent of the plan. Highlight days over that weekday's capacity.
 - Forecast strip, Pull next week menu, collapsible Done section.
 - Checking an item off shows a toast (about 10 s, paused while hovered or focused)
   with Undo and Log time. Undo restores the item exactly. (Decided 2026-10-04.)
-- Layout (decided 2026-10-04): Week (all days) or Day (a tab per day with its load bar
-  and minutes, arrow keys switch days, opens on today, first homework item today marked
-  "up next"). The choice is remembered (`settings.layout`).
+- Layout (revised 2026-10-04): one layout. Day tabs (each with item count, load bar and
+  minutes; arrow keys switch) plus a Week tab showing every day; opens on today. Each
+  day groups items by class (class header with count and minutes; planned order inside
+  a class); today's most urgent homework item is marked "up next". The header shows
+  today's count and minutes and the target day with -/+. Pull controls sit in the
+  right column on Next week.
 - App shell (decided 2026-10-04): left sidebar with navigation, a class color key and
   sync status (collapses behind a menu button under 820px); main column with header
-  and toolbar (Day/Week, order Planned/By class, target day); right column on wide
+  and today's count; right column on wide
   screens with the forecast, No due date and Dismissed. Theme (system/light/dark),
   six accents, and per-class colors (auto by course id, or picked); color is never the
   only cue (class name always shown).
