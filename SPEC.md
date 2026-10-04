@@ -61,7 +61,9 @@ Sync behavior:
 ## 4. Data model and storage
 Everything in `browser.storage.local`, with a `schemaVersion` and a migration function.
 Keys: `settings`, `items` (map by Canvas assignment id), `meta` (`lastSyncAt`,
-`lastError`), `weekState` (keyed by week start date: `{ extraDays }`), `courses`
+`lastError`), `weekState` (keyed by week start date: `{ extraDays, capacity }`, where `capacity`
+maps a date to that day's minutes and overrides the weekday default; weeks older than
+8 weeks are pruned), `courses`
 (map by course id: `{ name }`, Canvas names from the last sync).
 
 Derived item fields set by sync: `canvasDone`, `nonSubmittable`, `prevDueAt`, `hidden`.
@@ -220,9 +222,11 @@ Each one ends with `npm test` passing, a commit, and a short walkthrough.
   for overdue items. `web-ext lint` clean. Sync runs from the new-tab page (extension
   pages have the same host permission as the background script).
 - **M3. Settings GUI.** Everything in section 8 (including estimate rules by course,
-  type and keyword, and the stated-time scale), plus export/import.
-- **M4. Interactions.** Add/remove a day, pull next week, size chip, pin, forecast
-  strip, banners.
+  type and keyword, and the stated-time scale), plus export/import. Also (moved up from
+  M4 on 2026-10-04): the size chip, and a per-date capacity override edited on each day
+  in the planner (0 = day off, reset returns to the weekday default).
+- **M4. Interactions.** Pull next week, pin, forecast strip. (Add/remove a day and
+  banners were done in M2; size chip in M3.)
 - **M5. Polish.** Error states, dark mode, keyboard access, and instructions for
   installing long-term (signing as an unlisted add-on, or running a Firefox build that
   allows unsigned add-ons).
