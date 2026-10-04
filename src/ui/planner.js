@@ -18,6 +18,7 @@ let syncMessage = null;
 let editingDay = null; // date whose capacity is being edited
 let pullSize = 'M'; // amount picked in the "pull about …" control
 let thisWeekPlan = null; // latest plan for this week (pull gate, pull candidates)
+let selectedDay = null; // day shown in the Day layout (null = first day, i.e. today)
 
 function view() {
   const h = location.hash;
@@ -172,7 +173,7 @@ function pinButton(item) {
 }
 
 /** One item. kind: 'plan' (this week), 'next' (next week), 'done', 'dismissed'. */
-function itemRow(entry, kind = 'plan') {
+function itemRow(entry, kind = 'plan', { upNext = false } = {}) {
   const { item } = entry;
   const done = kind === 'done';
   const checkbox = el('input', {
@@ -189,6 +190,7 @@ function itemRow(entry, kind = 'plan') {
     : el('span', { className: 'title' }, item.title);
 
   const chips = [];
+  if (upNext) chips.push(el('span', { className: 'chip next' }, 'up next'));
   if (entry.inClass) chips.push(el('span', { className: 'chip' }, 'in class'));
   if (entry.overdue) chips.push(el('span', { className: 'chip bad' }, 'overdue'));
   else if (entry.behind && kind === 'plan') chips.push(el('span', { className: 'chip warn' }, 'behind plan'));
@@ -228,7 +230,7 @@ function itemRow(entry, kind = 'plan') {
     ? minutesControl(entry)
     : el('span', { className: 'chip' }, minutesLabel(entry.minutes)));
 
-  return el('li', { className: `item${done ? ' done' : ''}` },
+  return el('li', { className: `item${done ? ' done' : ''}${upNext ? ' up-next' : ''}` },
     checkbox,
     title,
     el('div', { className: 'right' }, actions),
@@ -272,6 +274,16 @@ function renderHeader(p) {
         onclick: () => changeExtraDays(week.start, 1),
       }, '+'),
     ),
+    !weekView ? null : el('div', { className: 'seg', role: 'group', 'aria-label': 'Layout' },
+      ['day', 'week'].map((layout) => el('button', {
+        'aria-pressed': String(state.settings.layout === layout), 'data-key': `layout-${layout}`,
+        className: state.settings.layout === layout ? 'on' : '',
+        onclick: () => {
+          if (state.settings.layout === layout) return;
+          selectedDay = null;
+          saveState({ settings: { ...state.settings, layout } });
+        },
+      }, layout === 'day' ? 'Day' : 'Week'))),
     el('div', { className: 'sync' },
       status,
       el('button', { onclick: sync, disabled: syncing }, 'Sync now'),
@@ -412,10 +424,48 @@ function capacityControl(day) {
   ];
 }
 
-function renderDay(day, today, kind) {
+/** Day layout: a tab per day (with its load), then the selected day in full. */
+function renderDayLayout(p, kind) {
+  const days = p.days;
+  const sel = days.find((d) => d.date === selectedDay) ?? days[0];
+  const pick = (date) => {
+    selectedDay = date;
+    render();
+    document.querySelector(`[data-key="daytab-${CSS.escape(date)}"]`)?.focus();
+  };
+  const tabs = el('div', { className: 'day-tabs', role: 'tablist', 'aria-label': 'Days' }, days.map((d, i) => {
+    const active = d.date === sel.date;
+    const pct = d.capacity ? Math.min(100, (d.load / d.capacity) * 100) : 0;
+    const name = d.date === p.today && kind === 'plan' ? 'Today' : dayLabel(d.date, { weekday: 'short' });
+    return el('button', {
+      role: 'tab', 'aria-selected': String(active), tabIndex: active ? 0 : -1,
+      className: `day-tab${active ? ' active' : ''}${d.over ? ' over' : ''}${d.blocked ? ' blocked' : ''}`,
+      'data-key': `daytab-${d.date}`,
+      'aria-label': `${dayLabel(d.date)}: ${minutesLabel(d.load)} planned of ${minutesLabel(d.capacity)}, ${d.items.length} item${d.items.length === 1 ? '' : 's'}`,
+      onclick: () => pick(d.date),
+      onkeydown: (e) => {
+        const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+        if (step) { e.preventDefault(); pick(days[(i + step + days.length) % days.length].date); }
+        if (e.key === 'Home') { e.preventDefault(); pick(days[0].date); }
+        if (e.key === 'End') { e.preventDefault(); pick(days.at(-1).date); }
+      },
+    },
+      el('span', { className: 'dt-name' }, name),
+      el('span', { className: 'dt-date' }, dayLabel(d.date, { month: 'short', day: 'numeric' })),
+      el('span', { className: 'dt-bar', 'aria-hidden': 'true' }, el('span', { style: `width:${pct}%` })),
+      el('span', { className: 'dt-load' }, d.capacity === 0 ? 'day off' : `${minutesLabel(d.load)} / ${minutesLabel(d.capacity)}`),
+    );
+  }));
+  const upNext = kind === 'plan' && sel.date === p.today;
+  return [tabs, renderDay(sel, p.today, kind, { upNext, role: 'tabpanel' })];
+}
+
+function renderDay(day, today, kind, { upNext = false, role = null } = {}) {
+  // "Up next": the first homework item (not an in-class activity) on today.
+  const nextId = upNext ? day.items.find((e) => !e.inClass)?.id : null;
   const pct = day.capacity ? Math.min(100, (day.load / day.capacity) * 100) : 0;
   const heading = dayLabel(day.date) + (day.date === today && kind === 'plan' ? ' · Today' : '');
-  return el('section', { className: `day${day.over ? ' over' : ''}${day.blocked ? ' blocked' : ''}` },
+  return el('section', { className: `day${day.over ? ' over' : ''}${day.blocked ? ' blocked' : ''}`, role },
     el('div', { className: 'day-head' },
       el('h2', {}, heading),
       el('span', { className: 'load' },
@@ -424,7 +474,7 @@ function renderDay(day, today, kind) {
     ),
     day.blocked ? null : el('div', { className: 'bar' }, el('div', { style: `width:${pct}%` })),
     day.items.length
-      ? el('ul', { className: 'items' }, day.items.map((e) => itemRow(e, kind)))
+      ? el('ul', { className: 'items' }, day.items.map((e) => itemRow(e, kind, { upNext: e.id === nextId })))
       : el('p', { className: 'empty' }, day.blocked ? 'No work planned on this day.' : 'Nothing planned.'),
   );
 }
@@ -477,13 +527,17 @@ function render() {
     $('extras').replaceChildren();
   } else if (v === 'next') {
     $('banners').replaceChildren(renderPullBar(), ...renderBanners(p));
-    $('days').replaceChildren(...p.days.map((d) => renderDay(d, p.today, 'next')));
+    $('days').replaceChildren(...(state.settings.layout === 'day'
+      ? renderDayLayout(p, 'next')
+      : p.days.map((d) => renderDay(d, p.today, 'next'))));
     $('extras').replaceChildren(...[
       panel("Won't fit by next week's target day", p.overflow, 'next', true),
     ].filter(Boolean));
   } else {
     $('banners').replaceChildren(...renderBanners(p), renderForecast(p));
-    $('days').replaceChildren(...p.days.map((d) => renderDay(d, p.today, 'plan')));
+    $('days').replaceChildren(...(state.settings.layout === 'day'
+      ? renderDayLayout(p, 'plan')
+      : p.days.map((d) => renderDay(d, p.today, 'plan'))));
     $('extras').replaceChildren(...[
       panel("Won't fit by the target day", p.overflow, 'plan', true),
       panel('At risk', p.atRisk, 'plan', true),
@@ -513,6 +567,7 @@ async function init() {
 window.addEventListener('hashchange', () => {
   if (view() !== 'settings') resetSettingsDraft(); // keep unsaved rules across settings tabs
   editingDay = null;
+  selectedDay = null;
   render();
 });
 

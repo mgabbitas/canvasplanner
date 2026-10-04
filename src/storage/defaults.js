@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   gatePullOnCompletion: true,
   pullCapMinutes: 180, // most unfinished pulled-in work allowed in this week
   showForecast: true,
+  layout: 'week', // 'week' or 'day' (one day at a time, with day tabs)
   includeNonSubmittable: true,
   openOnCanvasVisit: true, // first Canvas visit each browser session opens the planner
 });

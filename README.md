@@ -25,7 +25,8 @@ the same Saturday. Canvas Planner does, and spreads them out before that happens
 ### Available now
 - **Your week, planned.** Replaces the new-tab page with a day-by-day plan from today
   to your target day. Each day has a load bar showing planned minutes against the
-  time you have.
+  time you have. Switch between **Week** (every day at once) and **Day** (one day at
+  a time, with a tab per day showing its load, and today's next item highlighted).
 - **Sync from Canvas.** Pulls all active classes and their assignments using your
   browser login. Syncs on its own when the data is stale, or on demand with
   **Sync now**. If you're logged out, it says so and changes nothing.

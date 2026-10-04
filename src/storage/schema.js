@@ -80,6 +80,7 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     gatePullOnCompletion: bool('gatePullOnCompletion'),
     pullCapMinutes: int(s.pullCapMinutes, 15, 2400, d.pullCapMinutes ?? DEFAULT_SETTINGS.pullCapMinutes),
     showForecast: typeof s.showForecast === 'boolean' ? s.showForecast : (d.showForecast ?? true),
+    layout: ['week', 'day'].includes(s.layout) ? s.layout : (d.layout ?? 'week'),
     openOnCanvasVisit: typeof s.openOnCanvasVisit === 'boolean' ? s.openOnCanvasVisit : (d.openOnCanvasVisit ?? true),
     includeNonSubmittable: bool('includeNonSubmittable'),
   };

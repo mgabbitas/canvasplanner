@@ -169,6 +169,9 @@ independent of the plan. Highlight days over that weekday's capacity.
 - Forecast strip, Pull next week menu, collapsible Done section.
 - Checking an item off shows a toast (about 10 s, paused while hovered or focused)
   with Undo and Log time. Undo restores the item exactly. (Decided 2026-10-04.)
+- Layout (decided 2026-10-04): Week (all days) or Day (a tab per day with its load bar
+  and minutes, arrow keys switch days, opens on today, first homework item today marked
+  "up next"). The choice is remembered (`settings.layout`).
 - Views: This week, Next week, Stats, Settings (tabs: Schedule, Estimates, Classes,
   Sync & behavior, Data), addressed by URL hash.
 - Respects `prefers-color-scheme`. Keyboard-reachable controls.
