@@ -80,6 +80,7 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     gatePullOnCompletion: bool('gatePullOnCompletion'),
     pullCapMinutes: int(s.pullCapMinutes, 15, 2400, d.pullCapMinutes ?? DEFAULT_SETTINGS.pullCapMinutes),
     showForecast: typeof s.showForecast === 'boolean' ? s.showForecast : (d.showForecast ?? true),
+    openOnCanvasVisit: typeof s.openOnCanvasVisit === 'boolean' ? s.openOnCanvasVisit : (d.openOnCanvasVisit ?? true),
     includeNonSubmittable: bool('includeNonSubmittable'),
   };
 }
@@ -112,7 +113,17 @@ function validateItem(id, raw) {
     dismissed: raw.dismissed === true,
     pulledIn: raw.pulledIn === true,
     inClass: raw.inClass === true,
+    log: validateLog(raw.log),
   };
+}
+
+/** A logged time: minutes and difficulty are each optional; the finish day is required. */
+export function validateLog(raw) {
+  if (!isObj(raw) || typeof raw.finishedOn !== 'string' || !DATE.test(raw.finishedOn)) return null;
+  const minutes = raw.minutes == null ? null : int(raw.minutes, 1, MAX_MINUTES, null);
+  const difficulty = raw.difficulty == null ? null : int(raw.difficulty, 1, 5, null);
+  if (minutes == null && difficulty == null) return null;
+  return { minutes, difficulty, finishedOn: raw.finishedOn };
 }
 
 export function validateItems(raw) {

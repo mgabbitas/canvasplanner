@@ -24,6 +24,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   pullCapMinutes: 180, // most unfinished pulled-in work allowed in this week
   showForecast: true,
   includeNonSubmittable: true,
+  openOnCanvasVisit: true, // first Canvas visit each browser session opens the planner
 });
 
 export const SIZES = ['XS', 'S', 'M', 'L'];
@@ -36,4 +37,5 @@ export const USER_FIELD_DEFAULTS = Object.freeze({
   dismissed: false,
   pulledIn: false,
   inClass: false, // in-class activity: no homework time
+  log: null, // { minutes, difficulty (1-5), finishedOn: 'YYYY-MM-DD' } once logged
 });

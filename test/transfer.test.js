@@ -22,7 +22,7 @@ test('export has settings, week state, and only changed user fields', () => {
   assert.deepEqual(e.weekState['2026-09-28'].capacity, { '2026-09-29': 30 });
   assert.deepEqual(Object.keys(e.userItems), ['1', '3']);
   assert.deepEqual(e.userItems['1'], {
-    courseId: '9', manualDone: false, minutesOverride: 120, pinned: true, dismissed: false, pulledIn: false, inClass: false,
+    courseId: '9', manualDone: false, minutesOverride: 120, pinned: true, dismissed: false, pulledIn: false, inClass: false, log: null,
   });
   assert.equal(JSON.stringify(e).includes('secret-ish'), false); // no Canvas content
 });
