@@ -33,8 +33,11 @@ function saveRules(ctx) {
   return updateSettings(ctx, { estimateRules: draftRules.map(fromDraft) });
 }
 
-function section(title, ...children) {
-  return el('section', { className: 'panel settings' }, el('h2', {}, title), ...children);
+function section(title, intro, ...children) {
+  return el('section', { className: 'panel settings' },
+    el('h2', {}, title),
+    intro ? el('p', { className: 'intro' }, intro) : null,
+    ...children);
 }
 
 const field = (label, control, hint) =>
@@ -72,7 +75,7 @@ function scheduleSection(ctx) {
   )));
 
   const setAll = el('input', { type: 'number', min: 0, max: 1440, step: 5, placeholder: 'minutes', 'aria-label': 'Minutes for every day', 'data-key': 'cap-all' });
-  return section('Schedule',
+  return section('Schedule', 'When your week starts, when you want its work finished, and how much time you have each day.',
     el('div', { className: 'row' },
       field('Week starts on', select(dayOptions, String(s.weekStartDay), {
         'data-key': 'week-start', onchange: (e) => updateSettings(ctx, { weekStartDay: Number(e.target.value) }),
@@ -99,7 +102,7 @@ function scheduleSection(ctx) {
 
 function sizesSection(ctx) {
   const s = ctx.state.settings;
-  return section('Sizes',
+  return section('Sizes and defaults', 'Sizes are shorthand used by type defaults, rules and pull-by-amount.',
     el('div', { className: 'row' },
       SIZES.map((size) => field(`${size} minutes`,
         numberInput(`size-${size}`, s.sizeMinutes[size], { min: 1, max: 1440, label: `${size} minutes` },
@@ -179,7 +182,7 @@ function rulesSection(ctx) {
     );
   });
 
-  return section('Estimate rules',
+  return section('Estimate rules', null,
     el('p', { className: 'hint' },
       'First matching rule wins, top to bottom. A rule must match everything it sets. ',
       'Rules that name a class beat instructor-stated times; rules for any class don\'t. ',
@@ -202,7 +205,7 @@ function coursesSection(ctx) {
     const current = s.courses[id] ?? { include: true, displayName: '' };
     return updateSettings(ctx, { courses: { ...s.courses, [id]: { ...current, ...patch } } });
   };
-  return section('Classes',
+  return section('Classes', 'Uncheck a class to leave it out of planning. Give it a shorter name if you like.',
     courses.length
       ? el('ul', { className: 'courses' }, courses.map(([id, c]) => el('li', {},
         el('input', {
@@ -224,7 +227,9 @@ function behaviorSection(ctx) {
   const toggle = (key, label, hint) => el('label', { className: 'check' },
     el('input', { type: 'checkbox', checked: s[key], 'data-key': key, onchange: (e) => updateSettings(ctx, { [key]: e.target.checked }) }),
     el('span', {}, label), hint ? el('small', {}, hint) : null);
-  return section('Sync and behavior',
+  return section('Sync and behavior', null,
+    toggle('openOnCanvasVisit', 'Open the planner when I visit Canvas',
+      'The first Canvas visit in each browser session opens the planner and syncs. Visiting Canvas also syncs quietly in the background whenever your data is stale.'),
     field('Auto-sync when data is older than (minutes)',
       numberInput('auto-sync', s.autoSyncMinutes, { min: 15, max: 10080, label: 'Auto-sync minutes' },
         (v) => updateSettings(ctx, { autoSyncMinutes: v })), 'Minimum 15.'),
@@ -272,7 +277,7 @@ function dataSection(ctx) {
     },
   });
 
-  return section('Data',
+  return section('Data', null,
     el('div', { className: 'row' },
       el('button', { onclick: exportData, 'data-key': 'export' }, 'Export'),
       el('button', { onclick: () => importInput.click(), 'data-key': 'import' }, 'Import…'),
@@ -301,13 +306,20 @@ function dataSection(ctx) {
   );
 }
 
+const TABS = [
+  ['schedule', 'Schedule', [scheduleSection]],
+  ['estimates', 'Estimates', [rulesSection, sizesSection]],
+  ['classes', 'Classes', [coursesSection]],
+  ['behavior', 'Sync & behavior', [behaviorSection]],
+  ['data', 'Data', [dataSection]],
+];
+
 export function renderSettings(ctx) {
-  return [
-    scheduleSection(ctx),
-    sizesSection(ctx),
-    rulesSection(ctx),
-    coursesSection(ctx),
-    behaviorSection(ctx),
-    dataSection(ctx),
-  ];
+  const current = TABS.find(([key]) => key === ctx.tab) ?? TABS[0];
+  const nav = el('nav', { className: 'tabs subtabs', 'aria-label': 'Settings sections' },
+    TABS.map(([key, label]) => el('a', {
+      href: `#settings/${key}`, className: `tab${key === current[0] ? ' active' : ''}`,
+      'aria-current': key === current[0] ? 'page' : null, 'data-key': `stab-${key}`,
+    }, label)));
+  return [nav, ...current[2].map((render) => render(ctx))];
 }

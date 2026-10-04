@@ -1,14 +1,16 @@
-// New-tab planner page. Views by URL hash: '' this week, #next next week, #settings.
+// New-tab planner page. Views by URL hash: '' this week, #next, #stats, #settings[/tab].
 // All Canvas text goes in via textContent (see dom.js), never innerHTML.
 import { plan, planNextWeek, canPullItem } from '../planner/plan.js';
 import { estimate } from '../planner/estimate.js';
 import { planningWeek, toLocalDate } from '../planner/dates.js';
 import { loadState, save } from '../storage/store.js';
-import { pruneWeekState } from '../storage/schema.js';
+import { pruneWeekState, validateLog } from '../storage/schema.js';
 import { SIZES } from '../storage/defaults.js';
 import { runSync } from '../sync/run.js';
 import { el, select, dayLabel, dueLabel, minutesLabel, readInt } from './dom.js';
 import { renderSettings, resetSettingsDraft } from './settings.js';
+import { renderStats } from './statsview.js';
+import { showToast, logForm } from './toast.js';
 
 let state = null;
 let syncing = false;
@@ -17,7 +19,12 @@ let editingDay = null; // date whose capacity is being edited
 let pullSize = 'M'; // amount picked in the "pull about …" control
 let thisWeekPlan = null; // latest plan for this week (pull gate, pull candidates)
 
-const view = () => ({ '#settings': 'settings', '#next': 'next' })[location.hash] ?? 'this';
+function view() {
+  const h = location.hash;
+  if (h === '#settings' || h.startsWith('#settings/')) return 'settings';
+  return ({ '#next': 'next', '#stats': 'stats' })[h] ?? 'this';
+}
+const settingsTab = () => location.hash.split('/')[1] ?? '';
 
 // --- formatting ----------------------------------------------------------------
 
@@ -71,6 +78,45 @@ function setDayCapacity(date, minutes) {
     if (minutes == null) delete w.capacity[date];
     else w.capacity[date] = Math.min(1440, Math.max(0, minutes));
     return w;
+  });
+}
+
+// --- done, undo, and time logging -------------------------------------------------
+
+/** The day an item was finished: logged day, else Canvas submission day, else today. */
+function finishDay(item) {
+  if (item.log?.finishedOn) return item.log.finishedOn;
+  if (item.canvasDone && item.submittedAt) return toLocalDate(item.submittedAt);
+  return toLocalDate(Date.now());
+}
+
+function openLog(item, toast = null) {
+  const t = toast ?? showToast({ message: '' });
+  const estimateMinutes = estimate(item, state.settings).minutes;
+  t.setContent(logForm({
+    title: item.title,
+    minutes: item.log?.minutes ?? (estimateMinutes || null),
+    difficulty: item.log?.difficulty ?? null,
+    onSave: ({ minutes, difficulty }) => {
+      const log = validateLog({ minutes, difficulty, finishedOn: finishDay(item) });
+      t.close();
+      updateItem(item.id, { log });
+      if (log) showToast({ message: `Logged ${log.minutes ? minutesLabel(log.minutes) : 'difficulty'} for "${item.title}".`, duration: 4000 });
+    },
+    onCancel: () => t.close(),
+  }));
+}
+
+/** Check an item off, with a toast offering Undo and Log time. */
+function markDone(item) {
+  const before = { manualDone: item.manualDone, log: item.log };
+  updateItem(item.id, { manualDone: true });
+  const t = showToast({
+    message: `Done: ${item.title}`,
+    actions: [
+      { label: 'Undo', onclick: () => { t.close(); updateItem(item.id, before); } },
+      ...(item.inClass ? [] : [{ label: 'Log time', onclick: () => openLog(state.items[item.id], t) }]),
+    ],
   });
 }
 
@@ -136,7 +182,7 @@ function itemRow(entry, kind = 'plan') {
     'aria-label': `Mark "${item.title}" ${done ? 'not done' : 'done'}`,
     title: done && !entry.canUncheck ? 'Submitted in Canvas' : '',
     'data-key': `done-${item.id}`,
-    onchange: (e) => updateItem(item.id, { manualDone: e.target.checked }),
+    onchange: (e) => (e.target.checked ? markDone(item) : updateItem(item.id, { manualDone: false })),
   });
   const title = item.url
     ? el('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', className: 'title' }, item.title)
@@ -168,6 +214,14 @@ function itemRow(entry, kind = 'plan') {
   }
   if (kind === 'dismissed') {
     actions.push(el('button', { onclick: () => updateItem(item.id, { dismissed: false }), 'data-key': `restore-${item.id}` }, 'Restore'));
+  }
+  if (kind === 'done' && !entry.inClass) {
+    const l = item.log;
+    actions.push(el('button', {
+      className: l ? 'link logged' : '', 'data-key': `log-${item.id}`,
+      title: l ? 'Edit the logged time' : 'How long did it take?',
+      onclick: () => openLog(item),
+    }, l ? `logged ${[l.minutes ? minutesLabel(l.minutes) : null, l.difficulty ? `${l.difficulty}/5` : null].filter(Boolean).join(' · ')}` : 'Log time'));
   }
   if (kind === 'plan' || kind === 'next') actions.push(pinButton(item));
   actions.push(kind === 'plan' || kind === 'next'
@@ -203,11 +257,11 @@ function renderHeader(p) {
   }, label);
 
   const week = p.week;
+  const weekView = v === 'this' || v === 'next';
   return [
-    el('h1', {}, v === 'settings'
-      ? 'Settings'
+    el('h1', {}, v === 'settings' ? 'Settings' : v === 'stats' ? 'Your stats'
       : `Week of ${dayLabel(week.start, { month: 'short', day: 'numeric' })}${v === 'next' ? ' · projected' : ''}`),
-    v === 'settings' ? null : el('div', { className: 'target' },
+    !weekView ? null : el('div', { className: 'target' },
       el('span', {}, `Target: ${dayLabel(week.cutoff, { weekday: 'long' })}`),
       el('button', {
         disabled: !week.canRemoveDay, 'aria-label': 'Remove a day', 'data-key': 'remove-day',
@@ -225,9 +279,10 @@ function renderHeader(p) {
         ? el('button', { onclick: () => { location.hash = ''; } }, 'Back to plan')
         : el('button', { onclick: () => { location.hash = 'settings'; }, 'aria-label': 'Settings', title: 'Settings' }, '⚙'),
     ),
-    v === 'settings' ? null : el('nav', { className: 'tabs', 'aria-label': 'Week' },
+    v === 'settings' ? null : el('nav', { className: 'tabs', 'aria-label': 'Views' },
       tab('', 'This week', v === 'this'),
       tab('next', 'Next week', v === 'next'),
+      tab('stats', 'Stats', v === 'stats'),
     ),
   ];
 }
@@ -374,10 +429,10 @@ function renderDay(day, today, kind) {
   );
 }
 
-function panel(title, entries, kind, open = false) {
+function panel(title, entries, kind, open = false, note = '') {
   if (!entries.length) return null;
   return el('details', { className: 'panel', open },
-    el('summary', {}, `${title} (${entries.length})`),
+    el('summary', {}, `${title} (${entries.length})`, note ? el('span', { className: 'summary-note' }, note) : null),
     el('ul', { className: 'items' }, entries.map((e) => itemRow(e, kind))),
   );
 }
@@ -388,6 +443,7 @@ const settingsContext = () => ({
   state,
   saveState,
   render,
+  tab: settingsTab(),
   afterClear: async () => {
     state = await loadState();
     syncMessage = null;
@@ -415,6 +471,10 @@ function render() {
     $('banners').replaceChildren();
     $('days').replaceChildren(...renderSettings(settingsContext()));
     $('extras').replaceChildren();
+  } else if (v === 'stats') {
+    $('banners').replaceChildren();
+    $('days').replaceChildren(...renderStats({ state, saveState, courseName, finishDay, openLog: (i) => openLog(i) }));
+    $('extras').replaceChildren();
   } else if (v === 'next') {
     $('banners').replaceChildren(renderPullBar(), ...renderBanners(p));
     $('days').replaceChildren(...p.days.map((d) => renderDay(d, p.today, 'next')));
@@ -428,7 +488,10 @@ function render() {
       panel("Won't fit by the target day", p.overflow, 'plan', true),
       panel('At risk', p.atRisk, 'plan', true),
       panel('No due date', p.noDueDate, 'plan'),
-      panel('Done this week', p.done, 'done'),
+      panel('Done this week', p.done, 'done', false, (() => {
+        const n = p.done.filter((e) => !e.item.log && !e.inClass).length;
+        return n ? `${n} need${n === 1 ? 's' : ''} a time` : '';
+      })()),
       panel('Dismissed', p.dismissed, 'dismissed'),
     ].filter(Boolean));
   }
@@ -440,12 +503,15 @@ function render() {
 async function init() {
   state = await loadState();
   render();
+  // Opened by the background script after a Canvas visit (?sync=1): always sync.
+  const forced = new URLSearchParams(location.search).has('sync');
+  if (forced) history.replaceState(null, '', location.pathname + location.hash);
   const last = state.meta.lastSyncAt ? Date.parse(state.meta.lastSyncAt) : 0;
-  if (Date.now() - last > state.settings.autoSyncMinutes * 60_000) await sync();
+  if (forced || Date.now() - last > state.settings.autoSyncMinutes * 60_000) await sync();
 }
 
 window.addEventListener('hashchange', () => {
-  resetSettingsDraft();
+  if (view() !== 'settings') resetSettingsDraft(); // keep unsaved rules across settings tabs
   editingDay = null;
   render();
 });

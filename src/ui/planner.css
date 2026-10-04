@@ -149,3 +149,50 @@ ol.fc li.over .fc-bar > div { background: var(--bad-text); }
 .fc-n { min-height: 1.2em; font-weight: 600; color: var(--text); }
 details.forecast summary { cursor: pointer; font-weight: 600; font-size: 15px; }
 details.forecast[open] summary { margin-bottom: 8px; }
+
+/* --- M5: toast, log form, stats, settings tabs --- */
+#toasts { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 10; width: min(560px, calc(100vw - 32px)); }
+.toast { background: var(--text); color: var(--bg); border-radius: 10px; padding: 10px 12px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25); animation: toast-in 0.15s ease-out; }
+@keyframes toast-in { from { transform: translateY(8px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+.toast-body { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.toast-msg { flex: 1 1 200px; overflow-wrap: anywhere; }
+.toast button { background: transparent; color: var(--bg); border-color: transparent; font-weight: 600; }
+.toast button:hover { border-color: var(--bg); }
+.toast .toast-close { opacity: 0.7; font-weight: 400; }
+.log-form { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; width: 100%; }
+.log-form .log-title { flex-basis: 100%; font-weight: 600; overflow-wrap: anywhere; }
+.log-form label { display: flex; align-items: center; gap: 6px; }
+.log-form .log-minutes { width: 72px; font: inherit; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--bg); background: transparent; color: var(--bg); }
+.log-form .log-diff { width: 120px; accent-color: var(--accent); }
+.log-form .muted { opacity: 0.7; font-size: 13px; }
+.log-form .log-diff-value { font-size: 13px; min-width: 90px; }
+.log-form .log-buttons { display: flex; gap: 6px; margin-left: auto; }
+.toast button.primary { border-color: var(--bg); }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.toast button.primary { background: var(--bg); color: var(--text); }
+button.link.logged { text-decoration: none; color: var(--muted); font-size: 12px; }
+.summary-note { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 8px; }
+
+nav.subtabs { margin: 0 0 12px; flex-wrap: wrap; }
+.settings .intro { color: var(--muted); font-size: 13px; margin: -4px 0 10px; }
+
+.stats h2 { font-size: 16px; margin: 0 0 10px; }
+.stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.stat-card { border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+.stat-card strong { font-size: 20px; }
+.stat-card span { color: var(--muted); font-size: 12px; }
+.stat-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.stat-table th, .stat-table td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--border); }
+.stat-table thead th { border-top: none; color: var(--muted); font-weight: 600; font-size: 12px; }
+.stat-table td.good { color: var(--good); }
+.stat-table td.bad { color: var(--bad-text); }
+.stats { overflow-x: auto; }
+ol.wk-bars { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+ol.wk-bars li { display: grid; grid-template-columns: 40px 1fr 120px; gap: 8px; align-items: center; font-size: 13px; }
+.wk-bar { height: 10px; background: var(--bg); border-radius: 5px; overflow: hidden; display: block; }
+.wk-bar > span { display: block; height: 100%; background: var(--accent); }
+.wk-val { color: var(--muted); }
+ul.suggestions { list-style: none; padding: 0; margin: 0; }
+ul.suggestions li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); }
+ul.suggestions li:first-child { border-top: none; }

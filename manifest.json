@@ -26,5 +26,22 @@
   "options_ui": {
     "page": "src/ui/options.html",
     "open_in_tab": true
-  }
+  },
+  "background": {
+    "scripts": [
+      "src/background.js"
+    ],
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://byui.instructure.com/*"
+      ],
+      "js": [
+        "src/content/canvas-visit.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
 }
