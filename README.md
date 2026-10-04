@@ -8,8 +8,8 @@ week's work early (by Wednesday, by default) instead of on the official due date
 Canvas tells you *when* things are due. It doesn't tell you that 16 of them land on
 the same Saturday. Canvas Planner does, and spreads them out before that happens.
 
-> **Status:** early, personal project, under active development. It currently works
-> with one Canvas site (`byui.instructure.com`) and in Firefox only.
+> **Status:** version 1.0, a personal project. It works with one Canvas site
+> (`byui.instructure.com`) and in Firefox only.
 
 ## What it is (and isn't)
 
@@ -113,24 +113,39 @@ item to the wrong day.
 
 ## Install
 
-### Right now (development install)
-Firefox only allows permanently installing signed add-ons, so for now the extension
-is loaded temporarily and needs reloading after Firefox restarts.
+### Install the signed add-on
+Release Firefox only installs add-ons signed by Mozilla. Canvas Planner is signed as an
+**unlisted** add-on: Mozilla checks and signs it, but it isn't listed on the public
+add-ons site.
 
-1. Install [Node.js](https://nodejs.org/) (for the dev scripts) and clone this repo.
-2. In the repo, run `npm install`.
-3. Start a Firefox window with a separate, persistent profile:
-   ```
-   npm start
-   ```
-   This opens `about:debugging`. The first time, log into Canvas in that window; the
-   profile remembers the login.
-4. Click **Load Temporary Add-on…** and choose `manifest.json` in the repo.
-5. Open a new tab.
+1. Download the latest `.xpi` file from this repo's **Releases** page (or build one
+   yourself, below).
+2. In Firefox, open `about:addons`, click the gear icon, and choose
+   **Install Add-on From File…**. Pick the `.xpi`.
+3. Visit Canvas while logged in. The planner opens and syncs. It also replaces your
+   new-tab page.
 
-### Permanent install
-*Coming in a later milestone:* signing the extension as an unlisted add-on so it can
-be installed normally.
+Moving from a development install? Your data lives in that profile. Use
+**Settings → Data → Export** there, then **Import** in the new install.
+
+### Sign your own build
+1. Sign in at [addons.mozilla.org](https://addons.mozilla.org) and create API
+   credentials at the [API keys page](https://addons.mozilla.org/developers/addon/api/key/).
+2. In the repo, create `.amo.env` (gitignored, and never packaged):
+   ```
+   WEB_EXT_API_KEY=user:12345678:123
+   WEB_EXT_API_SECRET=your-secret
+   ```
+3. Bump `version` in `manifest.json` and `package.json` (each signed version must be
+   new), then run `npm install` once and `npm run sign`. The signed `.xpi` lands in
+   `web-ext-artifacts/`.
+
+### Development install (temporary)
+1. Install [Node.js](https://nodejs.org/) and clone this repo, then `npm install`.
+2. Run `npm start`. It opens a separate Firefox profile at `about:debugging`; log into
+   Canvas in that window the first time.
+3. Click **Load Temporary Add-on…** and choose `manifest.json`. Temporary add-ons are
+   removed when Firefox closes.
 
 ## Development
 
@@ -138,6 +153,8 @@ be installed normally.
 npm test          # run all tests (Node's built-in test runner)
 npm start         # open Firefox (dev profile) at about:debugging
 npx web-ext lint  # check the manifest and extension files
+npm run build     # package an unsigned .zip
+npm run sign      # sign an unlisted .xpi (needs .amo.env)
 ```
 
 - Plain JavaScript ES modules, no framework, no build step, no runtime dependencies.
@@ -161,3 +178,12 @@ Real Canvas data in `test/fixtures/` contains grades and is ignored by git. Test
 need it skip themselves when it isn't present.
 
 The full requirements and decision log are in [`SPEC.md`](SPEC.md).
+
+## Changelog
+
+### 1.0.0
+First release: Canvas sync with your browser login, a weekly plan with self-assigned
+target days, day tabs with class groups and counts, due-today flags, next-week
+projection and pulling, per-item minutes and in-class activities, estimate rules,
+time and difficulty logging with stats and rule suggestions, themes and class
+colors, export/import, and auto-open when you visit Canvas.

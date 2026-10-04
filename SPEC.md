@@ -275,7 +275,11 @@ Each one ends with `npm test` passing, a commit, and a short walkthrough.
   panel (with a "N need a time" count), never a pop-up; weekday stats use the day the
   item was finished/logged; difficulty is a 1-5 slider; a rule is suggested once a
   group has 3+ logs and its average differs from the current estimate by 5+ min.
-- **M6. Polish.** Error states, dark mode, keyboard access, and instructions for
+- **M6. Polish.** Done 2026-10-04: plain-language sync errors, first-run welcome,
+  skip link, contrast-checked accents, due-today/tomorrow flags (by real due date,
+  no reordering), version 1.0.0, `npm run sign` (unlisted; credentials in a gitignored
+  `.amo.env` that is never packaged). Not done: splitting `src/ui/planner.js`
+  (deferred; no user-facing change). Original scope: Error states, dark mode, keyboard access, and instructions for
   installing long-term (signing as an unlisted add-on, or running a Firefox build that
   allows unsigned add-ons).
 
