@@ -1,39 +1,23 @@
-// New-tab planner page. All Canvas text goes in via textContent, never innerHTML.
+// New-tab planner page: the plan view, plus the settings view at #settings.
+// All Canvas text goes in via textContent (see dom.js), never innerHTML.
 import { plan } from '../planner/plan.js';
+import { estimate } from '../planner/estimate.js';
+import { planningWeek, toLocalDate } from '../planner/dates.js';
 import { loadState, save } from '../storage/store.js';
+import { pruneWeekState } from '../storage/schema.js';
+import { SIZES } from '../storage/defaults.js';
 import { runSync } from '../sync/run.js';
+import { el, select, dayLabel, dueLabel, minutesLabel, readInt } from './dom.js';
+import { renderSettings, resetSettingsDraft } from './settings.js';
 
 let state = null;
 let syncing = false;
 let syncMessage = null;
+let editingDay = null; // date whose capacity is being edited
 
-// --- tiny DOM helper -------------------------------------------------------
+const isSettingsView = () => location.hash === '#settings';
 
-/** el('button', { className: 'x', onclick: fn }, 'text', childNode) */
-function el(tag, props = {}, ...children) {
-  const node = document.createElement(tag);
-  for (const [key, value] of Object.entries(props)) {
-    if (value == null || value === false) continue;
-    if (key.startsWith('on')) node.addEventListener(key.slice(2), value);
-    else if (key.includes('-')) node.setAttribute(key, value);
-    else node[key] = value;
-  }
-  for (const child of children.flat()) {
-    if (child == null || child === false) continue;
-    node.append(child instanceof Node ? child : document.createTextNode(String(child)));
-  }
-  return node;
-}
-
-// --- formatting ------------------------------------------------------------
-
-const dayLabel = (date, opts = { weekday: 'long', month: 'short', day: 'numeric' }) => {
-  const [y, m, d] = date.split('-').map(Number);
-  return new Date(y, m - 1, d, 12).toLocaleDateString(undefined, opts);
-};
-const dueLabel = (iso) =>
-  new Date(iso).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-const minutesLabel = (m) => (m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m`);
+// --- formatting ----------------------------------------------------------------
 
 function timeAgo(iso) {
   const mins = Math.round((Date.now() - Date.parse(iso)) / 60000);
@@ -47,22 +31,37 @@ const courseName = (courseId) =>
   state.settings.courses[courseId]?.displayName || state.courses[courseId]?.name || `Course ${courseId}`;
 
 const SOURCE_LABEL = {
-  manual: 'size you set', stated: 'instructor-stated time', keyword: 'title keyword rule',
+  manual: 'size you picked', rule: 'one of your estimate rules', stated: 'instructor-stated time',
   type: 'assignment type default', default: 'default size',
 };
 
-// --- state changes -----------------------------------------------------------
+// --- state changes ---------------------------------------------------------------
 
-async function updateItem(id, patch) {
-  state.items[id] = { ...state.items[id], ...patch };
-  await save({ items: state.items });
+async function saveState(partial) {
+  Object.assign(state, partial);
+  await save(partial);
   render();
 }
 
-async function changeExtraDays(weekStart, delta, current) {
-  state.weekState[weekStart] = { extraDays: Math.max(0, current + delta) };
-  await save({ weekState: state.weekState });
-  render();
+const updateItem = (id, patch) => saveState({ items: { ...state.items, [id]: { ...state.items[id], ...patch } } });
+
+/** Change one week's state (extraDays, per-date capacity) and prune old weeks. */
+function updateWeek(weekStart, change) {
+  const current = state.weekState[weekStart] ?? { extraDays: 0, capacity: {} };
+  const next = { ...state.weekState, [weekStart]: change({ ...current, capacity: { ...current.capacity } }) };
+  return saveState({ weekState: pruneWeekState(next, toLocalDate(Date.now())) });
+}
+
+const changeExtraDays = (weekStart, delta) =>
+  updateWeek(weekStart, (w) => ({ ...w, extraDays: Math.max(0, w.extraDays + delta) }));
+
+function setDayCapacity(date, minutes) {
+  editingDay = null;
+  return updateWeek(planningWeek(date, state.settings).start, (w) => {
+    if (minutes == null) delete w.capacity[date];
+    else w.capacity[date] = Math.min(1440, Math.max(0, minutes));
+    return w;
+  });
 }
 
 async function sync() {
@@ -77,7 +76,24 @@ async function sync() {
   render();
 }
 
-// --- rendering ---------------------------------------------------------------
+// --- plan view -------------------------------------------------------------------
+
+function sizeControl(entry) {
+  const { item } = entry;
+  const sizes = state.settings.sizeMinutes;
+  const auto = estimate({ ...item, sizeOverride: null }, state.settings).minutes;
+  return select(
+    [['', `${minutesLabel(auto)} auto`], ...SIZES.map((s) => [s, `${s} · ${minutesLabel(sizes[s])}`])],
+    item.sizeOverride ?? '',
+    {
+      className: `chip size${item.sizeOverride ? ' set' : ''}`,
+      title: `Estimate from ${SOURCE_LABEL[entry.source]}. Pick a size to change it.`,
+      'aria-label': `Size of "${item.title}"`,
+      'data-key': `size-${item.id}`,
+      onchange: (e) => updateItem(item.id, { sizeOverride: e.target.value || null }),
+    },
+  );
+}
 
 function itemRow(entry, { done = false } = {}) {
   const { item } = entry;
@@ -87,6 +103,7 @@ function itemRow(entry, { done = false } = {}) {
     disabled: done && !entry.canUncheck,
     'aria-label': `Mark "${item.title}" ${done ? 'not done' : 'done'}`,
     title: done && !entry.canUncheck ? 'Submitted in Canvas' : '',
+    'data-key': `done-${item.id}`,
     onchange: (e) => updateItem(item.id, { manualDone: e.target.checked }),
   });
   const title = item.url
@@ -104,7 +121,7 @@ function itemRow(entry, { done = false } = {}) {
     entry.overdue && !done
       ? el('button', { onclick: () => updateItem(item.id, { dismissed: true }), title: 'Hide this overdue item' }, 'Dismiss')
       : null,
-    el('span', { className: 'chip', title: `Estimate from ${SOURCE_LABEL[entry.source]}` }, minutesLabel(entry.minutes)),
+    done ? el('span', { className: 'chip' }, minutesLabel(entry.minutes)) : sizeControl(entry),
   );
 
   return el('li', { className: `item${done ? ' done' : ''}` },
@@ -129,19 +146,25 @@ function renderHeader(p) {
       : el('span', {}, meta.lastSyncAt ? `Synced ${timeAgo(meta.lastSyncAt)}` : 'Never synced');
 
   return [
-    el('h1', {}, `Week of ${dayLabel(week.start, { month: 'short', day: 'numeric' })}`),
-    el('div', { className: 'target' },
+    el('h1', {}, isSettingsView() ? 'Settings' : `Week of ${dayLabel(week.start, { month: 'short', day: 'numeric' })}`),
+    isSettingsView() ? null : el('div', { className: 'target' },
       el('span', {}, `Target: ${dayLabel(week.cutoff, { weekday: 'long' })}`),
       el('button', {
-        disabled: !p.week.canRemoveDay, 'aria-label': 'Remove a day',
-        onclick: () => changeExtraDays(week.start, -1, week.extraDays),
+        disabled: !week.canRemoveDay, 'aria-label': 'Remove a day', 'data-key': 'remove-day',
+        onclick: () => changeExtraDays(week.start, -1),
       }, '−'),
       el('button', {
-        disabled: !p.week.canAddDay, 'aria-label': 'Add a day',
-        onclick: () => changeExtraDays(week.start, 1, week.extraDays),
+        disabled: !week.canAddDay, 'aria-label': 'Add a day', 'data-key': 'add-day',
+        onclick: () => changeExtraDays(week.start, 1),
       }, '+'),
     ),
-    el('div', { className: 'sync' }, status, el('button', { onclick: sync, disabled: syncing }, 'Sync now')),
+    el('div', { className: 'sync' },
+      status,
+      el('button', { onclick: sync, disabled: syncing }, 'Sync now'),
+      isSettingsView()
+        ? el('button', { onclick: () => { location.hash = ''; } }, 'Back to plan')
+        : el('button', { onclick: () => { location.hash = 'settings'; }, 'aria-label': 'Settings', title: 'Settings' }, '⚙'),
+    ),
   ];
 }
 
@@ -160,9 +183,7 @@ function renderBanners(p) {
   if (p.overflow.length) {
     out.push(el('div', { className: 'banner warn' },
       el('span', {}, `${p.overflow.length} item${p.overflow.length > 1 ? 's' : ''}, ${minutesLabel(p.overflowMinutes)} won't fit by ${target}.`),
-      p.week.canAddDay
-        ? el('button', { onclick: () => changeExtraDays(p.week.start, 1, p.week.extraDays) }, 'Add a day')
-        : null,
+      p.week.canAddDay ? el('button', { onclick: () => changeExtraDays(p.week.start, 1) }, 'Add a day') : null,
     ));
   }
   if (p.atRisk.length) {
@@ -172,18 +193,54 @@ function renderBanners(p) {
   return out;
 }
 
+function capacityControl(day) {
+  if (editingDay === day.date) {
+    const input = el('input', {
+      type: 'number', min: 0, max: 1440, step: 5, value: day.capacity, className: 'cap-input',
+      'aria-label': `Minutes available on ${dayLabel(day.date)}`,
+      onkeydown: (e) => {
+        if (e.key === 'Enter') e.target.blur();
+        if (e.key === 'Escape') { editingDay = null; render(); }
+      },
+      onblur: (e) => {
+        if (editingDay !== day.date) return;
+        const minutes = readInt(e.target);
+        if (minutes == null || minutes === day.capacity) { editingDay = null; render(); } else setDayCapacity(day.date, minutes);
+      },
+    });
+    queueMicrotask(() => { input.focus(); input.select(); });
+    return [input, 'm'];
+  }
+  return [
+    el('button', {
+      className: 'cap', 'data-key': `cap-${day.date}`,
+      title: `Minutes available on this day (default ${minutesLabel(day.defaultCapacity)}). Click to change for this date only.`,
+      onclick: () => { editingDay = day.date; render(); },
+    }, day.capacity === 0 ? 'day off' : minutesLabel(day.capacity)),
+    day.capacityOverridden
+      ? el('button', {
+        className: 'link', 'data-key': `cap-reset-${day.date}`,
+        title: `Back to the ${minutesLabel(day.defaultCapacity)} default`,
+        onclick: () => setDayCapacity(day.date, null),
+      }, 'reset')
+      : null,
+  ];
+}
+
 function renderDay(day, today) {
   const pct = day.capacity ? Math.min(100, (day.load / day.capacity) * 100) : 0;
   const heading = dayLabel(day.date) + (day.date === today ? ' · Today' : '');
   return el('section', { className: `day${day.over ? ' over' : ''}${day.blocked ? ' blocked' : ''}` },
     el('div', { className: 'day-head' },
       el('h2', {}, heading),
-      el('span', { className: 'load' }, day.blocked ? 'blocked' : `${minutesLabel(day.load)} / ${minutesLabel(day.capacity)}`),
+      el('span', { className: 'load' },
+        day.blocked && day.capacity > 0 ? 'blocked · ' : `${minutesLabel(day.load)} / `,
+        ...capacityControl(day)),
     ),
     day.blocked ? null : el('div', { className: 'bar' }, el('div', { style: `width:${pct}%` })),
     day.items.length
       ? el('ul', { className: 'items' }, day.items.map((e) => itemRow(e)))
-      : el('p', { className: 'empty' }, day.blocked ? '' : 'Nothing planned.'),
+      : el('p', { className: 'empty' }, day.blocked ? 'No work planned on this day.' : 'Nothing planned.'),
   );
 }
 
@@ -195,21 +252,48 @@ function panel(title, entries, opts = {}) {
   );
 }
 
+// --- settings view hooks ---------------------------------------------------------
+
+const settingsContext = () => ({
+  state,
+  saveState,
+  render,
+  afterClear: async () => {
+    state = await loadState();
+    syncMessage = null;
+    location.hash = '';
+    render();
+    sync();
+  },
+});
+
+// --- render ------------------------------------------------------------------------
+
 function render() {
   if (!state) return;
+  // Re-rendering replaces the DOM; put keyboard focus back where it was.
+  const focusKey = document.activeElement?.getAttribute?.('data-key');
+
   const p = plan({ items: state.items, settings: state.settings, weekState: state.weekState, now: Date.now() });
-  document.getElementById('header').replaceChildren(...renderHeader(p));
-  document.getElementById('banners').replaceChildren(...renderBanners(p));
-  document.getElementById('days').replaceChildren(...p.days.map((d) => renderDay(d, p.today)));
-  document.getElementById('extras').replaceChildren(...[
-    panel("Won't fit by the target day", p.overflow, { open: true }),
-    panel('At risk', p.atRisk, { open: true }),
-    panel('No due date', p.noDueDate),
-    panel('Done this week', p.done, { done: true }),
-  ].filter(Boolean));
+  document.getElementById('header').replaceChildren(...renderHeader(p).filter(Boolean));
+  if (isSettingsView()) {
+    document.getElementById('banners').replaceChildren();
+    document.getElementById('days').replaceChildren(...renderSettings(settingsContext()));
+    document.getElementById('extras').replaceChildren();
+  } else {
+    document.getElementById('banners').replaceChildren(...renderBanners(p));
+    document.getElementById('days').replaceChildren(...p.days.map((d) => renderDay(d, p.today)));
+    document.getElementById('extras').replaceChildren(...[
+      panel("Won't fit by the target day", p.overflow, { open: true }),
+      panel('At risk', p.atRisk, { open: true }),
+      panel('No due date', p.noDueDate),
+      panel('Done this week', p.done, { done: true }),
+    ].filter(Boolean));
+  }
+  if (focusKey) document.querySelector(`[data-key="${CSS.escape(focusKey)}"]`)?.focus();
 }
 
-// --- startup -----------------------------------------------------------------
+// --- startup -----------------------------------------------------------------------
 
 async function init() {
   state = await loadState();
@@ -218,9 +302,15 @@ async function init() {
   if (Date.now() - last > state.settings.autoSyncMinutes * 60_000) await sync();
 }
 
+window.addEventListener('hashchange', () => {
+  resetSettingsDraft();
+  editingDay = null;
+  render();
+});
+
 // Another tab changed something: reload and redraw.
 browser.storage.onChanged.addListener(async (_changes, area) => {
-  if (area !== 'local' || syncing) return;
+  if (area !== 'local' || syncing || editingDay) return;
   state = await loadState();
   render();
 });
