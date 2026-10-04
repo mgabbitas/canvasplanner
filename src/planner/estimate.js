@@ -25,30 +25,38 @@ export function ruleMatches(rule, item) {
 }
 
 const ruleMinutes = (rule, sizeMinutes) => rule.minutes ?? sizeMinutes[rule.size] ?? null;
+const ruleUsable = (rule, sizeMinutes) => rule.inClass === true || ruleMinutes(rule, sizeMinutes) != null;
+const fromRule = (rule, sizeMinutes) => (rule.inClass === true
+  ? { minutes: 0, source: 'rule', inClass: true }
+  : { minutes: ruleMinutes(rule, sizeMinutes), source: 'rule', inClass: false });
 
-/** { minutes, source } where source is manual | rule | stated | type | default. */
+/**
+ * { minutes, source, inClass } where source is manual | rule | stated | type | default.
+ * inClass: an in-class activity, which takes no homework time (0 minutes).
+ */
 export function estimate(item, settings) {
   const sizes = settings.sizeMinutes;
   if (Number.isFinite(item.minutesOverride) && item.minutesOverride > 0) {
-    return { minutes: item.minutesOverride, source: 'manual' };
+    return { minutes: item.minutesOverride, source: 'manual', inClass: false };
   }
+  if (item.inClass === true) return { minutes: 0, source: 'manual', inClass: true };
   const rules = settings.estimateRules ?? [];
   const firstRule = (withCourse) => rules.find((r) =>
-    Boolean(r.courseId) === withCourse && ruleMatches(r, item) && ruleMinutes(r, sizes) != null);
+    Boolean(r.courseId) === withCourse && ruleMatches(r, item) && ruleUsable(r, sizes));
 
   const courseRule = firstRule(true);
-  if (courseRule) return { minutes: ruleMinutes(courseRule, sizes), source: 'rule' };
+  if (courseRule) return fromRule(courseRule, sizes);
 
   const stated = statedMinutes(item.descriptionText);
   if (stated != null) {
     const scale = (settings.statedScale ?? 100) / 100;
-    return { minutes: Math.max(1, Math.round(stated * scale)), source: 'stated' };
+    return { minutes: Math.max(1, Math.round(stated * scale)), source: 'stated', inClass: false };
   }
 
   const generalRule = firstRule(false);
-  if (generalRule) return { minutes: ruleMinutes(generalRule, sizes), source: 'rule' };
+  if (generalRule) return fromRule(generalRule, sizes);
 
   const typeSize = settings.typeDefaults[item.type];
-  if (typeSize && sizes[typeSize] != null) return { minutes: sizes[typeSize], source: 'type' };
-  return { minutes: sizes.M, source: 'default' };
+  if (typeSize && sizes[typeSize] != null) return { minutes: sizes[typeSize], source: 'type', inClass: false };
+  return { minutes: sizes.M, source: 'default', inClass: false };
 }

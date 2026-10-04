@@ -22,7 +22,7 @@ test('migration v1 -> v2: keyword rules become estimate rules', () => {
     weekState: { '2026-09-28': { extraDays: 1 } },
   };
   const s = migrate(v1);
-  assert.deepEqual(s.settings.estimateRules, [{ courseId: null, type: null, keyword: 'reading', size: 'S', minutes: null }]);
+  assert.deepEqual(s.settings.estimateRules, [{ courseId: null, type: null, keyword: 'reading', size: 'S', minutes: null, inClass: false }]);
   assert.equal(s.settings.capacity[1], 60);
   assert.equal('keywordRules' in s.settings, false);
   assert.deepEqual(s.weekState, { '2026-09-28': { extraDays: 1, capacity: {} } });
@@ -78,9 +78,9 @@ test('bad input falls back to the last valid settings, not the defaults', () => 
 
 test('estimate rules: need a condition and a value; minutes beat size', () => {
   assert.deepEqual(validateRule({ courseId: 7, keyword: ' Report ', minutes: '25', size: 'L' }),
-    { courseId: '7', type: null, keyword: 'Report', size: null, minutes: 25 });
+    { courseId: '7', type: null, keyword: 'Report', size: null, minutes: 25, inClass: false });
   assert.deepEqual(validateRule({ type: 'quiz', size: 'S' }),
-    { courseId: null, type: 'quiz', keyword: '', size: 'S', minutes: null });
+    { courseId: null, type: 'quiz', keyword: '', size: 'S', minutes: null, inClass: false });
   assert.equal(validateRule({ size: 'S' }), null); // no condition
   assert.equal(validateRule({ keyword: 'x' }), null); // no value
   assert.equal(validateRule({ keyword: 'x', minutes: 0 }).minutes, 1); // clamped, not dropped
@@ -117,4 +117,15 @@ test('weekState: extraDays and per-date capacity are clamped', () => {
 test('old weeks are pruned after 8 weeks', () => {
   const ws = { '2026-08-03': {}, '2026-08-10': {}, '2026-10-05': {} };
   assert.deepEqual(Object.keys(pruneWeekState(ws, '2026-10-05')), ['2026-08-10', '2026-10-05']);
+});
+
+test('in-class: rule value and item flag validate; new settings have defaults', () => {
+  assert.deepEqual(validateRule({ keyword: 'teach', inClass: true, size: 'L', minutes: 30 }),
+    { courseId: null, type: null, keyword: 'teach', size: null, minutes: null, inClass: true });
+  assert.equal(validateItems({ 1: { courseId: '9', inClass: 'yes' } })['1'].inClass, false);
+  assert.equal(validateItems({ 1: { courseId: '9', inClass: true } })['1'].inClass, true);
+  const s = validateSettings({ pullCapMinutes: 5, showForecast: 'no' });
+  assert.equal(s.pullCapMinutes, 15);
+  assert.equal(s.showForecast, true);
+  assert.equal(validateSettings({}).pullCapMinutes, 180);
 });

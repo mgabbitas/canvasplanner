@@ -22,7 +22,7 @@ test('export has settings, week state, and only changed user fields', () => {
   assert.deepEqual(e.weekState['2026-09-28'].capacity, { '2026-09-29': 30 });
   assert.deepEqual(Object.keys(e.userItems), ['1', '3']);
   assert.deepEqual(e.userItems['1'], {
-    courseId: '9', manualDone: false, minutesOverride: 120, pinned: true, dismissed: false, pulledIn: false,
+    courseId: '9', manualDone: false, minutesOverride: 120, pinned: true, dismissed: false, pulledIn: false, inClass: false,
   });
   assert.equal(JSON.stringify(e).includes('secret-ish'), false); // no Canvas content
 });
@@ -60,7 +60,7 @@ test('import rejects other files and clamps bad values', () => {
     userItems: { 1: { courseId: '9', minutesOverride: 'HUGE', manualDone: 'yes' }, evil: { courseId: '9' }, 5: 'junk' },
   });
   assert.equal(next.settings.capacity[0], 1440);
-  assert.deepEqual(next.settings.estimateRules, [{ courseId: null, type: 'quiz', keyword: '', size: 'XS', minutes: null }]);
+  assert.deepEqual(next.settings.estimateRules, [{ courseId: null, type: 'quiz', keyword: '', size: 'XS', minutes: null, inClass: false }]);
   assert.deepEqual(next.weekState, {});
   assert.equal(next.items['1'].minutesOverride, null);
   assert.equal(next.items['1'].manualDone, false);
@@ -71,7 +71,7 @@ test('a v1-shaped export still imports (keyword rules migrate)', () => {
   const next = applyImport(stored(), {
     app: 'canvas-planner', schemaVersion: 1, settings: { keywordRules: [{ keyword: 'essay', size: 'L' }] },
   });
-  assert.deepEqual(next.settings.estimateRules, [{ courseId: null, type: null, keyword: 'essay', size: 'L', minutes: null }]);
+  assert.deepEqual(next.settings.estimateRules, [{ courseId: null, type: null, keyword: 'essay', size: 'L', minutes: null, inClass: false }]);
 });
 
 test('a v2 export with size overrides imports as minutes', () => {

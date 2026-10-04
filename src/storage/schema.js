@@ -30,11 +30,12 @@ export function validateRule(r) {
   const courseId = r.courseId != null && ID.test(String(r.courseId)) ? String(r.courseId) : null;
   const type = TYPES.includes(r.type) ? r.type : null;
   const keyword = (str(r.keyword, 100) ?? '').trim();
-  const minutes = r.minutes == null ? null : int(r.minutes, 1, MAX_MINUTES, null);
-  const size = minutes == null && SIZES.includes(r.size) ? r.size : null;
+  const inClass = r.inClass === true;
+  const minutes = inClass || r.minutes == null ? null : int(r.minutes, 1, MAX_MINUTES, null);
+  const size = !inClass && minutes == null && SIZES.includes(r.size) ? r.size : null;
   if (!courseId && !type && !keyword) return null;
-  if (minutes == null && !size) return null;
-  return { courseId, type, keyword, size, minutes };
+  if (!inClass && minutes == null && !size) return null;
+  return { courseId, type, keyword, size, minutes, inClass };
 }
 
 /**
@@ -77,6 +78,8 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     courses,
     autoSyncMinutes: int(s.autoSyncMinutes, 15, 7 * 24 * 60, d.autoSyncMinutes),
     gatePullOnCompletion: bool('gatePullOnCompletion'),
+    pullCapMinutes: int(s.pullCapMinutes, 15, 2400, d.pullCapMinutes ?? DEFAULT_SETTINGS.pullCapMinutes),
+    showForecast: typeof s.showForecast === 'boolean' ? s.showForecast : (d.showForecast ?? true),
     includeNonSubmittable: bool('includeNonSubmittable'),
   };
 }
@@ -108,6 +111,7 @@ function validateItem(id, raw) {
     pinned: raw.pinned === true,
     dismissed: raw.dismissed === true,
     pulledIn: raw.pulledIn === true,
+    inClass: raw.inClass === true,
   };
 }
 

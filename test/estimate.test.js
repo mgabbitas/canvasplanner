@@ -29,14 +29,14 @@ test('resolution order: manual > course rule > stated x scale > general rule > t
     estimateRules: [rule({ keyword: 'report', size: 'L' }), rule({ courseId: '7', keyword: 'report', minutes: 25 })],
   };
   const report = (over) => item({ title: 'Week 2 Report', courseId: '7', ...over });
-  assert.deepEqual(estimate(report({ minutesOverride: 5, descriptionText: stated }), settings), { minutes: 5, source: 'manual' });
+  assert.deepEqual(estimate(report({ minutesOverride: 5, descriptionText: stated }), settings), { minutes: 5, source: 'manual', inClass: false });
   // A course rule beats the instructor's stated time, even though it's lower in the list.
-  assert.deepEqual(estimate(report({ descriptionText: stated }), settings), { minutes: 25, source: 'rule' });
+  assert.deepEqual(estimate(report({ descriptionText: stated }), settings), { minutes: 25, source: 'rule', inClass: false });
   // In another course only the general rule matches, and the stated time (x 60%) beats it.
-  assert.deepEqual(estimate(report({ courseId: '8', descriptionText: stated }), settings), { minutes: 90, source: 'stated' });
-  assert.deepEqual(estimate(report({ courseId: '8' }), settings), { minutes: 120, source: 'rule' });
-  assert.deepEqual(estimate(item({ type: 'external_tool' }), settings), { minutes: 5, source: 'type' });
-  assert.deepEqual(estimate(item({ type: 'weird' }), settings), { minutes: 45, source: 'default' });
+  assert.deepEqual(estimate(report({ courseId: '8', descriptionText: stated }), settings), { minutes: 90, source: 'stated', inClass: false });
+  assert.deepEqual(estimate(report({ courseId: '8' }), settings), { minutes: 120, source: 'rule', inClass: false });
+  assert.deepEqual(estimate(item({ type: 'external_tool' }), settings), { minutes: 5, source: 'type', inClass: false });
+  assert.deepEqual(estimate(item({ type: 'weird' }), settings), { minutes: 45, source: 'default', inClass: false });
 });
 
 test('rules: every condition set must match; first match in list order wins', () => {

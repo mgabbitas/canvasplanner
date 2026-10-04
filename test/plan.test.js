@@ -315,3 +315,69 @@ test('dismissed items are listed so they can be restored', () => {
   const p = run([gone, mk({ dismissed: true, canvasDone: true })]);
   assert.deepEqual(p.dismissed.map((e) => e.id), [gone.id]);
 });
+
+test('in-class activity: on its class day, 0 minutes, past ones drop off', () => {
+  const teach = mk({ due: '2026-09-30 09:00', inClass: true, minutesOverride: null });
+  const pastTeach = mk({ due: '2026-09-21 09:00', inClass: true, minutesOverride: null });
+  const homework = many(6, { due: '2026-10-03', minutesOverride: 20 });
+  const p = run([teach, pastTeach, ...homework]);
+  // Placed on the class day itself (not the day before, unlike homework due at 9 AM).
+  assert.equal(dateOf(p, teach.id), '2026-09-30');
+  const wed = p.days.find((d) => d.date === '2026-09-30');
+  assert.equal(wed.items.find((e) => e.id === teach.id).minutes, 0);
+  assert.equal(p.days[0].load, 120); // homework still fills Monday as before
+  assert.equal(dateOf(p, pastTeach.id), null);
+  assert.equal(p.overdue.length, 0);
+  assert.equal(p.forecast.find((f) => f.date === '2026-09-30').count, 0);
+});
+
+test('in-class by rule, and an item override beats the rule', () => {
+  const settings = { estimateRules: [{ courseId: null, type: null, keyword: 'teach', size: null, minutes: null, inClass: true }] };
+  const teach = mk({ title: 'W03 Day 1 Teach', due: '2026-09-30', minutesOverride: null });
+  const p = run([teach], { settings });
+  assert.equal(p.days.find((d) => d.date === '2026-09-30').items[0].inClass, true);
+  const overridden = run([{ ...teach, minutesOverride: 30 }], { settings });
+  assert.equal(dateOf(overridden, teach.id), '2026-09-28'); // planned as homework again
+});
+
+test('pull gate: pulled items do not re-close it; cap limits unfinished pulled work', async () => {
+  const { canPullItem } = await import('../src/planner/plan.js');
+  const doneThisWeek = mk({ canvasDone: true });
+  const next = [
+    mk({ due: '2026-10-05', minutesOverride: 60 }),
+    mk({ due: '2026-10-05', minutesOverride: 90 }),
+    mk({ due: '2026-10-06', minutesOverride: 45 }),
+    mk({ due: '2026-10-07', minutesOverride: 240 }),
+  ];
+  const settings = { pullCapMinutes: 180 };
+  // Nothing pulled yet: unlocked, full 3h available, Monday's 2h 30m fits.
+  const a = run([doneThisWeek, ...next], { settings });
+  assert.equal(a.pull.enabled, true);
+  assert.equal(a.pull.remainingMinutes, 180);
+  assert.equal(a.pull.nextDay.fits, true);
+  assert.equal(canPullItem(a.pull, 240), true); // a single big item when nothing is pulled
+
+  // Pulled Monday's 2h 30m: still unlocked (pulled work doesn't close the gate), 30m left.
+  const pulled = [doneThisWeek, { ...next[0], pulledIn: true }, { ...next[1], pulledIn: true }, next[2], next[3]];
+  const b = run(pulled, { settings });
+  assert.equal(b.pull.enabled, true);
+  assert.equal(b.pull.pulledMinutes, 150);
+  assert.equal(b.pull.remainingMinutes, 30);
+  assert.equal(canPullItem(b.pull, 45), false); // would pass the cap
+  assert.equal(b.pull.nextDay.fits, false);
+  assert.deepEqual(b.pull.bySize.L.map((e) => e.id), []); // 45m doesn't fit in 30m left
+
+  // Finishing a pulled item frees room again.
+  const c = run([doneThisWeek, { ...next[0], pulledIn: true, manualDone: true }, { ...next[1], pulledIn: true }, next[2], next[3]], { settings });
+  assert.equal(c.pull.remainingMinutes, 90);
+  assert.equal(canPullItem(c.pull, 45), true);
+
+  // At the cap: blocked, reason "cap". Unfinished own work: blocked, reason "week".
+  const full = run([doneThisWeek, { ...next[3], pulledIn: true }], { settings });
+  assert.equal(full.pull.enabled, false);
+  assert.equal(full.pull.blockedReason, 'cap');
+  const busy = run([mk(), ...next], { settings });
+  assert.equal(busy.pull.blockedReason, 'week');
+  // In-class items this week don't keep the gate closed.
+  assert.equal(run([mk({ inClass: true, due: '2026-10-02', minutesOverride: null }), ...next], { settings }).pull.enabled, true);
+});

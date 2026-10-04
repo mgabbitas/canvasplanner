@@ -18,7 +18,7 @@ function isActive(item, settings) {
 }
 
 function toEntry(item, settings, today) {
-  const { minutes, source } = estimate(item, settings);
+  const { minutes, source, inClass } = estimate(item, settings);
   const unlockDate = item.unlockAt ? toLocalDate(item.unlockAt) : null;
   const dueDay = item.dueAt ? toLocalDate(item.dueAt) : null; // calendar day it's due
   // Last day to work on it. Due before 5 PM means the day before, except that
@@ -30,6 +30,7 @@ function toEntry(item, settings, today) {
     item,
     minutes,
     source,
+    inClass,
     dueDay,
     lastDay,
     unlockDate,
@@ -87,11 +88,16 @@ export function plan({ items, settings, weekState = {}, now }) {
     onDay.get(date).push(e);
   };
 
-  const overdue = scoped.filter((e) => e.dueDay < today);
-  const pinned = scoped.filter((e) => e.dueDay >= today && e.pinned);
-  const rest = scoped.filter((e) => e.dueDay >= today && !e.pinned).sort(byDueThenSizeDesc);
+  // In-class activities take no homework time: they sit on their class day at 0 min,
+  // and past ones simply drop off (they aren't homework to catch up on).
+  const work = scoped.filter((e) => !e.inClass);
+  for (const e of scoped) if (e.inClass && e.dueDay >= today) place(e, e.dueDay);
 
-  for (const e of scoped) e.behind = behind;
+  const overdue = work.filter((e) => e.dueDay < today);
+  const pinned = work.filter((e) => e.dueDay >= today && e.pinned);
+  const rest = work.filter((e) => e.dueDay >= today && !e.pinned).sort(byDueThenSizeDesc);
+
+  for (const e of work) e.behind = behind;
   for (const e of overdue) {
     e.overdue = true;
     place(e, today);
@@ -130,30 +136,52 @@ export function plan({ items, settings, weekState = {}, now }) {
   });
 
   // --- pull next week ---
+  // Gate: this week's own work must be done first (if the setting is on; pulled items
+  // don't count), then pulling continues until unfinished pulled work reaches the cap.
+  const sum = (list) => list.reduce((s, e) => s + e.minutes, 0);
+  const pulledMinutes = sum(work.filter((e) => e.pulledIn));
+  const remaining = Math.max(0, (settings.pullCapMinutes ?? Infinity) - pulledMinutes);
+  const weekDone = work.every((e) => e.pulledIn);
+  const unlocked = !settings.gatePullOnCompletion || weekDone;
+  // With nothing pulled yet, one item may exceed the cap so a big item is never stuck.
+  const fitsOne = (minutes) => minutes <= remaining || pulledMinutes === 0;
+
   const candidates = entries
-    .filter((e) => e.dueDay && e.dueDay > week.end && !e.pulledIn)
+    .filter((e) => e.dueDay && e.dueDay > week.end && !e.pulledIn && !e.inClass)
     .sort(byDueThenSizeAsc);
   const nextDue = candidates[0]?.dueDay ?? null;
+  const nextDayEntries = candidates.filter((e) => e.dueDay === nextDue);
   const bySize = {};
   for (const [size, budget] of Object.entries(settings.sizeMinutes)) {
+    const limit = Math.min(budget, remaining);
     const picked = [];
     let total = 0;
     for (const e of candidates) {
-      if (picked.length > 0 && total + e.minutes > budget) break;
+      const ok = picked.length === 0 ? fitsOne(e.minutes) : total + e.minutes <= limit;
+      if (!ok) break;
       picked.push(e);
       total += e.minutes;
     }
     bySize[size] = picked;
   }
   const pull = {
-    enabled: !settings.gatePullOnCompletion || scoped.length === 0,
-    nextDay: { date: nextDue, entries: candidates.filter((e) => e.dueDay === nextDue) },
+    enabled: unlocked && remaining > 0,
+    blockedReason: !unlocked ? 'week' : remaining <= 0 ? 'cap' : null,
+    pulledMinutes,
+    capMinutes: settings.pullCapMinutes ?? null,
+    remainingMinutes: remaining,
+    nextDay: {
+      date: nextDue,
+      entries: nextDayEntries,
+      fits: nextDayEntries.length > 0
+        && (sum(nextDayEntries) <= remaining || (pulledMinutes === 0 && nextDayEntries.length === 1)),
+    },
     bySize,
   };
 
   // --- forecast: what's *due* each day, independent of the plan ---
   const forecast = dateRange(today, addDays(today, FORECAST_DAYS - 1)).map((date) => {
-    const due = entries.filter((e) => e.dueDay === date);
+    const due = entries.filter((e) => e.dueDay === date && !e.inClass);
     const minutes = due.reduce((sum, e) => sum + e.minutes, 0);
     return { date, count: due.length, minutes, over: minutes > capacity(date) };
   });
@@ -169,7 +197,6 @@ export function plan({ items, settings, weekState = {}, now }) {
       && (inWeek(toLocalDate(i.dueAt)) || i.pulledIn))
     .map((i) => ({ ...toEntry(i, settings, today), canUncheck: !i.canvasDone }));
 
-  const sum = (list) => list.reduce((s, e) => s + e.minutes, 0);
   return {
     today,
     week: {
@@ -204,4 +231,9 @@ export function planNextWeek({ items, settings, weekState = {}, now }) {
   const list = (Array.isArray(items) ? items : Object.values(items ?? {}))
     .filter((i) => !i.pulledIn && !(i.dueAt && toLocalDate(i.dueAt) <= thisWeek.end));
   return plan({ items: list, settings, weekState, now: atNoon(start) });
+}
+
+/** Can a single item of this many minutes be pulled right now? */
+export function canPullItem(pull, minutes) {
+  return pull.enabled && (minutes <= pull.remainingMinutes || pull.pulledMinutes === 0);
 }

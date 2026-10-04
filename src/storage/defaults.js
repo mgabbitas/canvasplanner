@@ -1,7 +1,7 @@
 // Single source of default settings. Placeholder values (SPEC section 8).
 // Weekday indexes follow Date#getDay: 0 = Sunday ... 6 = Saturday.
 
-const rules = (size, words) => words.map((keyword) => ({ courseId: null, type: null, keyword, size, minutes: null }));
+const rules = (size, words) => words.map((keyword) => ({ courseId: null, type: null, keyword, size, minutes: null, inClass: false }));
 
 export const DEFAULT_SETTINGS = Object.freeze({
   weekStartDay: 1,
@@ -21,6 +21,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   courses: {}, // courseId -> { include, displayName }
   autoSyncMinutes: 60,
   gatePullOnCompletion: true,
+  pullCapMinutes: 180, // most unfinished pulled-in work allowed in this week
+  showForecast: true,
   includeNonSubmittable: true,
 });
 
@@ -33,4 +35,5 @@ export const USER_FIELD_DEFAULTS = Object.freeze({
   pinned: false,
   dismissed: false,
   pulledIn: false,
+  inClass: false, // in-class activity: no homework time
 });
