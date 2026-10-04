@@ -50,7 +50,9 @@ file and SPEC.md disagree, stop and ask me.
     src/planner/   pure logic: dates, estimates, scheduling
     src/sync/      Canvas fetch + normalize
     src/storage/   schema, defaults, migrations, merge
-    src/ui/        new-tab planner page + settings view
+    src/ui/        new-tab planner page, stats and settings views
+    src/background.js        opens the planner / syncs when you visit Canvas
+    src/content/   content script on Canvas pages (signals a visit only)
     test/          tests
     test/fixtures/ real Canvas API JSON (private repo only)
 

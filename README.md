@@ -40,7 +40,16 @@ the same Saturday. Canvas Planner does, and spreads them out before that happens
 - **Banners** for overdue work, "won't fit by Wednesday" (with **Add a day**), and
   items at risk of missing their due date.
 - **Done tracking.** Items submitted in Canvas are done automatically. You can also
-  check items off yourself and uncheck them later.
+  check items off yourself; a Gmail-style message lets you **Undo** for a few seconds.
+- **Time tracking.** After checking an item off, choose **Log time** to record how long
+  it took and how hard it was (1-5). Items Canvas marked done can be logged from the
+  Done list.
+- **Stats.** How long you actually spend per class, per assignment type and per
+  weekday, how your real time compares with the estimates, and **suggested estimate
+  rules** from your averages that you can apply with one click.
+- **Opens when you visit Canvas.** The first Canvas visit in a browser session opens
+  the planner and syncs; later visits sync quietly when data is stale (can be turned
+  off).
 - **Time estimates you control.** Each item's estimate comes from, in order:
   1. minutes you pick on the item (a dropdown in 15-minute steps),
   2. your rules that name a class (a rule can also mark items as in-class),
@@ -53,7 +62,7 @@ the same Saturday. Canvas Planner does, and spreads them out before that happens
   estimate to see where it came from.
 - **Your time, per day.** Set default minutes for each weekday, block days entirely,
   or click a day in the planner to change just that date (0 = day off).
-- **Settings page.**
+- **Settings**, organized in tabs:
   - Week start and target day.
   - Per-day capacity.
   - Minutes per size and defaults per assignment type.
@@ -78,19 +87,14 @@ the same Saturday. Canvas Planner does, and spreads them out before that happens
 - Light and dark mode follow your system setting.
 
 ### Coming next
-- **Time tracking and stats.** When you check an item off, log how long it took and
-  how hard it was. A stats page shows how long you typically spend per class, per
-  assignment type and per weekday, and suggests estimate rules from your real
-  averages (for example "reports in this class take you about 25 minutes") that you
-  can apply with one click.
 - **Polish:** better error states, a keyboard and accessibility review, and a
   permanent install (signed add-on).
 
 ## How it works
 
-1. **Sync.** The new-tab page calls the Canvas REST API
-   (`/api/v1/courses`, `/api/v1/courses/:id/assignments`) with your browser session,
-   one class at a time, following pagination and backing off if Canvas rate-limits.
+1. **Sync.** The planner page (or, when you visit Canvas, the background script) calls
+   the Canvas REST API (`/api/v1/courses`, `/api/v1/courses/:id/assignments`) with
+   your browser session, one class at a time, following pagination and backing off if Canvas rate-limits.
 2. **Normalize and merge.** Assignments become simple items. Canvas fields are
    refreshed on every sync. Your own data (checks, minutes, dismissals) is never
    overwritten. Items that disappear from Canvas are hidden, not deleted.
@@ -143,7 +147,8 @@ manifest.json
 src/planner/   pure logic: dates, estimates, scheduling
 src/sync/      Canvas fetch + normalize
 src/storage/   schema, defaults, migrations, merge, export/import
-src/ui/        new-tab planner page + settings view
+src/ui/        new-tab planner page, stats and settings views
+src/background.js, src/content/   Canvas-visit detection (no page reading)
 test/          tests
 test/fixtures/ real Canvas API data (not committed)
 ```

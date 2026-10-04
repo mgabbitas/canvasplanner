@@ -167,6 +167,10 @@ independent of the plan. Highlight days over that weekday's capacity.
   change), pin toggle. Clicking a title opens the Canvas page in a new tab with
   `rel="noopener"`.
 - Forecast strip, Pull next week menu, collapsible Done section.
+- Checking an item off shows a toast (about 10 s, paused while hovered or focused)
+  with Undo and Log time. Undo restores the item exactly. (Decided 2026-10-04.)
+- Views: This week, Next week, Stats, Settings (tabs: Schedule, Estimates, Classes,
+  Sync & behavior, Data), addressed by URL hash.
 - Respects `prefers-color-scheme`. Keyboard-reachable controls.
 - Auto-sync when the page opens if data is older than the `autoSyncMinutes` setting.
 
@@ -206,6 +210,12 @@ clamp every value, and fall back to the last valid setting on bad input.
   runs as an event page, host permissions are granted at install).
 - New tab override (`chrome_url_overrides.newtab`) hosts the planner page.
 - Permissions per CLAUDE.md. The Canvas host is hardcoded in the manifest.
+- Canvas visit (decided 2026-10-04): a content script on Canvas pages (not login
+  pages) only messages the background script; it reads nothing from the page. The
+  first visit per browser session opens the planner with `?sync=1` (setting
+  `openOnCanvasVisit`, default on); later visits sync in the background when data is
+  stale. No extra permissions: the host permission covers the content script and
+  `tabs.create` needs none.
 - Sync entry point: background script, `fetch` with `credentials: 'include'`. Confirmed
   in M0 (2026-09-29): 200 JSON, all 9 courses, no content script needed.
 
