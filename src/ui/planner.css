@@ -126,3 +126,24 @@ ul.courses input[type=text] { flex: 1; max-width: 360px; }
 .check small { flex-basis: 100%; padding-left: 24px; }
 button.danger { color: var(--bad-text); border-color: var(--bad-text); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* --- M4: tabs, pins, pull bar, forecast --- */
+nav.tabs { flex-basis: 100%; display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+nav.tabs .tab { padding: 6px 14px; border: 1px solid transparent; border-bottom: none; border-radius: 8px 8px 0 0; color: var(--muted); text-decoration: none; margin-bottom: -1px; }
+nav.tabs .tab.active { color: var(--text); background: var(--card); border-color: var(--border); font-weight: 600; }
+button.pin { padding: 0 6px; border-color: transparent; background: transparent; filter: grayscale(1); opacity: 0.45; }
+button.pin.on { filter: none; opacity: 1; border-color: var(--border); }
+button.pin:hover { opacity: 1; }
+.pullbar h2, .forecast h2 { font-size: 15px; margin: 0 0 8px; }
+.pullbar .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pullbar .or { color: var(--muted); font-size: 13px; }
+.pullbar select { font: inherit; padding: 3px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); }
+.pullbar .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+.pullbar .warn-text { margin: 8px 0 0; }
+ol.fc { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 4px; }
+ol.fc li { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: var(--muted); position: relative; }
+ol.fc li.today .fc-date { color: var(--text); font-weight: 700; }
+.fc-bar { width: 100%; height: 40px; display: flex; align-items: flex-end; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.fc-bar > div { width: 100%; background: var(--bar); }
+ol.fc li.over .fc-bar > div { background: var(--bad-text); }
+.fc-n { min-height: 1.2em; font-weight: 600; color: var(--text); }

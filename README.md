@@ -60,16 +60,23 @@ the same Saturday. Canvas Planner does, and spreads them out before that happens
   - Estimate rules.
   - Include or rename classes.
   - Auto-sync interval.
+- **Next week.** Switch to a projected plan for next week, built as if this week's
+  work were done, with its own target day and per-date minutes. Pull work into this
+  week one item at a time, a whole day's worth, or by amount of time (earliest due
+  first). Pulled items can be sent back. By default, pulling unlocks once this week's
+  work is done (a setting).
+- **Pins.** Pin an item to keep it on its due date instead of letting the planner move
+  it earlier.
+- **14-day forecast strip** showing how many items and minutes are *due* each day,
+  with days over your available time highlighted.
+- **Dismiss and restore** overdue items you don't plan to do.
 - **Export / import** of your settings and per-item changes as a JSON file (no Canvas
   content in it), plus reset and clear-all.
 - Light and dark mode follow your system setting.
 
 ### Coming next
-- **Next week:** view next week's projected plan and pull work into this week (by
-  day's worth, by amount of time, or item by item).
-- **Pins** to keep an item on its due date, and a **14-day forecast strip** showing
-  how much is due each day.
-- **Polish:** better error states, keyboard access review, and a permanent install.
+- **Polish:** better error states, a keyboard and accessibility review, and a
+  permanent install (signed add-on).
 
 ### Later
 - **Time tracking.** When you check an item off, log how long it took and how hard it
