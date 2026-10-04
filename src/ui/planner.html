@@ -8,10 +8,19 @@
   <script type="module" src="planner.js"></script>
 </head>
 <body>
-  <header id="header"></header>
-  <div id="banners" role="status" aria-live="polite"></div>
-  <main id="days"></main>
-  <section id="extras"></section>
+  <div class="app" id="app">
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside>
+    <div class="scrim" id="scrim" hidden></div>
+    <div class="content" id="content">
+      <div class="main">
+        <header id="header"></header>
+        <div id="banners" role="status" aria-live="polite"></div>
+        <main id="days"></main>
+        <section id="extras"></section>
+      </div>
+      <aside class="rail" id="rail" aria-label="Overview"></aside>
+    </div>
+  </div>
   <div id="toasts" aria-live="polite"></div>
 </body>
 </html>

@@ -11,6 +11,8 @@ import { el, select, dayLabel, dueLabel, minutesLabel, readInt } from './dom.js'
 import { renderSettings, resetSettingsDraft } from './settings.js';
 import { renderStats } from './statsview.js';
 import { showToast, logForm } from './toast.js';
+import { icon } from './icons.js';
+import { courseColor, applyTheme } from './theme.js';
 
 let state = null;
 let syncing = false;
@@ -19,6 +21,7 @@ let editingDay = null; // date whose capacity is being edited
 let pullSize = 'M'; // amount picked in the "pull about …" control
 let thisWeekPlan = null; // latest plan for this week (pull gate, pull candidates)
 let selectedDay = null; // day shown in the Day layout (null = first day, i.e. today)
+let navOpen = false; // sidebar open on narrow screens
 
 function view() {
   const h = location.hash;
@@ -230,12 +233,15 @@ function itemRow(entry, kind = 'plan', { upNext = false } = {}) {
     ? minutesControl(entry)
     : el('span', { className: 'chip' }, minutesLabel(entry.minutes)));
 
-  return el('li', { className: `item${done ? ' done' : ''}${upNext ? ' up-next' : ''}` },
+  return el('li', {
+    className: `item${done ? ' done' : ''}${upNext ? ' up-next' : ''}`,
+    style: `--course:${courseColor(item.courseId, state.settings, state.courses)}`,
+  },
     checkbox,
     title,
     el('div', { className: 'right' }, actions),
     el('div', { className: 'sub' },
-      el('span', {}, courseName(item.courseId)),
+      el('span', { className: 'course' }, el('span', { className: 'dot', 'aria-hidden': 'true' }), courseName(item.courseId)),
       item.dueAt ? el('span', {}, `due ${dueLabel(item.dueAt)}`) : null,
       ...chips,
     ),
@@ -244,7 +250,21 @@ function itemRow(entry, kind = 'plan', { upNext = false } = {}) {
 
 // --- header, banners, pull bar, forecast ---------------------------------------------
 
-function renderHeader(p) {
+const NAV = [
+  ['', 'this', 'This week', 'week'],
+  ['next', 'next', 'Next week', 'next'],
+  ['stats', 'stats', 'Stats', 'stats'],
+  ['settings', 'settings', 'Settings', 'settings'],
+];
+
+function setNavOpen(open) {
+  navOpen = open;
+  document.getElementById('app').classList.toggle('nav-open', open);
+  document.getElementById('scrim').hidden = !open;
+  document.querySelector('[data-key="menu"]')?.setAttribute('aria-expanded', String(open));
+}
+
+function renderSidebar() {
   const v = view();
   const meta = state.meta;
   const status = syncing
@@ -253,48 +273,78 @@ function renderHeader(p) {
       ? el('span', { className: 'error' }, syncMessage || meta.lastError)
       : el('span', {}, meta.lastSyncAt ? `Synced ${timeAgo(meta.lastSyncAt)}` : 'Never synced');
 
-  const tab = (hash, label, active) => el('a', {
-    href: hash || '#', className: `tab${active ? ' active' : ''}`, 'aria-current': active ? 'page' : null,
-    onclick: (e) => { e.preventDefault(); location.hash = hash; },
-  }, label);
+  const courses = Object.keys(state.courses)
+    .filter((id) => state.settings.courses[id]?.include !== false)
+    .sort((a, b) => courseName(a).localeCompare(courseName(b)));
 
+  return [
+    el('div', { className: 'brand' },
+      el('span', { className: 'logo', 'aria-hidden': 'true' }, 'C'),
+      el('span', {}, 'Canvas Planner'),
+      el('button', { className: 'icon-btn close-nav', 'aria-label': 'Close menu', onclick: () => setNavOpen(false) }, icon('close')),
+    ),
+    el('nav', { className: 'nav', 'aria-label': 'Views' }, NAV.map(([hash, key, label, ic]) => el('a', {
+      href: `#${hash}`, className: `nav-link${v === key ? ' active' : ''}`, 'aria-current': v === key ? 'page' : null,
+      'data-key': `nav-${key}`,
+      onclick: (e) => { e.preventDefault(); setNavOpen(false); location.hash = hash; },
+    }, icon(ic), el('span', {}, label)))),
+    courses.length ? el('div', { className: 'side-section' },
+      el('h2', {}, 'Classes'),
+      el('ul', { className: 'legend' }, courses.map((id) => el('li', {},
+        el('span', { className: 'dot', style: `--course:${courseColor(id, state.settings, state.courses)}`, 'aria-hidden': 'true' }),
+        el('span', { className: 'legend-name' }, courseName(id)))))) : null,
+    el('div', { className: 'side-sync' },
+      el('div', { className: 'sync-status' }, status),
+      el('button', { onclick: sync, disabled: syncing, 'data-key': 'sync' }, icon('sync'), el('span', {}, syncing ? 'Syncing…' : 'Sync now')),
+    ),
+  ];
+}
+
+function renderHeader(p) {
+  const v = view();
   const week = p.week;
   const weekView = v === 'this' || v === 'next';
+  const title = v === 'settings' ? 'Settings' : v === 'stats' ? 'Your stats'
+    : `Week of ${dayLabel(week.start, { month: 'long', day: 'numeric' })}`;
+  const subtitle = !weekView ? null
+    : v === 'next' ? `Projected plan · target ${dayLabel(week.cutoff, { weekday: 'long' })}`
+      : `Finish by ${dayLabel(week.cutoff, { weekday: 'long', month: 'short', day: 'numeric' })}`;
+
+  const menuBtn = el('button', {
+    className: 'icon-btn menu-btn', 'aria-label': 'Menu', 'aria-expanded': String(navOpen), 'data-key': 'menu',
+    onclick: () => setNavOpen(!navOpen),
+  }, icon('menu'));
+
+  const seg = (label, options, value, onPick) => el('div', { className: 'seg', role: 'group', 'aria-label': label },
+    options.map(([key, text]) => el('button', {
+      'aria-pressed': String(value === key), className: value === key ? 'on' : '', 'data-key': `${label}-${key}`,
+      onclick: () => { if (value !== key) onPick(key); },
+    }, text)));
+
   return [
-    el('h1', {}, v === 'settings' ? 'Settings' : v === 'stats' ? 'Your stats'
-      : `Week of ${dayLabel(week.start, { month: 'short', day: 'numeric' })}${v === 'next' ? ' · projected' : ''}`),
-    !weekView ? null : el('div', { className: 'target' },
-      el('span', {}, `Target: ${dayLabel(week.cutoff, { weekday: 'long' })}`),
-      el('button', {
-        disabled: !week.canRemoveDay, 'aria-label': 'Remove a day', 'data-key': 'remove-day',
-        onclick: () => changeExtraDays(week.start, -1),
-      }, '−'),
-      el('button', {
-        disabled: !week.canAddDay, 'aria-label': 'Add a day', 'data-key': 'add-day',
-        onclick: () => changeExtraDays(week.start, 1),
-      }, '+'),
+    el('div', { className: 'title-row' },
+      menuBtn,
+      el('div', {}, el('h1', {}, title), subtitle ? el('p', { className: 'subtitle' }, subtitle) : null),
     ),
-    !weekView ? null : el('div', { className: 'seg', role: 'group', 'aria-label': 'Layout' },
-      ['day', 'week'].map((layout) => el('button', {
-        'aria-pressed': String(state.settings.layout === layout), 'data-key': `layout-${layout}`,
-        className: state.settings.layout === layout ? 'on' : '',
-        onclick: () => {
-          if (state.settings.layout === layout) return;
-          selectedDay = null;
-          saveState({ settings: { ...state.settings, layout } });
-        },
-      }, layout === 'day' ? 'Day' : 'Week'))),
-    el('div', { className: 'sync' },
-      status,
-      el('button', { onclick: sync, disabled: syncing }, 'Sync now'),
-      v === 'settings'
-        ? el('button', { onclick: () => { location.hash = ''; } }, 'Back to plan')
-        : el('button', { onclick: () => { location.hash = 'settings'; }, 'aria-label': 'Settings', title: 'Settings' }, '⚙'),
-    ),
-    v === 'settings' ? null : el('nav', { className: 'tabs', 'aria-label': 'Views' },
-      tab('', 'This week', v === 'this'),
-      tab('next', 'Next week', v === 'next'),
-      tab('stats', 'Stats', v === 'stats'),
+    !weekView ? null : el('div', { className: 'toolbar' },
+      seg('Layout', [['day', 'Day'], ['week', 'Week']], state.settings.layout, (layout) => {
+        selectedDay = null;
+        saveState({ settings: { ...state.settings, layout } });
+      }),
+      seg('Order', [['plan', 'Planned'], ['class', 'By class']], state.settings.daySort,
+        (daySort) => saveState({ settings: { ...state.settings, daySort } })),
+      el('div', { className: 'target' },
+        el('span', { className: 'muted' }, 'Target'),
+        el('button', {
+          disabled: !week.canRemoveDay, 'aria-label': 'Remove a day', 'data-key': 'remove-day',
+          title: 'Target one day earlier', onclick: () => changeExtraDays(week.start, -1),
+        }, '−'),
+        el('strong', {}, dayLabel(week.cutoff, { weekday: 'short' })),
+        el('button', {
+          disabled: !week.canAddDay, 'aria-label': 'Add a day', 'data-key': 'add-day',
+          title: 'Give yourself one more day', onclick: () => changeExtraDays(week.start, 1),
+        }, '+'),
+      ),
     ),
   ];
 }
@@ -463,6 +513,12 @@ function renderDayLayout(p, kind) {
 function renderDay(day, today, kind, { upNext = false, role = null } = {}) {
   // "Up next": the first homework item (not an in-class activity) on today.
   const nextId = upNext ? day.items.find((e) => !e.inClass)?.id : null;
+  // "By class" groups a day's items by class; within a class, planned order is kept.
+  const items = state.settings.daySort === 'class'
+    ? day.items.map((e, i) => [e, i])
+      .sort(([a, i], [b, j]) => courseName(a.item.courseId).localeCompare(courseName(b.item.courseId)) || i - j)
+      .map(([e]) => e)
+    : day.items;
   const pct = day.capacity ? Math.min(100, (day.load / day.capacity) * 100) : 0;
   const heading = dayLabel(day.date) + (day.date === today && kind === 'plan' ? ' · Today' : '');
   return el('section', { className: `day${day.over ? ' over' : ''}${day.blocked ? ' blocked' : ''}`, role },
@@ -473,8 +529,8 @@ function renderDay(day, today, kind, { upNext = false, role = null } = {}) {
         ...capacityControl(day)),
     ),
     day.blocked ? null : el('div', { className: 'bar' }, el('div', { style: `width:${pct}%` })),
-    day.items.length
-      ? el('ul', { className: 'items' }, day.items.map((e) => itemRow(e, kind, { upNext: e.id === nextId })))
+    items.length
+      ? el('ul', { className: 'items' }, items.map((e) => itemRow(e, kind, { upNext: e.id === nextId })))
       : el('p', { className: 'empty' }, day.blocked ? 'No work planned on this day.' : 'Nothing planned.'),
   );
 }
@@ -516,39 +572,46 @@ function render() {
   const p = v === 'next' ? planNextWeek(args) : thisWeekPlan;
 
   const $ = (id) => document.getElementById(id);
+  applyTheme(state.settings);
+  $('sidebar').replaceChildren(...renderSidebar().filter(Boolean));
   $('header').replaceChildren(...renderHeader(p).filter(Boolean));
+  const fill = (id, nodes) => $(id).replaceChildren(...nodes.filter(Boolean));
+  const days = (kind) => (state.settings.layout === 'day'
+    ? renderDayLayout(p, kind)
+    : p.days.map((d) => renderDay(d, p.today, kind)));
+  let rail = [];
   if (v === 'settings') {
-    $('banners').replaceChildren();
-    $('days').replaceChildren(...renderSettings(settingsContext()));
-    $('extras').replaceChildren();
+    fill('banners', []);
+    fill('days', renderSettings(settingsContext()));
+    fill('extras', []);
   } else if (v === 'stats') {
-    $('banners').replaceChildren();
-    $('days').replaceChildren(...renderStats({ state, saveState, courseName, finishDay, openLog: (i) => openLog(i) }));
-    $('extras').replaceChildren();
+    fill('banners', []);
+    fill('days', renderStats({ state, saveState, courseName, finishDay, openLog: (i) => openLog(i) }));
+    fill('extras', []);
   } else if (v === 'next') {
-    $('banners').replaceChildren(renderPullBar(), ...renderBanners(p));
-    $('days').replaceChildren(...(state.settings.layout === 'day'
-      ? renderDayLayout(p, 'next')
-      : p.days.map((d) => renderDay(d, p.today, 'next'))));
-    $('extras').replaceChildren(...[
-      panel("Won't fit by next week's target day", p.overflow, 'next', true),
-    ].filter(Boolean));
+    fill('banners', [renderPullBar(), ...renderBanners(p)]);
+    fill('days', days('next'));
+    fill('extras', [panel("Won't fit by next week's target day", p.overflow, 'next', true)]);
+    rail = [renderForecast(thisWeekPlan)];
   } else {
-    $('banners').replaceChildren(...renderBanners(p), renderForecast(p));
-    $('days').replaceChildren(...(state.settings.layout === 'day'
-      ? renderDayLayout(p, 'plan')
-      : p.days.map((d) => renderDay(d, p.today, 'plan'))));
-    $('extras').replaceChildren(...[
+    fill('banners', renderBanners(p));
+    fill('days', days('plan'));
+    fill('extras', [
       panel("Won't fit by the target day", p.overflow, 'plan', true),
       panel('At risk', p.atRisk, 'plan', true),
-      panel('No due date', p.noDueDate, 'plan'),
       panel('Done this week', p.done, 'done', false, (() => {
         const n = p.done.filter((e) => !e.item.log && !e.inClass).length;
         return n ? `${n} need${n === 1 ? 's' : ''} a time` : '';
       })()),
+    ]);
+    rail = [
+      renderForecast(p),
+      panel('No due date', p.noDueDate, 'plan'),
       panel('Dismissed', p.dismissed, 'dismissed'),
-    ].filter(Boolean));
+    ];
   }
+  fill('rail', rail);
+  $('content').classList.toggle('no-rail', !rail.filter(Boolean).length);
   if (focusKey) document.querySelector(`[data-key="${CSS.escape(focusKey)}"]`)?.focus();
 }
 
@@ -563,6 +626,9 @@ async function init() {
   const last = state.meta.lastSyncAt ? Date.parse(state.meta.lastSyncAt) : 0;
   if (forced || Date.now() - last > state.settings.autoSyncMinutes * 60_000) await sync();
 }
+
+document.getElementById('scrim').addEventListener('click', () => setNavOpen(false));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && navOpen) setNavOpen(false); });
 
 window.addEventListener('hashchange', () => {
   if (view() !== 'settings') resetSettingsDraft(); // keep unsaved rules across settings tabs

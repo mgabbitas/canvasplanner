@@ -172,8 +172,14 @@ independent of the plan. Highlight days over that weekday's capacity.
 - Layout (decided 2026-10-04): Week (all days) or Day (a tab per day with its load bar
   and minutes, arrow keys switch days, opens on today, first homework item today marked
   "up next"). The choice is remembered (`settings.layout`).
+- App shell (decided 2026-10-04): left sidebar with navigation, a class color key and
+  sync status (collapses behind a menu button under 820px); main column with header
+  and toolbar (Day/Week, order Planned/By class, target day); right column on wide
+  screens with the forecast, No due date and Dismissed. Theme (system/light/dark),
+  six accents, and per-class colors (auto by course id, or picked); color is never the
+  only cue (class name always shown).
 - Views: This week, Next week, Stats, Settings (tabs: Schedule, Estimates, Classes,
-  Sync & behavior, Data), addressed by URL hash.
+  Sync & behavior, Appearance, Data), addressed by URL hash.
 - Respects `prefers-color-scheme`. Keyboard-reachable controls.
 - Auto-sync when the page opens if data is older than the `autoSyncMinutes` setting.
 

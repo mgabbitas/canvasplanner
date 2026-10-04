@@ -85,7 +85,10 @@ the same Saturday. Canvas Planner does, and spreads them out before that happens
 - **Dismiss and restore** overdue items you don't plan to do.
 - **Export / import** of your settings and per-item changes as a JSON file (no Canvas
   content in it), plus reset and clear-all.
-- Light and dark mode follow your system setting.
+- **Looks.** A sidebar for navigation (a ☰ menu on narrow windows) and an overview
+  column on wide screens. System, light or dark theme, six accent colors, and a color
+  per class (shown as a stripe and dot beside the class name). Each day's items can be
+  ordered as planned or grouped by class.
 
 ### Coming next
 - **Polish:** better error states, a keyboard and accessibility review, and a

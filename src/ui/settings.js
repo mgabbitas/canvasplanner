@@ -4,6 +4,7 @@ import { validateSettings, validateRule, TYPES } from '../storage/schema.js';
 import { DEFAULT_SETTINGS, SIZES } from '../storage/defaults.js';
 import { buildExport, applyImport, MAX_IMPORT_BYTES } from '../storage/transfer.js';
 import { el, select, WEEKDAYS, TYPE_LABELS, minutesLabel, readInt } from './dom.js';
+import { ACCENTS, CLASS_COLORS, courseColorKey } from './theme.js';
 
 // Rules being edited, including incomplete ones that aren't saved yet.
 let draftRules = null;
@@ -202,12 +203,14 @@ function coursesSection(ctx) {
   const s = ctx.state.settings;
   const courses = Object.entries(ctx.state.courses).sort((a, b) => a[1].name.localeCompare(b[1].name));
   const setCourse = (id, patch) => {
-    const current = s.courses[id] ?? { include: true, displayName: '' };
+    const current = s.courses[id] ?? { include: true, displayName: '', color: null };
     return updateSettings(ctx, { courses: { ...s.courses, [id]: { ...current, ...patch } } });
   };
-  return section('Classes', 'Uncheck a class to leave it out of planning. Give it a shorter name if you like.',
+  return section('Classes', 'Uncheck a class to leave it out of planning, give it a shorter name, or pick its color.',
     courses.length
       ? el('ul', { className: 'courses' }, courses.map(([id, c]) => el('li', {},
+        swatches(`color-${id}`, `Color for ${c.name}`, Object.keys(CLASS_COLORS),
+          courseColorKey(id, s, ctx.state.courses), (k) => CLASS_COLORS[k], (color) => setCourse(id, { color }), true),
         el('input', {
           type: 'checkbox', checked: s.courses[id]?.include !== false, 'aria-label': `Include ${c.name}`,
           'data-key': `inc-${id}`, onchange: (e) => setCourse(id, { include: e.target.checked }),
@@ -219,6 +222,47 @@ function coursesSection(ctx) {
         }),
       )))
       : el('p', { className: 'hint' }, 'Sync once to list your classes.'),
+  );
+}
+
+/** A row of color swatch radio buttons. */
+function swatches(key, label, keys, value, colorOf, onPick, compact = false) {
+  return el('div', { className: `swatches${compact ? ' compact' : ''}`, role: 'radiogroup', 'aria-label': label },
+    keys.map((k) => el('button', {
+      role: 'radio', 'aria-checked': String(k === value), 'aria-label': k, title: k,
+      className: `swatch${k === value ? ' on' : ''}`, style: `--swatch:${colorOf(k)}`,
+      tabIndex: k === value ? 0 : -1, 'data-key': `${key}-${k}`,
+      onclick: () => onPick(k),
+      onkeydown: (e) => {
+        const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+        if (!step) return;
+        e.preventDefault();
+        onPick(keys[(keys.indexOf(value) + step + keys.length) % keys.length]);
+      },
+    })));
+}
+
+// Accent swatch colors (light-mode values; the page itself uses theme-aware ones).
+const ACCENT_SWATCH = {
+  blue: '#2f6fdb', teal: '#0f766e', purple: '#7c3aed', green: '#15803d', orange: '#c2410c', pink: '#be185d',
+};
+
+function appearanceSection(ctx) {
+  const s = ctx.state.settings;
+  const radios = (key, label, options, value) => el('div', { className: 'seg', role: 'group', 'aria-label': label },
+    options.map(([k, text]) => el('button', {
+      'aria-pressed': String(value === k), className: value === k ? 'on' : '', 'data-key': `${key}-${k}`,
+      onclick: () => updateSettings(ctx, { [key]: k }),
+    }, text)));
+  return section('Appearance', null,
+    field('Theme', radios('theme', 'Theme', [['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], s.theme)),
+    field('Accent color', swatches('accent', 'Accent color', Object.keys(ACCENTS), s.accent,
+      (k) => ACCENT_SWATCH[k], (accent) => updateSettings(ctx, { accent }))),
+    field('Layout', radios('layout', 'Layout', [['day', 'Day'], ['week', 'Week']], s.layout),
+      'Day shows one day at a time with a tab per day. Week shows every day at once.'),
+    field('Order within a day', radios('daySort', 'Order within a day', [['plan', 'Planned'], ['class', 'By class']], s.daySort),
+      'Planned keeps the scheduler\'s order (earliest due first). By class groups each day\'s items by class.'),
+    el('p', { className: 'hint' }, 'Class colors are set in the Classes tab.'),
   );
 }
 
@@ -310,6 +354,7 @@ const TABS = [
   ['schedule', 'Schedule', [scheduleSection]],
   ['estimates', 'Estimates', [rulesSection, sizesSection]],
   ['classes', 'Classes', [coursesSection]],
+  ['appearance', 'Appearance', [appearanceSection]],
   ['behavior', 'Sync & behavior', [behaviorSection]],
   ['data', 'Data', [dataSection]],
 ];
