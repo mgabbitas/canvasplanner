@@ -3,6 +3,10 @@
 import { DEFAULT_SETTINGS, SIZES, USER_FIELD_DEFAULTS } from './defaults.js';
 import { addDays } from '../planner/dates.js';
 
+// Kept in sync with src/ui/theme.js (schema stays free of UI imports).
+const ACCENT_KEYS = ['blue', 'teal', 'purple', 'green', 'orange', 'pink'];
+const CLASS_COLOR_KEYS = ['blue', 'orange', 'green', 'purple', 'red', 'teal', 'pink', 'amber', 'indigo', 'slate'];
+
 export const SCHEMA_VERSION = 3;
 
 export const TYPES = ['quiz', 'discussion', 'upload', 'external_tool', 'other'];
@@ -59,7 +63,11 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
   if (isObj(s.courses)) {
     for (const [id, c] of Object.entries(s.courses)) {
       if (!ID.test(id) || !isObj(c)) continue;
-      courses[id] = { include: c.include !== false, displayName: (str(c.displayName, 100) ?? '').trim() };
+      courses[id] = {
+        include: c.include !== false,
+        displayName: (str(c.displayName, 100) ?? '').trim(),
+        color: CLASS_COLOR_KEYS.includes(c.color) ? c.color : null,
+      };
     }
   }
   const blocked = Array.isArray(s.blockedWeekdays)
@@ -81,6 +89,9 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     pullCapMinutes: int(s.pullCapMinutes, 15, 2400, d.pullCapMinutes ?? DEFAULT_SETTINGS.pullCapMinutes),
     showForecast: typeof s.showForecast === 'boolean' ? s.showForecast : (d.showForecast ?? true),
     layout: ['week', 'day'].includes(s.layout) ? s.layout : (d.layout ?? 'week'),
+    daySort: ['plan', 'class'].includes(s.daySort) ? s.daySort : (d.daySort ?? 'plan'),
+    theme: ['system', 'light', 'dark'].includes(s.theme) ? s.theme : (d.theme ?? 'system'),
+    accent: ACCENT_KEYS.includes(s.accent) ? s.accent : (d.accent ?? 'blue'),
     openOnCanvasVisit: typeof s.openOnCanvasVisit === 'boolean' ? s.openOnCanvasVisit : (d.openOnCanvasVisit ?? true),
     includeNonSubmittable: bool('includeNonSubmittable'),
   };

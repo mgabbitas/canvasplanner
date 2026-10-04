@@ -65,7 +65,7 @@ test('settings are clamped and bad values fall back', () => {
   assert.equal(s.autoSyncMinutes, 15);
   assert.equal(s.statedScale, 10);
   assert.equal(s.gatePullOnCompletion, true);
-  assert.deepEqual(s.courses, { 5: { include: false, displayName: 'Phys' } });
+  assert.deepEqual(s.courses, { 5: { include: false, displayName: 'Phys', color: null } });
   assert.deepEqual(validateSettings({ blockedWeekdays: [0, 1, 2, 3, 4, 5, 6] }).blockedWeekdays, []);
 });
 

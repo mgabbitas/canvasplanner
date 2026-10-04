@@ -18,12 +18,15 @@ export const DEFAULT_SETTINGS = Object.freeze({
     ...rules('S', ['quiz', 'reading']),
   ],
   statedScale: 100, // percent applied to instructor-stated minutes
-  courses: {}, // courseId -> { include, displayName }
+  courses: {}, // courseId -> { include, displayName, color }
   autoSyncMinutes: 60,
   gatePullOnCompletion: true,
   pullCapMinutes: 180, // most unfinished pulled-in work allowed in this week
   showForecast: true,
   layout: 'week', // 'week' or 'day' (one day at a time, with day tabs)
+  daySort: 'plan', // order within a day: 'plan' (as scheduled) or 'class'
+  theme: 'system', // 'system', 'light' or 'dark'
+  accent: 'blue',
   includeNonSubmittable: true,
   openOnCanvasVisit: true, // first Canvas visit each browser session opens the planner
 });
