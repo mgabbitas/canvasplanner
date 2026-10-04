@@ -58,6 +58,9 @@ file and SPEC.md disagree, stop and ask me.
 - Follow the milestones in SPEC.md in order, one at a time. Stop at the end of each with
   tests passing and a short summary.
 - Small commits with clear messages.
+- Keep `README.md` current for other readers: when a change affects Features, Install
+  or Development, update it in the same commit (move features from "Coming next" to
+  "Available now" as they land).
 - Before writing non-trivial logic (especially in `src/planner/`), give me a short
   plain-language explanation of the approach. After each milestone, give a 5 to 10 line
   walkthrough of what changed and why, and call out one or two JS or WebExtension
