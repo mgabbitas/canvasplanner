@@ -10,7 +10,7 @@ export async function runSync() {
   try {
     result = await fetchCanvas({ fetchImpl: (url, opts) => fetch(url, opts), sleep });
   } catch (e) {
-    const error = e instanceof AuthError ? LOGIN_MESSAGE : `Sync failed: ${e.message}`;
+    const error = e instanceof AuthError ? LOGIN_MESSAGE : e.message;
     const { meta } = await loadState();
     await save({ meta: { ...meta, lastError: error } });
     return { ok: false, error };

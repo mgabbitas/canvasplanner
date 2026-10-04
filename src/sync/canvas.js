@@ -28,9 +28,14 @@ export function parseNextLink(header) {
 
 async function fetchWithBackoff(url, { fetchImpl, sleep }) {
   for (let attempt = 0; ; attempt++) {
-    const res = await fetchImpl(url, { credentials: 'include', headers: { Accept: 'application/json' } });
+    let res;
+    try {
+      res = await fetchImpl(url, { credentials: 'include', headers: { Accept: 'application/json' } });
+    } catch {
+      throw new Error("Couldn't reach Canvas. Check your internet connection, then sync again.");
+    }
     if (res.status !== 429) return res;
-    if (attempt >= MAX_RETRIES) throw new Error('Canvas is rate limiting requests; try again later');
+    if (attempt >= MAX_RETRIES) throw new Error('Canvas is busy right now. Try again in a few minutes.');
     const retryAfter = Number(res.headers.get('retry-after'));
     await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter, 60) * 1000 : 2 ** attempt * 1000);
   }
@@ -44,6 +49,7 @@ export async function getAll(path, deps) {
     if (page >= MAX_PAGES) throw new Error('Too many pages from Canvas');
     const res = await fetchWithBackoff(url, deps);
     if (res.status === 401 || res.status === 403) throw new AuthError();
+    if (res.status >= 500) throw new Error(`Canvas is having trouble (HTTP ${res.status}). Try again later.`);
     if (!res.ok) throw new Error(`Canvas returned HTTP ${res.status}`);
     const text = await res.text();
     let data;

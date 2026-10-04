@@ -7,6 +7,7 @@ import { loadState, save } from '../storage/store.js';
 import { pruneWeekState, validateLog } from '../storage/schema.js';
 import { SIZES } from '../storage/defaults.js';
 import { runSync } from '../sync/run.js';
+import { CANVAS, LOGIN_MESSAGE } from '../sync/canvas.js';
 import { el, select, dayLabel, dueLabel, minutesLabel, readInt } from './dom.js';
 import { renderSettings, resetSettingsDraft } from './settings.js';
 import { renderStats } from './statsview.js';
@@ -269,10 +270,11 @@ function setNavOpen(open) {
 function renderSidebar() {
   const v = view();
   const meta = state.meta;
+  const error = syncMessage || meta.lastError;
   const status = syncing
     ? el('span', {}, 'Syncing…')
-    : (syncMessage || meta.lastError)
-      ? el('span', { className: 'error' }, syncMessage || meta.lastError)
+    : error
+      ? el('span', { className: 'error' }, error, error === LOGIN_MESSAGE ? [' ', loginLink()] : null)
       : el('span', {}, meta.lastSyncAt ? `Synced ${timeAgo(meta.lastSyncAt)}` : 'Never synced');
 
   const courses = Object.keys(state.courses)
@@ -307,6 +309,28 @@ const itemCount = (entries) => {
   const n = homework(entries).length;
   return `${n} item${n === 1 ? '' : 's'}`;
 };
+
+const loginLink = () => el('a', { href: `${CANVAS}/`, target: '_blank', rel: 'noopener noreferrer' }, 'Open Canvas');
+
+/** Shown instead of the plan until the first successful sync. */
+function renderWelcome() {
+  const error = syncMessage || state.meta.lastError;
+  return el('section', { className: 'panel welcome' },
+    el('h2', {}, syncing ? 'Getting your assignments from Canvas…' : 'Welcome to Canvas Planner'),
+    syncing
+      ? el('p', { className: 'hint' }, 'This takes a few seconds the first time.')
+      : el('div', {},
+        error ? el('p', { className: 'warn-text' }, error) : null,
+        el('p', {}, error === LOGIN_MESSAGE
+          ? 'Log into Canvas in this browser, then come back and sync.'
+          : 'Sync to bring in your assignments. It uses your existing Canvas login in this browser.'),
+        el('div', { className: 'row' },
+          el('button', { className: 'primary', onclick: sync, 'data-key': 'welcome-sync' }, 'Sync now'),
+          error === LOGIN_MESSAGE ? loginLink() : null,
+        ),
+      ),
+  );
+}
 
 function renderHeader(p) {
   const v = view();
@@ -616,6 +640,10 @@ function render() {
   } else if (v === 'stats') {
     fill('banners', []);
     fill('days', renderStats({ state, saveState, courseName, finishDay, openLog: (i) => openLog(i) }));
+    fill('extras', []);
+  } else if (!state.meta.lastSyncAt && !Object.keys(state.items).length) {
+    fill('banners', []);
+    fill('days', [renderWelcome()]);
     fill('extras', []);
   } else if (v === 'next') {
     fill('banners', renderBanners(p));

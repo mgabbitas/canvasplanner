@@ -244,7 +244,7 @@ function swatches(key, label, keys, value, colorOf, onPick, compact = false) {
 
 // Accent swatch colors (light-mode values; the page itself uses theme-aware ones).
 const ACCENT_SWATCH = {
-  blue: '#2f6fdb', teal: '#0f766e', purple: '#7c3aed', green: '#15803d', orange: '#c2410c', pink: '#be185d',
+  blue: '#2563c9', teal: '#0f766e', purple: '#7c3aed', green: '#166c34', orange: '#b03b0b', pink: '#be185d',
 };
 
 function appearanceSection(ctx) {

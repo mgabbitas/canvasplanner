@@ -8,6 +8,7 @@
   <script type="module" src="planner.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#days">Skip to the plan</a>
   <div class="app" id="app">
     <aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside>
     <div class="scrim" id="scrim" hidden></div>
@@ -15,7 +16,7 @@
       <div class="main">
         <header id="header"></header>
         <div id="banners" role="status" aria-live="polite"></div>
-        <main id="days"></main>
+        <main id="days" tabindex="-1"></main>
         <section id="extras"></section>
       </div>
       <aside class="rail" id="rail" aria-label="Overview"></aside>

@@ -87,7 +87,7 @@ test('one course failing keeps its items untouched and reports the error', async
   assert.equal(next.items['20'].title, 'New title');
   assert.equal(next.items['20'].pinned, true);
   assert.equal(next.items['30'].hidden, true);
-  assert.match(next.meta.lastError, /Physics: Canvas returned HTTP 500/);
+  assert.match(next.meta.lastError, /Physics: Canvas is having trouble \(HTTP 500\)/);
   assert.equal(next.meta.lastSyncAt, '2026-09-30T18:00:00.000Z');
   assert.deepEqual(next.courses, { 1: { name: 'Physics' }, 2: { name: 'Chem' } });
 });
@@ -98,4 +98,11 @@ test('session expiring mid-sync aborts the whole sync', async () => {
     '/api/v1/courses/1/assignments': [json({}, { status: 403 })],
   });
   await assert.rejects(fetchCanvas(fake), AuthError);
+});
+
+test('network failure and rate limiting give plain-language errors', async () => {
+  const offline = { fetchImpl: async () => { throw new TypeError('NetworkError when attempting to fetch resource.'); }, sleep: async () => {} };
+  await assert.rejects(fetchCanvas(offline), /Couldn't reach Canvas/);
+  const busy = fakeCanvas({ '/api/v1/courses?': Array.from({ length: 4 }, () => json({}, { status: 429 })) });
+  await assert.rejects(fetchCanvas(busy), /Canvas is busy right now/);
 });
