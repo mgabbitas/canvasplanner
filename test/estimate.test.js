@@ -6,7 +6,7 @@ import { DEFAULT_SETTINGS as S } from '../src/storage/defaults.js';
 import { normalizeAssignment } from '../src/sync/normalize.js';
 import { fixture, needsFixture } from './helpers.js';
 
-const item = (over = {}) => ({ courseId: '1', title: 'Thing', type: 'upload', descriptionText: '', sizeOverride: null, ...over });
+const item = (over = {}) => ({ courseId: '1', title: 'Thing', type: 'upload', descriptionText: '', minutesOverride: null, ...over });
 
 test('stated minutes: conservative phrase only', () => {
   assert.equal(statedMinutes('It should take about 15 minutes to complete'), 15);
@@ -29,7 +29,7 @@ test('resolution order: manual > course rule > stated x scale > general rule > t
     estimateRules: [rule({ keyword: 'report', size: 'L' }), rule({ courseId: '7', keyword: 'report', minutes: 25 })],
   };
   const report = (over) => item({ title: 'Week 2 Report', courseId: '7', ...over });
-  assert.deepEqual(estimate(report({ sizeOverride: 'XS', descriptionText: stated }), settings), { minutes: 5, source: 'manual' });
+  assert.deepEqual(estimate(report({ minutesOverride: 5, descriptionText: stated }), settings), { minutes: 5, source: 'manual' });
   // A course rule beats the instructor's stated time, even though it's lower in the list.
   assert.deepEqual(estimate(report({ descriptionText: stated }), settings), { minutes: 25, source: 'rule' });
   // In another course only the general rule matches, and the stated time (x 60%) beats it.

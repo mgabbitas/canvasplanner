@@ -253,7 +253,7 @@ function dataSection(ctx) {
       } catch (err) {
         return say(err instanceof SyntaxError ? 'That file is not valid JSON.' : err.message, true);
       }
-      if (!confirm('Replace your settings, sizes, done checks and dismissed items with the ones in this file?')) return;
+      if (!confirm('Replace your settings, item minutes, done checks and dismissed items with the ones in this file?')) return;
       draftRules = null;
       await ctx.saveState(next);
       say('Imported.');
@@ -268,7 +268,7 @@ function dataSection(ctx) {
       el('button', {
         'data-key': 'reset',
         onclick: () => {
-          if (!confirm('Reset all settings to defaults? Your done checks and item sizes are kept.')) return;
+          if (!confirm('Reset all settings to defaults? Your done checks and item minutes are kept.')) return;
           draftRules = null;
           ctx.saveState({ settings: validateSettings(DEFAULT_SETTINGS) });
           say('Settings reset to defaults.');
@@ -284,7 +284,7 @@ function dataSection(ctx) {
         },
       }, 'Clear all data'),
     ),
-    el('p', { className: 'hint' }, 'Export saves settings and your per-item changes (sizes, checks, dismissals) to a file. It contains no Canvas content.'),
+    el('p', { className: 'hint' }, 'Export saves settings and your per-item changes (minutes, checks, dismissals) to a file. It contains no Canvas content.'),
     message ? el('p', { className: message.bad ? 'warn-text' : 'hint', role: 'status' }, message.text) : null,
   );
 }

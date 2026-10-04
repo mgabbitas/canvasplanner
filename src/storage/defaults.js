@@ -29,7 +29,7 @@ export const SIZES = ['XS', 'S', 'M', 'L'];
 /** User-owned item fields. Sync never touches these. */
 export const USER_FIELD_DEFAULTS = Object.freeze({
   manualDone: false,
-  sizeOverride: null,
+  minutesOverride: null, // minutes you set on the item (beats every estimate)
   pinned: false,
   dismissed: false,
   pulledIn: false,

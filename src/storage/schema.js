@@ -3,7 +3,7 @@
 import { DEFAULT_SETTINGS, SIZES, USER_FIELD_DEFAULTS } from './defaults.js';
 import { addDays } from '../planner/dates.js';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const TYPES = ['quiz', 'discussion', 'upload', 'external_tool', 'other'];
 const MAX_MINUTES = 24 * 60;
@@ -104,7 +104,7 @@ function validateItem(id, raw) {
     prevDueAt: isoOrNull(raw.prevDueAt),
     hidden: raw.hidden === true,
     manualDone: raw.manualDone === true,
-    sizeOverride: SIZES.includes(raw.sizeOverride) ? raw.sizeOverride : USER_FIELD_DEFAULTS.sizeOverride,
+    minutesOverride: raw.minutesOverride == null ? USER_FIELD_DEFAULTS.minutesOverride : int(raw.minutesOverride, 1, MAX_MINUTES, null),
     pinned: raw.pinned === true,
     dismissed: raw.dismissed === true,
     pulledIn: raw.pulledIn === true,
@@ -160,6 +160,14 @@ export function validateCourses(raw) {
   return out;
 }
 
+/** v2 -> v3 helper: replace an item's sizeOverride with minutesOverride. */
+export function sizeToMinutes(item, sizeMinutes) {
+  if (!isObj(item) || !('sizeOverride' in item)) return item;
+  const { sizeOverride, ...rest } = item;
+  const minutes = SIZES.includes(sizeOverride) ? sizeMinutes[sizeOverride] : null;
+  return { ...rest, minutesOverride: rest.minutesOverride ?? minutes };
+}
+
 /** Upgrade older stored shapes step by step, oldest first. Returns a new object. */
 function upgrade(raw) {
   const r = { ...raw };
@@ -173,6 +181,11 @@ function upgrade(raw) {
       }));
     }
     r.settings = settings;
+  }
+  if (version < 3 && isObj(r.items)) {
+    // v2 -> v3: per-item size override (XS/S/M/L) became exact minutes.
+    const sizeMinutes = validateSettings(r.settings).sizeMinutes;
+    r.items = Object.fromEntries(Object.entries(r.items).map(([id, item]) => [id, sizeToMinutes(item, sizeMinutes)]));
   }
   return r;
 }

@@ -5,7 +5,6 @@ import { estimate } from '../planner/estimate.js';
 import { planningWeek, toLocalDate } from '../planner/dates.js';
 import { loadState, save } from '../storage/store.js';
 import { pruneWeekState } from '../storage/schema.js';
-import { SIZES } from '../storage/defaults.js';
 import { runSync } from '../sync/run.js';
 import { el, select, dayLabel, dueLabel, minutesLabel, readInt } from './dom.js';
 import { renderSettings, resetSettingsDraft } from './settings.js';
@@ -31,7 +30,7 @@ const courseName = (courseId) =>
   state.settings.courses[courseId]?.displayName || state.courses[courseId]?.name || `Course ${courseId}`;
 
 const SOURCE_LABEL = {
-  manual: 'size you picked', rule: 'one of your estimate rules', stated: 'instructor-stated time',
+  manual: 'minutes you picked', rule: 'one of your estimate rules', stated: 'instructor-stated time',
   type: 'assignment type default', default: 'default size',
 };
 
@@ -78,19 +77,22 @@ async function sync() {
 
 // --- plan view -------------------------------------------------------------------
 
-function sizeControl(entry) {
+// Minutes you can pick for an item: 5, 10, then every 15 min up to 4 h, then 5, 6, 8 h.
+const MINUTE_CHOICES = [5, 10, ...Array.from({ length: 16 }, (_, i) => (i + 1) * 15), 300, 360, 480];
+
+function minutesControl(entry) {
   const { item } = entry;
-  const sizes = state.settings.sizeMinutes;
-  const auto = estimate({ ...item, sizeOverride: null }, state.settings).minutes;
+  const auto = estimate({ ...item, minutesOverride: null }, state.settings).minutes;
+  const choices = [...new Set([...MINUTE_CHOICES, item.minutesOverride].filter(Boolean))].sort((a, b) => a - b);
   return select(
-    [['', `${minutesLabel(auto)} auto`], ...SIZES.map((s) => [s, `${s} · ${minutesLabel(sizes[s])}`])],
-    item.sizeOverride ?? '',
+    [['', `${minutesLabel(auto)} auto`], ...choices.map((m) => [String(m), minutesLabel(m)])],
+    item.minutesOverride ? String(item.minutesOverride) : '',
     {
-      className: `chip size${item.sizeOverride ? ' set' : ''}`,
-      title: `Estimate from ${SOURCE_LABEL[entry.source]}. Pick a size to change it.`,
-      'aria-label': `Size of "${item.title}"`,
-      'data-key': `size-${item.id}`,
-      onchange: (e) => updateItem(item.id, { sizeOverride: e.target.value || null }),
+      className: `chip size${item.minutesOverride ? ' set' : ''}`,
+      title: `Estimate from ${SOURCE_LABEL[entry.source]}. Pick minutes to change it.`,
+      'aria-label': `Minutes for "${item.title}"`,
+      'data-key': `minutes-${item.id}`,
+      onchange: (e) => updateItem(item.id, { minutesOverride: e.target.value ? Number(e.target.value) : null }),
     },
   );
 }
@@ -121,7 +123,7 @@ function itemRow(entry, { done = false } = {}) {
     entry.overdue && !done
       ? el('button', { onclick: () => updateItem(item.id, { dismissed: true }), title: 'Hide this overdue item' }, 'Dismiss')
       : null,
-    done ? el('span', { className: 'chip' }, minutesLabel(entry.minutes)) : sizeControl(entry),
+    done ? el('span', { className: 'chip' }, minutesLabel(entry.minutes)) : minutesControl(entry),
   );
 
   return el('li', { className: `item${done ? ' done' : ''}` },

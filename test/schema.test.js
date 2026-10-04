@@ -7,7 +7,7 @@ import { DEFAULT_SETTINGS } from '../src/storage/defaults.js';
 test('empty or garbage storage gives defaults', () => {
   for (const raw of [undefined, null, 42, [], {}]) {
     const s = migrate(raw);
-    assert.equal(s.schemaVersion, 2);
+    assert.equal(s.schemaVersion, 3);
     assert.deepEqual(s.settings, validateSettings(DEFAULT_SETTINGS));
     assert.equal(s.settings.estimateRules.length, 12);
     assert.deepEqual(s.items, {});
@@ -28,6 +28,24 @@ test('migration v1 -> v2: keyword rules become estimate rules', () => {
   assert.deepEqual(s.weekState, { '2026-09-28': { extraDays: 1, capacity: {} } });
   // A v1 store with no settings at all just gets the defaults.
   assert.equal(migrate({ schemaVersion: 1 }).settings.estimateRules.length, 12);
+});
+
+test('migration v2 -> v3: item size override becomes minutes', () => {
+  const s = migrate({
+    schemaVersion: 2,
+    settings: { sizeMinutes: { XS: 5, S: 15, M: 45, L: 90 } },
+    items: {
+      1: { courseId: '9', title: 'A', sizeOverride: 'S' },
+      2: { courseId: '9', title: 'B', sizeOverride: 'L' },
+      3: { courseId: '9', title: 'C', sizeOverride: null },
+    },
+  });
+  assert.equal(s.items['1'].minutesOverride, 15); // uses your size minutes, not the defaults
+  assert.equal(s.items['2'].minutesOverride, 90);
+  assert.equal(s.items['3'].minutesOverride, null);
+  assert.equal('sizeOverride' in s.items['1'], false);
+  // A v3 store is left alone.
+  assert.equal(migrate({ schemaVersion: 3, items: { 1: { courseId: '9', minutesOverride: 37 } } }).items['1'].minutesOverride, 37);
 });
 
 test('settings are clamped and bad values fall back', () => {
@@ -73,7 +91,7 @@ test('estimate rules: need a condition and a value; minutes beat size', () => {
 
 test('items: malformed entries dropped, fields coerced, non-Canvas URLs removed', () => {
   const items = validateItems({
-    '12': { courseId: '9', title: 'A', dueAt: '2026-10-03T05:59:00Z', manualDone: 'true', sizeOverride: 'L',
+    '12': { courseId: '9', title: 'A', dueAt: '2026-10-03T05:59:00Z', manualDone: 'true', minutesOverride: 120,
       url: 'javascript:alert(1)', type: 'weird' },
     'abc': { courseId: '9' },
     '13': { courseId: 'x' },
@@ -82,7 +100,7 @@ test('items: malformed entries dropped, fields coerced, non-Canvas URLs removed'
   assert.deepEqual(Object.keys(items), ['12']);
   const i = items['12'];
   assert.equal(i.manualDone, false);
-  assert.equal(i.sizeOverride, 'L');
+  assert.equal(i.minutesOverride, 120);
   assert.equal(i.url, null);
   assert.equal(i.type, 'other');
   assert.equal(i.dueAt, '2026-10-03T05:59:00Z');

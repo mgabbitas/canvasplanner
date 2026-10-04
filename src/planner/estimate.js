@@ -1,5 +1,5 @@
 // Minutes estimate per item. Highest-priority source wins (SPEC section 5):
-// size you set > rules naming a course > instructor-stated time x scale >
+// minutes you set on the item > rules naming a course > instructor-stated time x scale >
 // general rules > type default > default size M.
 
 // Only "should take about N minutes/hours". Looser phrases in real descriptions are
@@ -29,8 +29,8 @@ const ruleMinutes = (rule, sizeMinutes) => rule.minutes ?? sizeMinutes[rule.size
 /** { minutes, source } where source is manual | rule | stated | type | default. */
 export function estimate(item, settings) {
   const sizes = settings.sizeMinutes;
-  if (item.sizeOverride && sizes[item.sizeOverride] != null) {
-    return { minutes: sizes[item.sizeOverride], source: 'manual' };
+  if (Number.isFinite(item.minutesOverride) && item.minutesOverride > 0) {
+    return { minutes: item.minutesOverride, source: 'manual' };
   }
   const rules = settings.estimateRules ?? [];
   const firstRule = (withCourse) => rules.find((r) =>

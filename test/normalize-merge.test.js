@@ -63,11 +63,11 @@ test('scenario 9: merge keeps user fields and flags a moved due date', () => {
   assert.equal(first['1'].manualDone, false);
   assert.equal(first['1'].prevDueAt, null);
 
-  const edited = { '1': { ...first['1'], manualDone: true, sizeOverride: 'L', pinned: true } };
+  const edited = { '1': { ...first['1'], manualDone: true, minutesOverride: 120, pinned: true } };
   const moved = normalizeAssignment(raw({ due_at: '2026-10-06T05:59:00Z', name: 'Renamed' }), 9);
   const second = mergeCourse(edited, 9, [moved]);
   assert.equal(second['1'].manualDone, true);
-  assert.equal(second['1'].sizeOverride, 'L');
+  assert.equal(second['1'].minutesOverride, 120);
   assert.equal(second['1'].pinned, true);
   assert.equal(second['1'].title, 'Renamed');
   assert.equal(second['1'].dueAt, '2026-10-06T05:59:00Z');

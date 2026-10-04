@@ -24,7 +24,7 @@ const mk = (over = {}) => {
     dueAt: due === null ? null : iso(due ?? '2026-10-03'), unlockAt: unlock ? iso(unlock) : null,
     lockAt: null, points: 100, canvasStatus: 'unsubmitted', canvasDone: false, submittedAt: null,
     descriptionText: '', url: null, prevDueAt: null, hidden: false,
-    ...USER_FIELD_DEFAULTS, sizeOverride: 'S', ...rest,
+    ...USER_FIELD_DEFAULTS, minutesOverride: 20, ...rest,
   };
 };
 const many = (n, over) => Array.from({ length: n }, () => mk(over));
@@ -36,7 +36,7 @@ const placedOn = (p) => Object.fromEntries(p.days.map((d) => [d.date, d.items.ma
 const dateOf = (p, id) => p.days.find((d) => d.items.some((e) => e.id === id))?.date ?? null;
 
 test('scenario 1: sixteen items due Saturday are spread within capacity by Wednesday', () => {
-  const p = run(many(16, { due: '2026-10-03 23:59', sizeOverride: 'S' })); // 16 x 20 min
+  const p = run(many(16, { due: '2026-10-03 23:59', minutesOverride: 20 })); // 16 x 20 min
   assert.equal(p.week.cutoff, '2026-09-30');
   assert.deepEqual(p.days.map((d) => [d.date, d.load]), [
     ['2026-09-28', 120], ['2026-09-29', 120], ['2026-09-30', 80],
@@ -46,7 +46,7 @@ test('scenario 1: sixteen items due Saturday are spread within capacity by Wedne
 });
 
 test('scenario 2: overflow appears, then Add a day resolves it', () => {
-  const items = many(7, { due: '2026-10-03', sizeOverride: 'M' }); // 7 x 45 min, 2 fit per day
+  const items = many(7, { due: '2026-10-03', minutesOverride: 45 }); // 7 x 45 min, 2 fit per day
   const before = run(items);
   assert.equal(before.overflow.length, 1);
   assert.equal(before.overflowMinutes, 45);
@@ -65,7 +65,7 @@ test('scenario 2: overflow appears, then Add a day resolves it', () => {
 });
 
 test('scenario 3: Wednesday passed, items flagged behind and scheduled ASAP', () => {
-  const items = many(10, { due: '2026-10-03', sizeOverride: 'M' });
+  const items = many(10, { due: '2026-10-03', minutesOverride: 45 });
   const p = run(items, { now: '2026-10-01 09:00' }); // Thursday
   assert.equal(p.behind, true);
   assert.deepEqual(p.days.map((d) => [d.date, d.items.length]), [
@@ -98,7 +98,7 @@ test('scenario 6: DST change on 1 Nov 2026', () => {
   const evalItem = mk({
     dueAt: '2026-11-02T06:59:59Z', // 11:59:59 PM Sun 1 Nov MST
     unlockAt: '2026-10-26T06:00:00Z', // 12:00 AM Mon 26 Oct MDT
-    sizeOverride: 'XS',
+    minutesOverride: 5,
   });
   const lateOpen = mk({ due: '2026-11-01 23:59', unlock: '2026-10-31 00:00' });
   const p = run([evalItem, lateOpen], { now: '2026-10-26 10:00' });
@@ -118,15 +118,15 @@ test('scenario 6: DST change on 1 Nov 2026', () => {
 });
 
 test('scenario 7a: blocked weekday is never used', () => {
-  const p = run(many(3, { sizeOverride: 'L' }), { settings: { blockedWeekdays: [2] } }); // no Tuesdays
+  const p = run(many(3, { minutesOverride: 120 }), { settings: { blockedWeekdays: [2] } }); // no Tuesdays
   assert.deepEqual(placedOn(p)['2026-09-29'], []);
   assert.equal(p.days.find((d) => d.date === '2026-09-29').blocked, true);
   assert.equal(p.overflow.length, 1);
 });
 
 test('scenario 7b: oversized item goes on an empty day, flagged over capacity', () => {
-  const big = mk({ descriptionText: 'It should take about 3 hours.', sizeOverride: null });
-  const small = mk({ sizeOverride: 'S' });
+  const big = mk({ descriptionText: 'It should take about 3 hours.', minutesOverride: null });
+  const small = mk({ minutesOverride: 20 });
   const p = run([big, small]);
   const mon = p.days[0];
   assert.deepEqual(mon.items.map((e) => e.id), [big.id]);
@@ -136,21 +136,21 @@ test('scenario 7b: oversized item goes on an empty day, flagged over capacity', 
 });
 
 test('scenario 7c: pinned item sits on its due date and counts toward load', () => {
-  const pinned = mk({ due: '2026-09-30', pinned: true, sizeOverride: 'L' });
-  const other = mk({ due: '2026-09-30', sizeOverride: 'S' });
+  const pinned = mk({ due: '2026-09-30', pinned: true, minutesOverride: 120 });
+  const other = mk({ due: '2026-09-30', minutesOverride: 20 });
   const p = run([pinned, other]);
   assert.equal(dateOf(p, pinned.id), '2026-09-30');
   assert.equal(dateOf(p, other.id), '2026-09-28');
-  const tight = run([pinned, mk({ due: '2026-09-30', sizeOverride: 'S' })], { now: '2026-09-30 08:00' });
+  const tight = run([pinned, mk({ due: '2026-09-30', minutesOverride: 20 })], { now: '2026-09-30 08:00' });
   assert.equal(tight.overflow.length, 1); // Wed is full with the pinned 120 min
 });
 
 test('scenario 8: pull next week, by day and by size', () => {
   const doneThisWeek = mk({ canvasDone: true, canvasStatus: 'submitted' });
-  const monA = mk({ due: '2026-10-05', sizeOverride: 'M' });
-  const monB = mk({ due: '2026-10-05', sizeOverride: 'XS' });
-  const tue = mk({ due: '2026-10-06', sizeOverride: 'S' });
-  const locked = mk({ due: '2026-10-07', unlock: '2026-10-05 00:00', sizeOverride: 'S' });
+  const monA = mk({ due: '2026-10-05', minutesOverride: 45 });
+  const monB = mk({ due: '2026-10-05', minutesOverride: 5 });
+  const tue = mk({ due: '2026-10-06', minutesOverride: 20 });
+  const locked = mk({ due: '2026-10-07', unlock: '2026-10-05 00:00', minutesOverride: 20 });
   const items = [doneThisWeek, monA, monB, tue, locked];
 
   const p = run(items);
@@ -178,7 +178,7 @@ test('scenario 8: pull next week, by day and by size', () => {
 });
 
 test('per-date capacity override: smaller day, day off, and unblocking a blocked weekday', () => {
-  const items = many(6, { due: '2026-10-03', sizeOverride: 'S' }); // 6 x 20 min
+  const items = many(6, { due: '2026-10-03', minutesOverride: 20 }); // 6 x 20 min
   const weekState = { '2026-09-28': { extraDays: 0, capacity: { '2026-09-28': 40, '2026-09-29': 0 } } };
   const p = run(items, { weekState });
   assert.deepEqual(p.days.map((d) => [d.date, d.load, d.capacity, d.capacityOverridden, d.blocked]), [
@@ -188,22 +188,22 @@ test('per-date capacity override: smaller day, day off, and unblocking a blocked
   ]);
   assert.equal(p.days[0].defaultCapacity, 120);
   // Tuesday is a blocked weekday, but an explicit override for that date wins.
-  const q = run(many(9, { due: '2026-10-03', sizeOverride: 'S' }), { settings: { blockedWeekdays: [2] }, weekState: { '2026-09-28': { capacity: { '2026-09-29': 60 } } } });
+  const q = run(many(9, { due: '2026-10-03', minutesOverride: 20 }), { settings: { blockedWeekdays: [2] }, weekState: { '2026-09-28': { capacity: { '2026-09-29': 60 } } } });
   assert.equal(q.days[1].load, 60);
   // Forecast "over" uses the same capacity.
-  const f = run(many(3, { due: '2026-09-29', sizeOverride: 'S' }), { weekState });
+  const f = run(many(3, { due: '2026-09-29', minutesOverride: 20 }), { weekState });
   assert.equal(f.forecast[1].over, true);
 });
 
 test('overdue items are scheduled today and flagged', () => {
-  const late = mk({ due: '2026-09-29', sizeOverride: 'S' });
+  const late = mk({ due: '2026-09-29', minutesOverride: 20 });
   const p = run([late], { now: '2026-09-30 08:00' });
   assert.deepEqual(p.overdue.map((e) => e.id), [late.id]);
   assert.equal(dateOf(p, late.id), '2026-09-30');
 });
 
 test('overdue items from earlier weeks carry over until done or dismissed', () => {
-  const lastWeek = mk({ due: '2026-09-24', sizeOverride: 'S' });
+  const lastWeek = mk({ due: '2026-09-24', minutesOverride: 20 });
   const p = run([lastWeek]);
   assert.deepEqual(p.overdue.map((e) => e.id), [lastWeek.id]);
   assert.equal(dateOf(p, lastWeek.id), '2026-09-28');
@@ -213,7 +213,7 @@ test('overdue items from earlier weeks carry over until done or dismissed', () =
 });
 
 test('due before 5 PM must be done the day before', () => {
-  const morning = mk({ due: '2026-10-01 09:00', sizeOverride: 'S' });
+  const morning = mk({ due: '2026-10-01 09:00', minutesOverride: 20 });
   const p = run([...many(6, { due: '2026-09-29' }), morning], { now: '2026-09-29 08:00' });
   // Tue is full (6 x 20), Wed is the last day for a 9 AM Thursday item.
   assert.equal(dateOf(p, morning.id), '2026-09-30');
@@ -242,8 +242,8 @@ test('filters: no due date, dismissed, hidden, excluded course, non-submittable'
 
 test('forecast: 14 days of due load, including items not open yet', () => {
   const p = run([
-    ...many(7, { due: '2026-10-03', sizeOverride: 'S' }),
-    mk({ due: '2026-10-05', unlock: '2026-10-04 00:00', sizeOverride: 'XS' }),
+    ...many(7, { due: '2026-10-03', minutesOverride: 20 }),
+    mk({ due: '2026-10-05', unlock: '2026-10-04 00:00', minutesOverride: 5 }),
   ]);
   assert.equal(p.forecast.length, 14);
   assert.equal(p.forecast[0].date, '2026-09-28');

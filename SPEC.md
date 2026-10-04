@@ -15,8 +15,9 @@ export/import.
 ratings, LLM time estimates (keep the `estimate.source` field for this), homelab or
 phone sync, notifications, other Canvas sites, anything that writes to Canvas.
 
-**Planned direction (after v1):** time tracking. I log how long each assignment
-actually took, and the tool learns averages by course, type and keyword (e.g. "Course
+**Planned direction (after v1):** time tracking. When I check an item off, it asks how
+long it actually took and how difficult it was (a slider), both optional. I log how
+long each assignment actually took, and the tool learns averages by course, type and keyword (e.g. "Course
 A reports take 25 min on average") and uses them as estimates. Keep estimates
 explainable by `estimate.source` and keep course, type and title on every item so
 logged times can be grouped later.
@@ -72,7 +73,7 @@ Item, Canvas-owned fields (overwritten on every sync): `id`, `courseId`, `title`
 `type`, `dueAt`, `unlockAt`, `lockAt`, `points`, `canvasStatus`, `submittedAt`,
 `descriptionText` (plain text, truncated), `url`.
 
-Item, user-owned fields (sync never touches these): `manualDone`, `sizeOverride`,
+Item, user-owned fields (sync never touches these): `manualDone`, `minutesOverride`,
 `pinned`, `dismissed`, `pulledIn`.
 
 Merge rules:
@@ -85,7 +86,7 @@ Merge rules:
 
 ## 5. Estimates
 Each item gets `estimate: { minutes, source }`. Resolution order, highest wins:
-1. `sizeOverride` (XS/S/M/L, mapped through the size to minutes setting), source `manual`
+1. `minutesOverride` (exact minutes picked on the item), source `manual`
 2. First matching estimate rule that names a course, source `rule`
 3. Minutes the instructor states in the description (e.g. "should take about 15
    minutes"), times the stated-time scale, source `stated`. Use a conservative regex
@@ -223,7 +224,8 @@ Each one ends with `npm test` passing, a commit, and a short walkthrough.
   pages have the same host permission as the background script).
 - **M3. Settings GUI.** Everything in section 8 (including estimate rules by course,
   type and keyword, and the stated-time scale), plus export/import. Also (moved up from
-  M4 on 2026-10-04): the size chip, and a per-date capacity override edited on each day
+  M4 on 2026-10-04): the per-item minutes chip (a dropdown of minutes: 5, 10, then
+15-minute steps; changed from XS/S/M/L sizes on 2026-10-04, schema v3), and a per-date capacity override edited on each day
   in the planner (0 = day off, reset returns to the weekday default).
 - **M4. Interactions.** Pull next week, pin, forecast strip. (Add/remove a day and
   banners were done in M2; size chip in M3.)
