@@ -24,3 +24,10 @@ test('content scripts only run on the Canvas host and read nothing', () => {
     }
   }
 });
+
+test('packaging never includes Canvas data or signing credentials', async () => {
+  const { default: config } = await import('../web-ext-config.mjs');
+  for (const path of ['test', '.amo.env']) assert.ok(config.ignoreFiles.includes(path), `${path} must be ignored`);
+  const gitignore = readFileSync(new URL('../.gitignore', import.meta.url), 'utf8');
+  for (const line of ['.amo.env', 'test/fixtures/*.json']) assert.ok(gitignore.split('\n').includes(line), `${line} must be gitignored`);
+});

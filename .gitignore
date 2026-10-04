@@ -1,5 +1,8 @@
 node_modules/
-.web-ext-artifacts/
+web-ext-artifacts/
+
+# Mozilla add-on signing credentials. Never commit.
+.amo.env
 
 # Real Canvas data (grades, course info). Local only, never commit.
 test/fixtures/*.json

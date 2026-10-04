@@ -1,12 +1,14 @@
 {
   "name": "canvasplanner",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test",
     "start": "firefox --no-remote --profile \"$HOME/.cache/canvasplanner-firefox\" \"about:debugging#/runtime/this-firefox\"",
-    "lint": "web-ext lint"
+    "lint": "web-ext lint",
+    "build": "web-ext build --overwrite-dest",
+    "sign": "node --env-file=.amo.env node_modules/web-ext/bin/web-ext.js sign --channel=unlisted"
   },
   "devDependencies": {
     "web-ext": "^10.7.0"
