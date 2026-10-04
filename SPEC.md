@@ -84,12 +84,14 @@ Merge rules:
 ## 5. Estimates
 Each item gets `estimate: { minutes, source }`. Resolution order, highest wins:
 1. `sizeOverride` (XS/S/M/L, mapped through the size to minutes setting), source `manual`
-2. Minutes the instructor states in the description (e.g. "should take about 15
-   minutes"), source `stated`. Use a conservative regex and test against fixtures.
-3. First matching title keyword rule (case-insensitive substring, ordered list),
-   source `keyword`
-4. Type default, source `type`
-5. Global default size M, source `default`
+2. First matching estimate rule that names a course, source `rule`
+3. Minutes the instructor states in the description (e.g. "should take about 15
+   minutes"), times the stated-time scale, source `stated`. Use a conservative regex
+   and test against fixtures.
+4. First matching estimate rule with no course (keyword is a case-insensitive title
+   substring; list order), source `rule`
+5. Type default, source `type`
+6. Global default size M, source `default`
 
 Type resolution: an item's type is the first match in `submission_types`, checked in
 this order: quiz (`online_quiz`), discussion (`discussion_topic`), upload
@@ -244,10 +246,10 @@ Decided 2026-09-30: overdue items from earlier weeks carry over until done or
 dismissed; estimates become editable per course, type and keyword (M3); time tracking
 is the planned direction after v1.
 
-**Open questions:**
-- (M3) Where estimate rules sit relative to instructor-stated times: should a matching
-  rule beat a stated time, only course-specific rules beat it, or should stated
-  (scaled) always win?
+Decided 2026-10-04: course-specific estimate rules beat instructor-stated times;
+general rules don't (section 5).
+
+**Open questions:** none.
 
 Decided 2026-09-30: pull-by-size orders by due date,
 then smallest first; the forecast includes not-yet-unlocked items.
