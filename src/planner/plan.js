@@ -37,6 +37,9 @@ function toEntry(item, settings, today) {
     notOpenYet: unlockDate != null && unlockDate > today,
     pinned: Boolean(item.pinned),
     pulledIn: Boolean(item.pulledIn),
+    // Real Canvas due date vs today, for urgency flags (independent of the plan).
+    dueToday: dueDay === today,
+    dueTomorrow: dueDay != null && dueDay === addDays(today, 1),
     date: null,
     overdue: false,
     behind: false,

@@ -201,6 +201,9 @@ a.title:hover { color: var(--accent); text-decoration: underline; }
 .item .right { display: flex; gap: 6px; align-items: center; }
 .item.done .title { text-decoration: line-through; color: var(--muted); }
 .item.up-next { background: var(--accent-soft); border-radius: 8px; }
+/* Due today (real Canvas date): red title; the "due today" chip says it in words too. */
+.item.urgent .title { color: var(--bad-text); }
+.urgent-text { color: var(--bad-text); font-weight: 600; }
 .chip { font-size: 12px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
 .chip.bad { background: var(--bad-bg); color: var(--bad-text); border-color: transparent; }
 .chip.warn { background: var(--warn-bg); color: var(--warn-text); border-color: transparent; }

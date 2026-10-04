@@ -196,6 +196,8 @@ function itemRow(entry, kind = 'plan', { upNext = false, showCourse = true } = {
   if (upNext) chips.push(el('span', { className: 'chip next' }, 'up next'));
   if (entry.inClass) chips.push(el('span', { className: 'chip' }, 'in class'));
   if (entry.overdue) chips.push(el('span', { className: 'chip bad' }, 'overdue'));
+  else if (entry.dueToday && kind !== 'done') chips.push(el('span', { className: 'chip bad' }, 'due today'));
+  else if (entry.dueTomorrow && kind !== 'done') chips.push(el('span', { className: 'chip warn' }, 'due tomorrow'));
   else if (entry.behind && kind === 'plan') chips.push(el('span', { className: 'chip warn' }, 'behind plan'));
   if (entry.notOpenYet) chips.push(el('span', { className: 'chip' }, `opens ${dayLabel(entry.unlockDate, { weekday: 'short', month: 'short', day: 'numeric' })}`));
   if (item.prevDueAt) chips.push(el('span', { className: 'chip warn', title: `Was due ${dueLabel(item.prevDueAt)}` }, 'due date changed'));
@@ -234,7 +236,7 @@ function itemRow(entry, kind = 'plan', { upNext = false, showCourse = true } = {
     : el('span', { className: 'chip' }, minutesLabel(entry.minutes)));
 
   return el('li', {
-    className: `item${done ? ' done' : ''}${upNext ? ' up-next' : ''}`,
+    className: `item${done ? ' done' : ''}${upNext ? ' up-next' : ''}${!done && (entry.dueToday || entry.overdue) ? ' urgent' : ''}`,
     style: `--course:${courseColor(item.courseId, state.settings, state.courses)}`,
   },
     checkbox,
@@ -325,6 +327,8 @@ function renderHeader(p) {
     const today = v === 'this' ? p.days.find((d) => d.date === p.today) : null;
     const parts = [];
     if (today) parts.push(el('strong', {}, `Today: ${itemCount(today.items)} · ${minutesLabel(today.load)}`));
+    const dueToday = v === 'this' ? homework(p.days.flatMap((d) => d.items)).filter((e) => e.dueToday || e.overdue).length : 0;
+    if (dueToday) parts.push(el('span', { className: 'urgent-text' }, `${dueToday} due today`));
     if (v === 'next') parts.push(el('span', {}, 'Projected plan'));
     subtitle = el('div', { className: 'subtitle-row' },
       el('p', { className: 'subtitle' }, ...parts.flatMap((x, i) => (i ? [' · ', x] : [x]))),

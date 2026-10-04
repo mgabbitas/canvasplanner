@@ -381,3 +381,15 @@ test('pull gate: pulled items do not re-close it; cap limits unfinished pulled w
   // In-class items this week don't keep the gate closed.
   assert.equal(run([mk({ inClass: true, due: '2026-10-02', minutesOverride: null }), ...next], { settings }).pull.enabled, true);
 });
+
+test('urgency flags follow the real Canvas due date, not the planned day', () => {
+  const today = mk({ due: '2026-09-28 23:59' });
+  const tomorrowMorning = mk({ due: '2026-09-29 09:00' }); // planned for today (due before 5 PM)
+  const later = mk({ due: '2026-10-03' });
+  const p = run([today, tomorrowMorning, later]);
+  const entry = (id) => p.days.flatMap((d) => d.items).find((e) => e.id === id);
+  assert.deepEqual([entry(today.id).dueToday, entry(today.id).dueTomorrow], [true, false]);
+  assert.deepEqual([entry(tomorrowMorning.id).dueToday, entry(tomorrowMorning.id).dueTomorrow], [false, true]);
+  assert.equal(dateOf(p, tomorrowMorning.id), '2026-09-28');
+  assert.deepEqual([entry(later.id).dueToday, entry(later.id).dueTomorrow], [false, false]);
+});
