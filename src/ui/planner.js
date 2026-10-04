@@ -1,6 +1,6 @@
 // New-tab planner page. Views by URL hash: '' this week, #next next week, #settings.
 // All Canvas text goes in via textContent (see dom.js), never innerHTML.
-import { plan, planNextWeek } from '../planner/plan.js';
+import { plan, planNextWeek, canPullItem } from '../planner/plan.js';
 import { estimate } from '../planner/estimate.js';
 import { planningWeek, toLocalDate } from '../planner/dates.js';
 import { loadState, save } from '../storage/store.js';
@@ -93,17 +93,23 @@ const MINUTE_CHOICES = [5, 10, ...Array.from({ length: 16 }, (_, i) => (i + 1) *
 
 function minutesControl(entry) {
   const { item } = entry;
-  const auto = estimate({ ...item, minutesOverride: null }, state.settings).minutes;
+  const auto = estimate({ ...item, minutesOverride: null, inClass: false }, state.settings);
+  const autoLabel = auto.inClass ? 'In class (auto)' : `${minutesLabel(auto.minutes)} auto`;
   const choices = [...new Set([...MINUTE_CHOICES, item.minutesOverride].filter(Boolean))].sort((a, b) => a - b);
+  const value = item.minutesOverride ? String(item.minutesOverride) : item.inClass ? 'inclass' : '';
   return select(
-    [['', `${minutesLabel(auto)} auto`], ...choices.map((m) => [String(m), minutesLabel(m)])],
-    item.minutesOverride ? String(item.minutesOverride) : '',
+    [['', autoLabel], ['inclass', 'In class (0m)'], ...choices.map((m) => [String(m), minutesLabel(m)])],
+    value,
     {
-      className: `chip size${item.minutesOverride ? ' set' : ''}`,
-      title: `Estimate from ${SOURCE_LABEL[entry.source]}. Pick minutes to change it.`,
+      className: `chip size${value ? ' set' : ''}`,
+      title: `Estimate from ${SOURCE_LABEL[entry.source]}. Pick minutes, or "In class" for an activity done in class.`,
       'aria-label': `Minutes for "${item.title}"`,
       'data-key': `minutes-${item.id}`,
-      onchange: (e) => updateItem(item.id, { minutesOverride: e.target.value ? Number(e.target.value) : null }),
+      onchange: (e) => {
+        const v = e.target.value;
+        if (v === 'inclass') return updateItem(item.id, { inClass: true, minutesOverride: null });
+        return updateItem(item.id, { inClass: false, minutesOverride: v ? Number(v) : null });
+      },
     },
   );
 }
@@ -137,13 +143,14 @@ function itemRow(entry, kind = 'plan') {
     : el('span', { className: 'title' }, item.title);
 
   const chips = [];
+  if (entry.inClass) chips.push(el('span', { className: 'chip' }, 'in class'));
   if (entry.overdue) chips.push(el('span', { className: 'chip bad' }, 'overdue'));
   else if (entry.behind && kind === 'plan') chips.push(el('span', { className: 'chip warn' }, 'behind plan'));
   if (entry.notOpenYet) chips.push(el('span', { className: 'chip' }, `opens ${dayLabel(entry.unlockDate, { weekday: 'short', month: 'short', day: 'numeric' })}`));
   if (item.prevDueAt) chips.push(el('span', { className: 'chip warn', title: `Was due ${dueLabel(item.prevDueAt)}` }, 'due date changed'));
   if (entry.pulledIn && kind === 'plan') chips.push(el('span', { className: 'chip' }, 'pulled in'));
 
-  const canPull = thisWeekPlan?.pull.enabled;
+  const pull = thisWeekPlan?.pull;
   const actions = [];
   if (kind === 'plan' && entry.overdue) {
     actions.push(el('button', { onclick: () => updateItem(item.id, { dismissed: true }), title: 'Hide this overdue item', 'data-key': `dismiss-${item.id}` }, 'Dismiss'));
@@ -151,10 +158,11 @@ function itemRow(entry, kind = 'plan') {
   if (kind === 'plan' && entry.pulledIn) {
     actions.push(el('button', { onclick: () => updateItem(item.id, { pulledIn: false }), title: 'Move back to its own week', 'data-key': `back-${item.id}` }, 'Send back'));
   }
-  if (kind === 'next') {
+  if (kind === 'next' && !entry.inClass) {
+    const ok = pull && canPullItem(pull, entry.minutes);
     actions.push(el('button', {
-      disabled: !canPull, 'data-key': `pull-${item.id}`,
-      title: canPull ? 'Plan this in this week' : 'Finish this week\'s work first (or turn off the pull gate in Settings)',
+      disabled: !ok, 'data-key': `pull-${item.id}`,
+      title: ok ? 'Plan this in this week' : pullBlockedText(pull, entry.minutes),
       onclick: () => updateItem(item.id, { pulledIn: true }),
     }, 'Pull →'));
   }
@@ -248,6 +256,13 @@ function renderBanners(p) {
   return out;
 }
 
+function pullBlockedText(pull, minutes) {
+  if (!pull) return '';
+  if (pull.blockedReason === 'week') return 'Pulling unlocks when this week\'s own work is done. You can turn this off in Settings.';
+  if (pull.blockedReason === 'cap') return `You already have ${minutesLabel(pull.pulledMinutes)} of unfinished pulled work (the limit is ${minutesLabel(pull.capMinutes)}). Finish some, or raise the limit in Settings.`;
+  return `Only ${minutesLabel(pull.remainingMinutes)} of pull room left${minutes ? ` (this needs ${minutesLabel(minutes)})` : ''}. Finish some pulled work, or raise the limit in Settings.`;
+}
+
 function renderPullBar() {
   const { pull } = thisWeekPlan;
   const day = pull.nextDay;
@@ -255,9 +270,12 @@ function renderPullBar() {
   const pullAll = (entries) => updateItems(entries.map((e) => e.id), { pulledIn: true });
   return el('section', { className: 'panel pullbar' },
     el('h2', {}, 'Pull into this week'),
+    el('p', { className: 'hint' },
+      `Unfinished pulled work: ${minutesLabel(pull.pulledMinutes)} of ${minutesLabel(pull.capMinutes)} allowed.`),
     el('div', { className: 'row' },
       el('button', {
-        disabled: !pull.enabled || !day.entries.length, 'data-key': 'pull-day',
+        disabled: !pull.enabled || !day.fits, 'data-key': 'pull-day',
+        title: pull.enabled && !day.fits && day.entries.length ? pullBlockedText(pull, sumMinutes(day.entries)) : '',
         onclick: () => pullAll(day.entries),
       }, day.date
         ? `Pull ${dayLabel(day.date, { weekday: 'long', month: 'short', day: 'numeric' })}'s items (${day.entries.length} · ${minutesLabel(sumMinutes(day.entries))})`
@@ -275,14 +293,21 @@ function renderPullBar() {
     ),
     pull.enabled
       ? el('p', { className: 'hint' }, 'Or pull single items below. Pulled items can be sent back from this week.')
-      : el('p', { className: 'warn-text' }, 'Pulling unlocks when this week\'s work is done. You can turn this off in Settings.'),
+      : el('p', { className: 'warn-text' }, pullBlockedText(pull)),
   );
 }
 
 function renderForecast(p) {
   const max = Math.max(1, ...p.forecast.map((f) => f.minutes));
-  return el('section', { className: 'panel forecast' },
-    el('h2', {}, 'Due in the next 14 days'),
+  return el('details', {
+    className: 'panel forecast', open: state.settings.showForecast, 'data-key': 'forecast',
+    ontoggle: (e) => {
+      if (e.target.open !== state.settings.showForecast) {
+        saveState({ settings: { ...state.settings, showForecast: e.target.open } });
+      }
+    },
+  },
+    el('summary', {}, 'Due in the next 14 days'),
     el('ol', { className: 'fc' }, p.forecast.map((f) => {
       const text = `${dayLabel(f.date)}: ${f.count ? `${plural(f.count, 'item')}, ${minutesLabel(f.minutes)} due` : 'nothing due'}${f.over ? ' (more than that day\'s time)' : ''}`;
       return el('li', { className: `${f.over ? 'over' : ''}${f.date === p.today ? ' today' : ''}`, title: text },

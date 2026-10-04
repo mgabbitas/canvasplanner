@@ -14,13 +14,14 @@ export function resetSettingsDraft() {
   message = null;
 }
 
-const toDraft = (r) => ({ ...r, mode: r.minutes != null ? 'minutes' : 'size' });
+const toDraft = (r) => ({ ...r, mode: r.inClass ? 'inclass' : r.minutes != null ? 'minutes' : 'size' });
 const fromDraft = (d) => ({
   courseId: d.courseId || null,
   type: d.type || null,
   keyword: d.keyword,
   size: d.mode === 'size' ? d.size : null,
   minutes: d.mode === 'minutes' ? d.minutes : null,
+  inClass: d.mode === 'inclass',
 });
 
 function updateSettings(ctx, patch) {
@@ -126,7 +127,11 @@ function rulesSection(ctx) {
   const courses = Object.entries(ctx.state.courses).sort((a, b) => a[1].name.localeCompare(b[1].name));
   const courseOptions = [['', 'Any class'], ...courses.map(([id, c]) => [id, s.courses[id]?.displayName || c.name])];
   const typeOptions = [['', 'Any type'], ...TYPES.map((t) => [t, TYPE_LABELS[t]])];
-  const valueOptions = [...SIZES.map((z) => [z, `${z} · ${minutesLabel(s.sizeMinutes[z])}`]), ['minutes', 'Exact minutes']];
+  const valueOptions = [
+    ...SIZES.map((z) => [z, `${z} · ${minutesLabel(s.sizeMinutes[z])}`]),
+    ['minutes', 'Exact minutes'],
+    ['inclass', 'In class (0m)'],
+  ];
 
   const edit = (i, patch) => {
     draftRules[i] = { ...draftRules[i], ...patch };
@@ -150,11 +155,14 @@ function rulesSection(ctx) {
         onchange: (e) => edit(i, { keyword: e.target.value.trim() }),
       }),
       el('span', { className: 'arrow' }, '→'),
-      select(valueOptions, d.mode === 'minutes' ? 'minutes' : d.size ?? 'M', {
+      select(valueOptions, d.mode === 'size' ? d.size ?? 'M' : d.mode, {
         'aria-label': 'Estimate', 'data-key': `r${i}-value`,
-        onchange: (e) => edit(i, e.target.value === 'minutes'
-          ? { mode: 'minutes', minutes: d.minutes ?? s.sizeMinutes[d.size ?? 'M'] }
-          : { mode: 'size', size: e.target.value }),
+        onchange: (e) => {
+          const v = e.target.value;
+          if (v === 'inclass') return edit(i, { mode: 'inclass' });
+          if (v === 'minutes') return edit(i, { mode: 'minutes', minutes: d.minutes ?? s.sizeMinutes[d.size ?? 'M'] });
+          return edit(i, { mode: 'size', size: v });
+        },
       }),
       d.mode === 'minutes'
         ? numberInput(`r${i}-min`, d.minutes, { min: 1, max: 1440, label: 'Minutes' }, (v) => edit(i, { minutes: v }))
@@ -221,7 +229,11 @@ function behaviorSection(ctx) {
       numberInput('auto-sync', s.autoSyncMinutes, { min: 15, max: 10080, label: 'Auto-sync minutes' },
         (v) => updateSettings(ctx, { autoSyncMinutes: v })), 'Minimum 15.'),
     toggle('includeNonSubmittable', 'Plan items that can\'t be submitted online', 'e.g. "no submission" or "on paper" assignments.'),
-    toggle('gatePullOnCompletion', 'Only allow pulling next week\'s work once this week is done'),
+    toggle('gatePullOnCompletion', 'Only allow pulling next week\'s work once this week\'s own work is done'),
+    field('Most unfinished pulled work allowed in this week (minutes)',
+      numberInput('pull-cap', s.pullCapMinutes, { min: 15, max: 2400, step: 15, label: 'Pull limit minutes' },
+        (v) => updateSettings(ctx, { pullCapMinutes: v })),
+      'Finish pulled items to make room for more. 180 = 3 hours.'),
   );
 }
 

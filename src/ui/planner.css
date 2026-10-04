@@ -147,3 +147,5 @@ ol.fc li.today .fc-date { color: var(--text); font-weight: 700; }
 .fc-bar > div { width: 100%; background: var(--bar); }
 ol.fc li.over .fc-bar > div { background: var(--bad-text); }
 .fc-n { min-height: 1.2em; font-weight: 600; color: var(--text); }
+details.forecast summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+details.forecast[open] summary { margin-bottom: 8px; }

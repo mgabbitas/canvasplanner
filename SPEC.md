@@ -11,16 +11,15 @@ I choose, and never later than the real due date.
 size override and pin, 14-day due-load forecast, settings editable in a GUI,
 export/import.
 
-**Out of v1 (design so they can be added, do not build):** time logging, difficulty
-ratings, LLM time estimates (keep the `estimate.source` field for this), homelab or
+**Out of v1 (design so they can be added, do not build):** LLM time estimates (keep the `estimate.source` field for this), homelab or
 phone sync, notifications, other Canvas sites, anything that writes to Canvas.
 
-**Planned direction (after v1):** time tracking. When I check an item off, it asks how
-long it actually took and how difficult it was (a slider), both optional. I log how
-long each assignment actually took, and the tool learns averages by course, type and keyword (e.g. "Course
-A reports take 25 min on average") and uses them as estimates. Keep estimates
-explainable by `estimate.source` and keep course, type and title on every item so
-logged times can be grouped later.
+**Time tracking (moved into v1 as M5 on 2026-10-04):** when I check an item off, it
+asks how long it actually took and how difficult it was (a slider), both optional. A
+stats page shows how long I typically spend by class, by assignment type and by
+weekday, and suggests estimate rules from my averages (e.g. "Physics reports: you
+average 24 min over 6 logged; rule says 45") with an Apply button. Nothing changes
+estimates without me applying it. Keep estimates explainable by `estimate.source`.
 
 ## 3. Canvas data
 Sync uses my existing logged-in browser session. No access token (student tokens are
@@ -96,6 +95,13 @@ Each item gets `estimate: { minutes, source }`. Resolution order, highest wins:
 5. Type default, source `type`
 6. Global default size M, source `default`
 
+In-class activities (decided 2026-10-04): an item can be marked "in class" (item-level
+`inClass`, or an estimate rule whose value is "in class"). It takes no homework time:
+0 minutes, placed on its class day (its local due date, without the before-5-PM shift),
+not counted in the forecast, never pulled, and it doesn't keep the pull gate closed.
+Past in-class items drop off instead of becoming overdue. An item's own minutes
+override beats an in-class rule.
+
 Type resolution: an item's type is the first match in `submission_types`, checked in
 this order: quiz (`online_quiz`), discussion (`discussion_topic`), upload
 (`online_upload`, `online_text_entry`, `online_url`, `media_recording`), external tool
@@ -139,8 +145,11 @@ Add a day: increments `extraDays` for this week (the cutoff moves to Thursday, t
 Friday). Also offer Remove a day. Cannot pass the end of the planning week.
 
 Pull next week:
-- Enabled only when nothing is left undone in the current week, unless the
-  `gatePullOnCompletion` setting is off.
+- Gate (decided 2026-10-04): this week's own work (not counting pulled items or
+  in-class items) must be done, unless `gatePullOnCompletion` is off. Then pulling
+  continues while unfinished pulled work is under `pullCapMinutes` (default 180).
+  Every pull, single or bulk, must fit in the room left, except that one item may
+  exceed it when nothing is pulled yet (so a big item is never stuck).
 - Modes: next day's worth (all undone items due on the earliest upcoming day after this
   week) or by size (choose XS/S/M/L; earliest-due first, ties smallest first).
 - Pulled items set `pulledIn` and are planned by the same algorithm. Each has a "send
@@ -179,6 +188,8 @@ below are guesses, not measurements: I'll edit them.
 | Per-course: include toggle, display name | all included, Canvas name |
 | Auto-sync interval, minutes | 60 (min 15) |
 | Gate pull-next-week on completion | on |
+| Most unfinished pulled work allowed (minutes) | 180 |
+| Forecast strip open (remembered from the strip's toggle) | on |
 | Include non-submittable items (`none`, `on_paper`) | on |
 
 Estimate rules replace plain title keyword rules. Each rule has an optional course,
@@ -233,17 +244,20 @@ Each one ends with `npm test` passing, a commit, and a short walkthrough.
   same way as if it were next week's first day and this week's work were done (items
   due this week or earlier are left out), with next week's own target day, added days
   and per-date capacity. Each item there has a "Pull to this week" action, and the
-  bulk pull controls (next day's worth, by amount) live there too. The
-  `gatePullOnCompletion` setting blocks all pulls, single and bulk, while this week
-  has unfinished work.
-- **M5. Polish.** Error states, dark mode, keyboard access, and instructions for
+  bulk pull controls (next day's worth, by amount) live there too. Follow-ups
+  (2026-10-04): in-class activities, the pull cap, a collapsible forecast strip, and
+  a Dismissed panel with Restore.
+- **M5. Time tracking and stats.** Check-off prompt for time taken and difficulty
+  (both optional), a stats page (by class, type, weekday), and rule suggestions with
+  Apply. Details to settle at the start of M5.
+- **M6. Polish.** Error states, dark mode, keyboard access, and instructions for
   installing long-term (signing as an unlisted add-on, or running a Firefox build that
   allows unsigned add-ons).
 
 ## 11. Decisions, assumptions, open questions
 **Decided with me:** plan only the current week; pull next week is a manual button;
 done means submitted or graded; leftover work after Wednesday is scheduled ASAP and
-flagged "behind plan"; time logging, difficulty and LLM estimates come later; the
+flagged "behind plan"; LLM estimates come later; the
 extension replaces the calendar-feed idea because the session API works.
 
 Decided 2026-09-29 after reviewing the fixture: multi-type resolution order (section 5);

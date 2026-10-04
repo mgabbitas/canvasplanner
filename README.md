@@ -43,7 +43,7 @@ the same Saturday. Canvas Planner does, and spreads them out before that happens
   check items off yourself and uncheck them later.
 - **Time estimates you control.** Each item's estimate comes from, in order:
   1. minutes you pick on the item (a dropdown in 15-minute steps),
-  2. your rules that name a class,
+  2. your rules that name a class (a rule can also mark items as in-class),
   3. the instructor's stated time ("should take about 30 minutes"), scaled by how fast
      you usually work,
   4. your general rules,
@@ -64,10 +64,13 @@ the same Saturday. Canvas Planner does, and spreads them out before that happens
   work were done, with its own target day and per-date minutes. Pull work into this
   week one item at a time, a whole day's worth, or by amount of time (earliest due
   first). Pulled items can be sent back. By default, pulling unlocks once this week's
-  work is done (a setting).
+  own work is done, and you can keep pulling until you have 3 hours of unfinished
+  pulled work (both adjustable).
+- **In-class activities.** Mark an item (or a whole kind of item, by rule) as done in
+  class: it shows on its class day but takes none of your homework time.
 - **Pins.** Pin an item to keep it on its due date instead of letting the planner move
   it earlier.
-- **14-day forecast strip** showing how many items and minutes are *due* each day,
+- **14-day forecast strip** (collapsible) showing how many items and minutes are *due* each day,
   with days over your available time highlighted.
 - **Dismiss and restore** overdue items you don't plan to do.
 - **Export / import** of your settings and per-item changes as a JSON file (no Canvas
@@ -75,14 +78,13 @@ the same Saturday. Canvas Planner does, and spreads them out before that happens
 - Light and dark mode follow your system setting.
 
 ### Coming next
+- **Time tracking and stats.** When you check an item off, log how long it took and
+  how hard it was. A stats page shows how long you typically spend per class, per
+  assignment type and per weekday, and suggests estimate rules from your real
+  averages (for example "reports in this class take you about 25 minutes") that you
+  can apply with one click.
 - **Polish:** better error states, a keyboard and accessibility review, and a
   permanent install (signed add-on).
-
-### Later
-- **Time tracking.** When you check an item off, log how long it took and how hard it
-  was. The planner then learns your real averages by class, type and keyword (for
-  example "reports in this class take you about 25 minutes") and uses them as
-  estimates.
 
 ## How it works
 
