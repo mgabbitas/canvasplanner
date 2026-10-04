@@ -1,4 +1,6 @@
-// Minutes estimate per item. Highest-priority source wins (SPEC section 5).
+// Minutes estimate per item. Highest-priority source wins (SPEC section 5):
+// size you set > rules naming a course > instructor-stated time x scale >
+// general rules > type default > default size M.
 
 // Only "should take about N minutes/hours". Looser phrases in real descriptions are
 // video lengths or in-class presentation times, not the assignment's length.
@@ -12,26 +14,41 @@ export function statedMinutes(text) {
   return minutes > 0 && minutes <= MAX_STATED_MINUTES ? minutes : null;
 }
 
-function keywordSize(title, rules) {
-  const t = String(title ?? '').toLowerCase();
-  for (const rule of rules ?? []) {
-    const k = String(rule?.keyword ?? '').trim().toLowerCase();
-    if (k && t.includes(k)) return rule.size;
-  }
-  return null;
+/** Does this rule apply to the item? Every condition the rule sets must match. */
+export function ruleMatches(rule, item) {
+  const keyword = String(rule.keyword ?? '').trim().toLowerCase();
+  if (!rule.courseId && !rule.type && !keyword) return false;
+  if (rule.courseId && String(rule.courseId) !== String(item.courseId)) return false;
+  if (rule.type && rule.type !== item.type) return false;
+  if (keyword && !String(item.title ?? '').toLowerCase().includes(keyword)) return false;
+  return true;
 }
 
-/** { minutes, source } where source is manual | stated | keyword | type | default. */
+const ruleMinutes = (rule, sizeMinutes) => rule.minutes ?? sizeMinutes[rule.size] ?? null;
+
+/** { minutes, source } where source is manual | rule | stated | type | default. */
 export function estimate(item, settings) {
-  const sizeMin = (size) => settings.sizeMinutes[size];
-  if (item.sizeOverride && sizeMin(item.sizeOverride) != null) {
-    return { minutes: sizeMin(item.sizeOverride), source: 'manual' };
+  const sizes = settings.sizeMinutes;
+  if (item.sizeOverride && sizes[item.sizeOverride] != null) {
+    return { minutes: sizes[item.sizeOverride], source: 'manual' };
   }
+  const rules = settings.estimateRules ?? [];
+  const firstRule = (withCourse) => rules.find((r) =>
+    Boolean(r.courseId) === withCourse && ruleMatches(r, item) && ruleMinutes(r, sizes) != null);
+
+  const courseRule = firstRule(true);
+  if (courseRule) return { minutes: ruleMinutes(courseRule, sizes), source: 'rule' };
+
   const stated = statedMinutes(item.descriptionText);
-  if (stated != null) return { minutes: stated, source: 'stated' };
-  const kw = keywordSize(item.title, settings.keywordRules);
-  if (kw && sizeMin(kw) != null) return { minutes: sizeMin(kw), source: 'keyword' };
+  if (stated != null) {
+    const scale = (settings.statedScale ?? 100) / 100;
+    return { minutes: Math.max(1, Math.round(stated * scale)), source: 'stated' };
+  }
+
+  const generalRule = firstRule(false);
+  if (generalRule) return { minutes: ruleMinutes(generalRule, sizes), source: 'rule' };
+
   const typeSize = settings.typeDefaults[item.type];
-  if (typeSize && sizeMin(typeSize) != null) return { minutes: sizeMin(typeSize), source: 'type' };
-  return { minutes: sizeMin('M'), source: 'default' };
+  if (typeSize && sizes[typeSize] != null) return { minutes: sizes[typeSize], source: 'type' };
+  return { minutes: sizes.M, source: 'default' };
 }

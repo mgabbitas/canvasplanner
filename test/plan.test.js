@@ -177,6 +177,24 @@ test('scenario 8: pull next week, by day and by size', () => {
   assert.equal(q.pull.nextDay.date, '2026-10-05');
 });
 
+test('per-date capacity override: smaller day, day off, and unblocking a blocked weekday', () => {
+  const items = many(6, { due: '2026-10-03', sizeOverride: 'S' }); // 6 x 20 min
+  const weekState = { '2026-09-28': { extraDays: 0, capacity: { '2026-09-28': 40, '2026-09-29': 0 } } };
+  const p = run(items, { weekState });
+  assert.deepEqual(p.days.map((d) => [d.date, d.load, d.capacity, d.capacityOverridden, d.blocked]), [
+    ['2026-09-28', 40, 40, true, false],
+    ['2026-09-29', 0, 0, true, true], // day off
+    ['2026-09-30', 80, 120, false, false],
+  ]);
+  assert.equal(p.days[0].defaultCapacity, 120);
+  // Tuesday is a blocked weekday, but an explicit override for that date wins.
+  const q = run(many(9, { due: '2026-10-03', sizeOverride: 'S' }), { settings: { blockedWeekdays: [2] }, weekState: { '2026-09-28': { capacity: { '2026-09-29': 60 } } } });
+  assert.equal(q.days[1].load, 60);
+  // Forecast "over" uses the same capacity.
+  const f = run(many(3, { due: '2026-09-29', sizeOverride: 'S' }), { weekState });
+  assert.equal(f.forecast[1].over, true);
+});
+
 test('overdue items are scheduled today and flagged', () => {
   const late = mk({ due: '2026-09-29', sizeOverride: 'S' });
   const p = run([late], { now: '2026-09-30 08:00' });

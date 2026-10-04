@@ -6,7 +6,7 @@ import { DEFAULT_SETTINGS as S } from '../src/storage/defaults.js';
 import { normalizeAssignment } from '../src/sync/normalize.js';
 import { fixture, needsFixture } from './helpers.js';
 
-const item = (over = {}) => ({ title: 'Thing', type: 'upload', descriptionText: '', sizeOverride: null, ...over });
+const item = (over = {}) => ({ courseId: '1', title: 'Thing', type: 'upload', descriptionText: '', sizeOverride: null, ...over });
 
 test('stated minutes: conservative phrase only', () => {
   assert.equal(statedMinutes('It should take about 15 minutes to complete'), 15);
@@ -19,21 +19,50 @@ test('stated minutes: conservative phrase only', () => {
   assert.equal(statedMinutes('should take about 40 hours'), null); // implausible, ignored
 });
 
-test('resolution order: manual > stated > keyword > type > default', () => {
-  const stated = 'It should take about 15 minutes.';
-  assert.deepEqual(estimate(item({ sizeOverride: 'L', descriptionText: stated }), S), { minutes: 120, source: 'manual' });
-  assert.deepEqual(estimate(item({ title: 'Week 1 Report', descriptionText: stated }), S), { minutes: 15, source: 'stated' });
-  assert.deepEqual(estimate(item({ title: 'Week 1 REPORT' }), S), { minutes: 120, source: 'keyword' });
-  assert.deepEqual(estimate(item({ type: 'external_tool' }), S), { minutes: 5, source: 'type' });
-  assert.deepEqual(estimate(item({ type: 'weird' }), S), { minutes: 45, source: 'default' });
+const rule = (over) => ({ courseId: null, type: null, keyword: '', size: null, minutes: null, ...over });
+
+test('resolution order: manual > course rule > stated x scale > general rule > type > default', () => {
+  const stated = 'It should take about 2.5 hours.';
+  const settings = {
+    ...S,
+    statedScale: 60,
+    estimateRules: [rule({ keyword: 'report', size: 'L' }), rule({ courseId: '7', keyword: 'report', minutes: 25 })],
+  };
+  const report = (over) => item({ title: 'Week 2 Report', courseId: '7', ...over });
+  assert.deepEqual(estimate(report({ sizeOverride: 'XS', descriptionText: stated }), settings), { minutes: 5, source: 'manual' });
+  // A course rule beats the instructor's stated time, even though it's lower in the list.
+  assert.deepEqual(estimate(report({ descriptionText: stated }), settings), { minutes: 25, source: 'rule' });
+  // In another course only the general rule matches, and the stated time (x 60%) beats it.
+  assert.deepEqual(estimate(report({ courseId: '8', descriptionText: stated }), settings), { minutes: 90, source: 'stated' });
+  assert.deepEqual(estimate(report({ courseId: '8' }), settings), { minutes: 120, source: 'rule' });
+  assert.deepEqual(estimate(item({ type: 'external_tool' }), settings), { minutes: 5, source: 'type' });
+  assert.deepEqual(estimate(item({ type: 'weird' }), settings), { minutes: 45, source: 'default' });
 });
 
-test('keyword rules: first match in list order wins', () => {
-  // "report" (L) comes before "reading" (S) in the default list.
-  assert.equal(estimate(item({ title: 'Daily Reading Report' }), S).minutes, 120);
-  const reordered = { ...S, keywordRules: [{ keyword: 'reading', size: 'S' }, { keyword: 'report', size: 'L' }] };
-  assert.equal(estimate(item({ title: 'Daily Reading Report' }), reordered).minutes, 20);
-  assert.equal(estimate(item({ title: 'x' }), { ...S, keywordRules: [{ keyword: '', size: 'L' }] }).source, 'type');
+test('rules: every condition set must match; first match in list order wins', () => {
+  const settings = {
+    ...S,
+    estimateRules: [
+      rule({ courseId: '7', type: 'quiz', size: 'XS' }),
+      rule({ type: 'quiz', keyword: 'mastery', minutes: 33 }),
+      rule({ keyword: 'reading', size: 'S' }),
+      rule({ keyword: 'report', size: 'L' }),
+    ],
+  };
+  assert.equal(estimate(item({ courseId: '7', type: 'quiz', title: 'Mastery Quiz' }), settings).minutes, 5);
+  assert.equal(estimate(item({ courseId: '8', type: 'quiz', title: 'Mastery Quiz' }), settings).minutes, 33);
+  assert.equal(estimate(item({ courseId: '8', type: 'upload', title: 'Mastery Upload' }), settings).source, 'type');
+  // "reading" is above "report" here, so the daily reading report gets S.
+  assert.equal(estimate(item({ title: 'Daily Reading Report' }), settings).minutes, 20);
+  // A rule with no conditions never matches.
+  assert.equal(estimate(item({ title: 'x' }), { ...S, estimateRules: [rule({ size: 'L' })] }).source, 'type');
+});
+
+test('stated scale rounds and never goes below 1 minute', () => {
+  const s = (scale) => estimate(item({ descriptionText: 'should take about 15 minutes' }), { ...S, statedScale: scale }).minutes;
+  assert.equal(s(100), 15);
+  assert.equal(s(70), 11);
+  assert.equal(s(1), 1);
 });
 
 test('fixture: exactly the three stated-time assignments are found', needsFixture, () => {

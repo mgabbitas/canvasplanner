@@ -1,10 +1,11 @@
 // Storage schema: validate, clamp and migrate everything read from storage. Pure.
 // Anything malformed falls back to the default rather than throwing.
 import { DEFAULT_SETTINGS, SIZES, USER_FIELD_DEFAULTS } from './defaults.js';
+import { addDays } from '../planner/dates.js';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
-const TYPES = ['quiz', 'discussion', 'upload', 'external_tool', 'other'];
+export const TYPES = ['quiz', 'discussion', 'upload', 'external_tool', 'other'];
 const MAX_MINUTES = 24 * 60;
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -18,10 +19,30 @@ function int(v, min, max, fallback) {
 }
 
 const weekdayIndex = (v, fallback) => int(v, 0, 6, fallback);
+const ID = /^\d{1,20}$/;
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const MAX_RULES = 200;
 const size = (v, fallback) => (SIZES.includes(v) ? v : fallback);
 
-export function validateSettings(raw) {
-  const d = DEFAULT_SETTINGS;
+/** One estimate rule, or null if it has no condition or no value. */
+export function validateRule(r) {
+  if (!isObj(r)) return null;
+  const courseId = r.courseId != null && ID.test(String(r.courseId)) ? String(r.courseId) : null;
+  const type = TYPES.includes(r.type) ? r.type : null;
+  const keyword = (str(r.keyword, 100) ?? '').trim();
+  const minutes = r.minutes == null ? null : int(r.minutes, 1, MAX_MINUTES, null);
+  const size = minutes == null && SIZES.includes(r.size) ? r.size : null;
+  if (!courseId && !type && !keyword) return null;
+  if (minutes == null && !size) return null;
+  return { courseId, type, keyword, size, minutes };
+}
+
+/**
+ * Validate settings. Bad or missing values fall back to `base` (the last valid
+ * settings when editing, the defaults otherwise).
+ */
+export function validateSettings(raw, base = DEFAULT_SETTINGS) {
+  const d = base;
   const s = isObj(raw) ? raw : {};
   const capacity = Array.isArray(s.capacity) && s.capacity.length === 7
     ? s.capacity.map((c, i) => int(c, 0, MAX_MINUTES, d.capacity[i]))
@@ -30,41 +51,40 @@ export function validateSettings(raw) {
   for (const k of SIZES) sizeMinutes[k] = int(s.sizeMinutes?.[k], 1, MAX_MINUTES, d.sizeMinutes[k]);
   const typeDefaults = {};
   for (const t of TYPES) typeDefaults[t] = size(s.typeDefaults?.[t], d.typeDefaults[t]);
-  const keywordRules = Array.isArray(s.keywordRules)
-    ? s.keywordRules
-      .filter((r) => isObj(r) && str(r.keyword, 100)?.trim() && SIZES.includes(r.size))
-      .slice(0, 200)
-      .map((r) => ({ keyword: r.keyword.trim().slice(0, 100), size: r.size }))
-    : d.keywordRules.map((r) => ({ ...r }));
+  const estimateRules = Array.isArray(s.estimateRules)
+    ? s.estimateRules.map(validateRule).filter(Boolean).slice(0, MAX_RULES)
+    : d.estimateRules.map((r) => ({ ...r }));
   const courses = {};
   if (isObj(s.courses)) {
     for (const [id, c] of Object.entries(s.courses)) {
-      if (!isObj(c)) continue;
-      courses[id] = { include: c.include !== false, displayName: str(c.displayName, 100) ?? '' };
+      if (!ID.test(id) || !isObj(c)) continue;
+      courses[id] = { include: c.include !== false, displayName: (str(c.displayName, 100) ?? '').trim() };
     }
   }
   const blocked = Array.isArray(s.blockedWeekdays)
-    ? [...new Set(s.blockedWeekdays.map((w) => weekdayIndex(w, -1)).filter((w) => w >= 0))]
-    : [];
+    ? [...new Set(s.blockedWeekdays.map((w) => weekdayIndex(w, -1)).filter((w) => w >= 0))].sort()
+    : [...d.blockedWeekdays];
+  const bool = (k) => (typeof s[k] === 'boolean' ? s[k] : d[k]);
   return {
     weekStartDay: weekdayIndex(s.weekStartDay, d.weekStartDay),
     targetDay: weekdayIndex(s.targetDay, d.targetDay),
     capacity,
-    blockedWeekdays: blocked.length < 7 ? blocked : [],
+    blockedWeekdays: blocked.length < 7 ? blocked : [...d.blockedWeekdays],
     sizeMinutes,
     typeDefaults,
-    keywordRules,
+    estimateRules,
+    statedScale: int(s.statedScale, 10, 300, d.statedScale),
     courses,
     autoSyncMinutes: int(s.autoSyncMinutes, 15, 7 * 24 * 60, d.autoSyncMinutes),
-    gatePullOnCompletion: typeof s.gatePullOnCompletion === 'boolean' ? s.gatePullOnCompletion : d.gatePullOnCompletion,
-    includeNonSubmittable: typeof s.includeNonSubmittable === 'boolean' ? s.includeNonSubmittable : d.includeNonSubmittable,
+    gatePullOnCompletion: bool('gatePullOnCompletion'),
+    includeNonSubmittable: bool('includeNonSubmittable'),
   };
 }
 
 function validateItem(id, raw) {
-  if (!isObj(raw) || !/^\d{1,20}$/.test(id)) return null;
+  if (!isObj(raw) || !ID.test(id)) return null;
   const courseId = String(raw.courseId ?? '');
-  if (!/^\d{1,20}$/.test(courseId)) return null;
+  if (!ID.test(courseId)) return null;
   const url = str(raw.url, 1000);
   return {
     id,
@@ -105,9 +125,25 @@ export function validateWeekState(raw) {
   const out = {};
   if (!isObj(raw)) return out;
   for (const [week, w] of Object.entries(raw)) {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(week) && isObj(w)) out[week] = { extraDays: int(w.extraDays, 0, 6, 0) };
+    if (!DATE.test(week) || !isObj(w)) continue;
+    const capacity = {};
+    if (isObj(w.capacity)) {
+      for (const [date, minutes] of Object.entries(w.capacity)) {
+        const m = int(minutes, 0, MAX_MINUTES, null);
+        if (DATE.test(date) && m != null) capacity[date] = m;
+      }
+    }
+    out[week] = { extraDays: int(w.extraDays, 0, 6, 0), capacity };
   }
   return out;
+}
+
+const KEEP_WEEKS = 8;
+
+/** Drop week state for weeks that started more than 8 weeks before today. */
+export function pruneWeekState(weekState, today) {
+  const oldest = addDays(today, -7 * KEEP_WEEKS);
+  return Object.fromEntries(Object.entries(weekState).filter(([week]) => week >= oldest));
 }
 
 export function validateMeta(raw) {
@@ -119,15 +155,31 @@ export function validateCourses(raw) {
   const out = {};
   if (!isObj(raw)) return out;
   for (const [id, c] of Object.entries(raw)) {
-    if (/^\d{1,20}$/.test(id) && isObj(c)) out[id] = { name: str(c.name, 200) || `Course ${id}` };
+    if (ID.test(id) && isObj(c)) out[id] = { name: str(c.name, 200) || `Course ${id}` };
   }
   return out;
 }
 
-/** Whole stored state -> current schema, validated. Unknown future versions are not trusted. */
+/** Upgrade older stored shapes step by step, oldest first. Returns a new object. */
+function upgrade(raw) {
+  const r = { ...raw };
+  const version = Number.isInteger(r.schemaVersion) ? r.schemaVersion : 1;
+  if (version < 2 && isObj(r.settings)) {
+    // v1 -> v2: title keyword rules became estimate rules (course/type/keyword).
+    const { keywordRules, ...settings } = r.settings;
+    if (Array.isArray(keywordRules) && !Array.isArray(settings.estimateRules)) {
+      settings.estimateRules = keywordRules.map((k) => ({
+        courseId: null, type: null, keyword: k?.keyword, size: k?.size, minutes: null,
+      }));
+    }
+    r.settings = settings;
+  }
+  return r;
+}
+
+/** Whole stored state -> current schema, validated. */
 export function migrate(raw) {
-  const r = isObj(raw) ? raw : {};
-  // Version 1 is the first schema; future migrations go here, oldest first.
+  const r = upgrade(isObj(raw) ? raw : {});
   return {
     schemaVersion: SCHEMA_VERSION,
     settings: validateSettings(r.settings),

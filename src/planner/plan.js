@@ -72,8 +72,12 @@ export function plan({ items, settings, weekState = {}, now }) {
 
   // --- scheduling ---
   const blocked = new Set(settings.blockedWeekdays ?? []);
-  const capacity = (d) => settings.capacity[weekday(d)] ?? 0;
-  const usable = (d) => !blocked.has(weekday(d)) && capacity(d) > 0;
+  const defaultCapacity = (d) => settings.capacity[weekday(d)] ?? 0;
+  // A per-date override (set on the day in the planner) beats the weekday default
+  // and a blocked weekday. 0 means a day off.
+  const override = (d) => weekState?.[planningWeek(d, settings).start]?.capacity?.[d];
+  const capacity = (d) => override(d) ?? defaultCapacity(d);
+  const usable = (d) => (override(d) != null || !blocked.has(weekday(d))) && capacity(d) > 0;
   const load = new Map();
   const onDay = new Map();
   const place = (e, date) => {
@@ -116,6 +120,8 @@ export function plan({ items, settings, weekState = {}, now }) {
       date,
       weekday: weekday(date),
       capacity: capacity(date),
+      defaultCapacity: defaultCapacity(date),
+      capacityOverridden: override(date) != null,
       blocked: !usable(date),
       load: l,
       over: l > capacity(date),
