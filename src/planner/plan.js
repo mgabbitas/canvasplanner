@@ -1,7 +1,7 @@
 // The planner: items + settings + week state + now -> everything the page shows.
 // Pure: no browser APIs, no clock. See SPEC section 6.
 import {
-  toLocalDate, addDays, weekday, dateRange, minDate, maxDate, workDueDate, planningWeek,
+  toLocalDate, addDays, weekday, dateRange, minDate, maxDate, workDueDate, planningWeek, atNoon,
 } from './dates.js';
 import { estimate } from './estimate.js';
 
@@ -158,6 +158,11 @@ export function plan({ items, settings, weekState = {}, now }) {
     return { date, count: due.length, minutes, over: minutes > capacity(date) };
   });
 
+  // --- dismissed (so a dismissal can be undone) ---
+  const dismissed = all
+    .filter((i) => i.dismissed && !isDone(i) && !i.hidden && courseIncluded(i, settings))
+    .map((i) => toEntry(i, settings, today));
+
   // --- done this week (for the collapsible Done section) ---
   const done = all
     .filter((i) => isDone(i) && !i.hidden && courseIncluded(i, settings) && i.dueAt
@@ -180,8 +185,23 @@ export function plan({ items, settings, weekState = {}, now }) {
     atRisk,
     atRiskMinutes: sum(atRisk),
     noDueDate,
+    dismissed,
     pull,
     forecast,
     done,
   };
+}
+
+/**
+ * Projected plan for next week, as if this week's work were done: items due this
+ * week or earlier and items already pulled into this week are left out, and the
+ * rest is planned as of next week's first day (its own target day, added days and
+ * per-date capacity apply).
+ */
+export function planNextWeek({ items, settings, weekState = {}, now }) {
+  const thisWeek = planningWeek(toLocalDate(now), settings);
+  const start = addDays(thisWeek.start, 7);
+  const list = (Array.isArray(items) ? items : Object.values(items ?? {}))
+    .filter((i) => !i.pulledIn && !(i.dueAt && toLocalDate(i.dueAt) <= thisWeek.end));
+  return plan({ items: list, settings, weekState, now: atNoon(start) });
 }

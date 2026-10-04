@@ -11,7 +11,7 @@ export function toLocalDate(value) {
 }
 
 /** Noon on the given local date. Noon is never skipped or repeated by DST. */
-function atNoon(date) {
+export function atNoon(date) {
   const [y, m, d] = date.split('-').map(Number);
   return new Date(y, m - 1, d, 12);
 }

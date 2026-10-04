@@ -278,3 +278,40 @@ test('fixture: plan invariants hold on real data', needsFixture, () => {
   const p = plan({ items: w07, settings: S, weekState: {}, now: iso('2026-10-26 10:00') });
   assert.equal(p.days[0].items[0]?.item.title, 'W07 Evaluation');
 });
+
+test('next week: projected plan leaves out this week and pulled items', async () => {
+  const { planNextWeek } = await import('../src/planner/plan.js');
+  const thisWeek = mk({ due: '2026-10-02' });
+  const overdue = mk({ due: '2026-09-20' });
+  const pulled = mk({ due: '2026-10-06', pulledIn: true });
+  const monday = mk({ due: '2026-10-05', minutesOverride: 45 });
+  const saturday = many(8, { due: '2026-10-10', minutesOverride: 45 });
+  const opensThu = mk({ due: '2026-10-10', unlock: '2026-10-08 00:00', minutesOverride: 5 });
+  const items = [thisWeek, overdue, pulled, monday, ...saturday, opensThu];
+  // Next week's own state: one added day and a light Tuesday.
+  const weekState = { '2026-10-05': { extraDays: 1, capacity: { '2026-10-06': 45 } } };
+
+  const p = planNextWeek({ items, settings: S, weekState, now: iso('2026-09-30 08:00') });
+  assert.equal(p.today, '2026-10-05');
+  assert.equal(p.week.start, '2026-10-05');
+  assert.equal(p.week.cutoff, '2026-10-08'); // Wednesday + 1 added day
+  assert.equal(p.behind, false);
+  assert.equal(p.overdue.length, 0);
+  const ids = p.days.flatMap((d) => d.items.map((e) => e.id));
+  for (const left of [thisWeek, overdue, pulled]) assert.ok(!ids.includes(left.id));
+  assert.equal(dateOf(p, monday.id), '2026-10-05');
+  assert.equal(p.days[1].capacity, 45);
+  assert.equal(p.days[1].capacityOverridden, true);
+  // Opens Thursday: never placed before then.
+  assert.equal(dateOf(p, opensThu.id), '2026-10-08');
+  assert.equal(p.days.find((d) => d.date === '2026-10-08').items.find((e) => e.id === opensThu.id).notOpenYet, true);
+  // Every remaining next-week item is either placed by the cutoff or reported as overflow.
+  const placed = p.days.reduce((s, d) => s + d.items.length, 0);
+  assert.equal(placed + p.overflow.length, 10);
+});
+
+test('dismissed items are listed so they can be restored', () => {
+  const gone = mk({ due: '2026-09-20', dismissed: true });
+  const p = run([gone, mk({ dismissed: true, canvasDone: true })]);
+  assert.deepEqual(p.dismissed.map((e) => e.id), [gone.id]);
+});
