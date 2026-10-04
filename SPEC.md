@@ -228,7 +228,14 @@ Each one ends with `npm test` passing, a commit, and a short walkthrough.
 15-minute steps; changed from XS/S/M/L sizes on 2026-10-04, schema v3), and a per-date capacity override edited on each day
   in the planner (0 = day off, reset returns to the weekday default).
 - **M4. Interactions.** Pull next week, pin, forecast strip. (Add/remove a day and
-  banners were done in M2; size chip in M3.)
+  banners were done in M2; size chip in M3.) Plus a **Next week** view (decided
+  2026-10-04): tabs This week / Next week. Next week shows a projected plan, planned the
+  same way as if it were next week's first day and this week's work were done (items
+  due this week or earlier are left out), with next week's own target day, added days
+  and per-date capacity. Each item there has a "Pull to this week" action, and the
+  bulk pull controls (next day's worth, by amount) live there too. The
+  `gatePullOnCompletion` setting blocks all pulls, single and bulk, while this week
+  has unfinished work.
 - **M5. Polish.** Error states, dark mode, keyboard access, and instructions for
   installing long-term (signing as an unlisted add-on, or running a Firefox build that
   allows unsigned add-ons).
