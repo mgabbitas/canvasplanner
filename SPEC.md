@@ -249,7 +249,10 @@ Each one ends with `npm test` passing, a commit, and a short walkthrough.
   a Dismissed panel with Restore.
 - **M5. Time tracking and stats.** Check-off prompt for time taken and difficulty
   (both optional), a stats page (by class, type, weekday), and rule suggestions with
-  Apply. Details to settle at the start of M5.
+  Apply. Decided 2026-10-04: Canvas-done items get a "Log time" button in the Done
+  panel (with a "N need a time" count), never a pop-up; weekday stats use the day the
+  item was finished/logged; difficulty is a 1-5 slider; a rule is suggested once a
+  group has 3+ logs and its average differs from the current estimate by 5+ min.
 - **M6. Polish.** Error states, dark mode, keyboard access, and instructions for
   installing long-term (signing as an unlisted add-on, or running a Firefox build that
   allows unsigned add-ons).
