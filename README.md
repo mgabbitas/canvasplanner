@@ -153,6 +153,7 @@ Moving from a development install? Your data lives in that profile. Use
 npm test          # run all tests (Node's built-in test runner)
 npm start         # open Firefox (dev profile) at about:debugging
 npx web-ext lint  # check the manifest and extension files
+npm run check:ui  # click through the real page in headless Firefox (needs the fixture)
 npm run build     # package an unsigned .zip
 npm run sign      # sign an unlisted .xpi (needs .amo.env)
 ```

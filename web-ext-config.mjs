@@ -3,6 +3,6 @@
 export default {
   ignoreFiles: [
     'test', 'package.json', 'package-lock.json', 'web-ext-config.mjs', '*.md',
-    '.amo.env', 'web-ext-artifacts', 'node_modules',
+    '.amo.env', 'web-ext-artifacts', 'node_modules', 'tools',
   ],
 };

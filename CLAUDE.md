@@ -44,16 +44,21 @@ file and SPEC.md disagree, stop and ask me.
   at `about:debugging`, then Load Temporary Add-on > `manifest.json`. `web-ext run`
   does not work here: CachyOS locks `devtools.debugger.remote-enabled` to false.
 - `npx web-ext lint`: lint the manifest (from milestone M2 on).
+- `npm run check:ui`: headless-Firefox click-through of the real page with a fake
+  `browser` API and the fixture data. Run it after any change in `src/ui/`
+  (`-- --screenshot` saves screenshots to `web-ext-artifacts/`).
 
 ## Layout
     manifest.json
     src/planner/   pure logic: dates, estimates, scheduling
     src/sync/      Canvas fetch + normalize
     src/storage/   schema, defaults, migrations, merge
-    src/ui/        new-tab planner page, stats and settings views
+    src/ui/        page: app.js (shared state), shell.js, week.js, items.js,
+                   settings.js, statsview.js, planner.js (render + startup)
     src/background.js        opens the planner / syncs when you visit Canvas
     src/content/   content script on Canvas pages (signals a visit only)
     test/          tests
+    tools/ui-check/  browser click-through check (not packaged)
     test/fixtures/ real Canvas API JSON (private repo only)
 
 ## How to work with me

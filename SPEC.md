@@ -278,8 +278,9 @@ Each one ends with `npm test` passing, a commit, and a short walkthrough.
 - **M6. Polish.** Done 2026-10-04: plain-language sync errors, first-run welcome,
   skip link, contrast-checked accents, due-today/tomorrow flags (by real due date,
   no reordering), version 1.0.0, `npm run sign` (unlisted; credentials in a gitignored
-  `.amo.env` that is never packaged). Not done: splitting `src/ui/planner.js`
-  (deferred; no user-facing change). Original scope: Error states, dark mode, keyboard access, and instructions for
+  `.amo.env` that is never packaged). `src/ui/planner.js` split into app/shell/
+  week/items modules, verified with a headless-Firefox click-through
+  (`npm run check:ui`) before and after. Original scope: Error states, dark mode, keyboard access, and instructions for
   installing long-term (signing as an unlisted add-on, or running a Firefox build that
   allows unsigned add-ons).
 
