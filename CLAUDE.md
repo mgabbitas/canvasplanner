@@ -65,9 +65,18 @@ file and SPEC.md disagree, stop and ask me.
 - Follow the milestones in SPEC.md in order, one at a time. Stop at the end of each with
   tests passing and a short summary.
 - Small commits with clear messages.
-- Keep `README.md` current for other readers: when a change affects Features, Install
-  or Development, update it in the same commit (move features from "Coming next" to
-  "Available now" as they land).
+- Keep `README.md` current for other readers, in the same commit as the change. It is
+  deliberately short and plain: what it does, install, using it, a settings overview,
+  a short developer section and changelog. Simplicity beats covering every feature.
+
+## Releasing a new version
+1. Bump `version` in `manifest.json` and `package.json`; add a changelog line to README.
+2. `npm test`, `npm run check:ui`, `npx web-ext lint`, then `npm run build`.
+3. I upload `web-ext-artifacts/canvas_planner-<version>.zip` at addons.mozilla.org
+   ("On your own"), then put the signed `.xpi` in the project folder.
+4. Publish a GitHub Release `v<version>` with the signed file attached as
+   `canvas-planner.xpi` (that exact name: the README links to
+   `releases/latest/download/canvas-planner.xpi`). `.xpi` files are never committed.
 - Before writing non-trivial logic (especially in `src/planner/`), give me a short
   plain-language explanation of the approach. After each milestone, give a 5 to 10 line
   walkthrough of what changed and why, and call out one or two JS or WebExtension

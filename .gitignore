@@ -1,6 +1,9 @@
 node_modules/
 web-ext-artifacts/
 
+# Signed builds go on GitHub Releases, not in git.
+*.xpi
+
 # Mozilla add-on signing credentials. Never commit.
 .amo.env
 
