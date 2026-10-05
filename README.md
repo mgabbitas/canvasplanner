@@ -182,6 +182,11 @@ The full requirements and decision log are in [`SPEC.md`](SPEC.md).
 
 ## Changelog
 
+### 1.0.1
+Logo and add-on icon. Fixes: time logging Save was blocked for most minute values;
+header now separates "due today" from "overdue"; Next week's "due today/tomorrow"
+chips use the real date.
+
 ### 1.0.0
 First release: Canvas sync with your browser login, a weekly plan with self-assigned
 target days, day tabs with class groups and counts, due-today flags, next-week
