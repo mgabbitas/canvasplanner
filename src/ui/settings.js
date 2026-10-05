@@ -276,7 +276,7 @@ function behaviorSection(ctx) {
     toggle('includeNonSubmittable', 'Plan items that can\'t be submitted online', 'e.g. "no submission" or "on paper" assignments.'),
     toggle('gatePullOnCompletion', 'Only allow pulling next week\'s work once this week\'s own work is done'),
     field('Most unfinished pulled work allowed in this week (minutes)',
-      numberInput('pull-cap', s.pullCapMinutes, { min: 15, max: 2400, step: 15, label: 'Pull limit minutes' },
+      numberInput('pull-cap', s.pullCapMinutes, { min: 15, max: 2400, step: 5, label: 'Pull limit minutes' },
         (v) => updateSettings(ctx, { pullCapMinutes: v })),
       'Finish pulled items to make room for more. 180 = 3 hours.'),
   );

@@ -55,7 +55,8 @@ const DIFFICULTY_WORDS = ['', 'very easy', 'easy', 'medium', 'hard', 'very hard'
 export function logForm({ title, minutes, difficulty, onSave, onCancel }) {
   let touched = difficulty != null;
   const minutesInput = el('input', {
-    type: 'number', min: 1, max: 1440, step: 5, value: minutes ?? '', className: 'log-minutes',
+    // step 1: with min 1 a step of 5 would only accept 1, 6, 11... and block Save.
+    type: 'number', min: 1, max: 1440, step: 1, value: minutes ?? '', className: 'log-minutes',
     'aria-label': 'Minutes it took', 'data-key': 'log-minutes',
   });
   const value = el('span', { className: 'log-diff-value' }, touched ? `${difficulty} · ${DIFFICULTY_WORDS[difficulty]}` : 'not set');

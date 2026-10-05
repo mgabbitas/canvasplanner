@@ -351,8 +351,11 @@ function renderHeader(p) {
     const today = v === 'this' ? p.days.find((d) => d.date === p.today) : null;
     const parts = [];
     if (today) parts.push(el('strong', {}, `Today: ${itemCount(today.items)} · ${minutesLabel(today.load)}`));
-    const dueToday = v === 'this' ? homework(p.days.flatMap((d) => d.items)).filter((e) => e.dueToday || e.overdue).length : 0;
+    const work = v === 'this' ? homework(p.days.flatMap((d) => d.items)) : [];
+    const dueToday = work.filter((e) => e.dueToday).length;
+    const overdue = work.filter((e) => e.overdue).length;
     if (dueToday) parts.push(el('span', { className: 'urgent-text' }, `${dueToday} due today`));
+    if (overdue) parts.push(el('span', { className: 'urgent-text' }, `${overdue} overdue`));
     if (v === 'next') parts.push(el('span', {}, 'Projected plan'));
     subtitle = el('div', { className: 'subtitle-row' },
       el('p', { className: 'subtitle' }, ...parts.flatMap((x, i) => (i ? [' · ', x] : [x]))),
