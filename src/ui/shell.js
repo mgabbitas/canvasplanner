@@ -1,6 +1,6 @@
 // App shell: sidebar navigation, page header, and the first-run welcome card.
 import { dayLabel, minutesLabel, el } from './dom.js';
-import { icon } from './icons.js';
+import { icon, logo } from './icons.js';
 import { courseColor } from './theme.js';
 import { CANVAS, LOGIN_MESSAGE } from '../sync/canvas.js';
 import { app, view, timeAgo, courseName, sync, changeExtraDays, homework, itemCount } from './app.js';
@@ -35,7 +35,7 @@ export function renderSidebar() {
 
   return [
     el('div', { className: 'brand' },
-      el('span', { className: 'logo', 'aria-hidden': 'true' }, 'C'),
+      logo(),
       el('span', {}, 'Canvas Planner'),
       el('button', { className: 'icon-btn close-nav', 'aria-label': 'Close menu', onclick: () => setNavOpen(false) }, icon('close')),
     ),

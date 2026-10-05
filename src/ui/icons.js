@@ -27,3 +27,22 @@ export function icon(name) {
   }
   return svg;
 }
+
+/** The app logo (calendar with a check), drawn in the current accent color. */
+export function logo() {
+  const svg = document.createElementNS(SVG, 'svg');
+  for (const [k, v] of Object.entries({ viewBox: '0 0 32 32', width: 28, height: 28, 'aria-hidden': 'true', class: 'logo' })) svg.setAttribute(k, v);
+  const bg = document.createElementNS(SVG, 'rect');
+  for (const [k, v] of Object.entries({ width: 32, height: 32, rx: 8, class: 'logo-bg' })) bg.setAttribute(k, v);
+  const g = document.createElementNS(SVG, 'g');
+  for (const [k, v] of Object.entries({
+    class: 'logo-fg', fill: 'none', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+  })) g.setAttribute(k, v);
+  const cal = document.createElementNS(SVG, 'rect');
+  for (const [k, v] of Object.entries({ x: 8, y: 9.5, width: 16, height: 14.5, rx: 2.5 })) cal.setAttribute(k, v);
+  const lines = document.createElementNS(SVG, 'path');
+  lines.setAttribute('d', 'M8 14h16M12 7.5v4M20 7.5v4M12.5 19l2.5 2.5 4.5-4.5');
+  g.append(cal, lines);
+  svg.append(bg, g);
+  return svg;
+}
