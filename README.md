@@ -84,7 +84,6 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Planned
 
-- Undo when you delete an estimate rule.
 - A page per class (click it in the sidebar) to set many estimates at once.
 - Upcoming exams listed next to the forecast.
 - Your own items for things Canvas doesn't track (studying, project milestones).

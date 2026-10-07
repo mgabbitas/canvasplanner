@@ -5,6 +5,7 @@ import { DEFAULT_SETTINGS, SIZES } from '../storage/defaults.js';
 import { buildExport, applyImport, MAX_IMPORT_BYTES } from '../storage/transfer.js';
 import { el, select, WEEKDAYS, TYPE_LABELS, minutesLabel, readInt } from './dom.js';
 import { ACCENTS, CLASS_COLORS, courseColorKey } from './theme.js';
+import { showToast } from './toast.js';
 
 // Rules being edited, including incomplete ones that aren't saved yet.
 let draftRules = null;
@@ -32,6 +33,33 @@ function updateSettings(ctx, patch) {
 
 function saveRules(ctx) {
   return updateSettings(ctx, { estimateRules: draftRules.map(fromDraft) });
+}
+
+/** "Physics + Quiz + "report" → 25m", for the undo message. */
+function ruleText(d, ctx) {
+  const s = ctx.state.settings;
+  const course = d.courseId ? s.courses[d.courseId]?.displayName || ctx.state.courses[d.courseId]?.name : null;
+  const when = [course, d.type ? TYPE_LABELS[d.type] : null, d.keyword ? `"${d.keyword}"` : null].filter(Boolean);
+  const value = d.mode === 'inclass' ? 'in class' : d.mode === 'minutes' ? minutesLabel(d.minutes ?? 0) : d.size;
+  return `${when.join(' + ') || 'new rule'} → ${value}`;
+}
+
+/** Delete a rule, with Undo that puts it back in the same place. */
+function deleteRule(ctx, i) {
+  const [removed] = draftRules.splice(i, 1);
+  saveRules(ctx);
+  const t = showToast({
+    message: `Deleted rule: ${ruleText(removed, ctx)}`,
+    actions: [{
+      label: 'Undo',
+      onclick: () => {
+        t.close();
+        if (!draftRules) draftRules = ctx.state.settings.estimateRules.map(toDraft);
+        draftRules.splice(Math.min(i, draftRules.length), 0, removed);
+        saveRules(ctx);
+      },
+    }],
+  });
 }
 
 function section(title, intro, ...children) {
@@ -176,7 +204,7 @@ function rulesSection(ctx) {
         el('button', { 'aria-label': 'Move down', title: 'Move down', disabled: i === draftRules.length - 1, 'data-key': `r${i}-down`, onclick: () => move(i, 1) }, '↓'),
         el('button', {
           'aria-label': 'Delete rule', title: 'Delete', 'data-key': `r${i}-del`,
-          onclick: () => { draftRules.splice(i, 1); return saveRules(ctx); },
+          onclick: () => deleteRule(ctx, i),
         }, '✕'),
       ),
       incomplete ? el('small', { className: 'warn-text' }, 'Not saved yet: pick a class, a type or a keyword.') : null,

@@ -129,6 +129,11 @@ async function run() {
   document.querySelector('[data-key="accent-teal"]').click(); await wait(200);
   check('accent teal', document.documentElement.dataset.accent === 'teal');
   await go('#settings/estimates');
+  const rulesBefore = JSON.stringify(window.__store.settings.estimateRules);
+  document.querySelector('[data-key="r0-del"]').click(); await wait(200);
+  check('delete rule', window.__store.settings.estimateRules.length === JSON.parse(rulesBefore).length - 1, document.querySelector('.toast-msg')?.textContent);
+  document.querySelector('[data-key="toast-Undo"]')?.click(); await wait(200);
+  check('undo rule delete', JSON.stringify(window.__store.settings.estimateRules) === rulesBefore);
   document.querySelector('[data-key="add-rule"]').click(); await wait(150);
   check('add rule shows incomplete row', !!document.querySelector('.rule.incomplete'));
   await go('#settings/classes');
