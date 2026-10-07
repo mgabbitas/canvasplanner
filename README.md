@@ -15,6 +15,8 @@ Wednesday instead of piling up on Saturday.
   at the top.
 - **Fits your schedule.** You choose how many minutes you have each day; work that
   doesn't fit is reported, never quietly pushed past its due date.
+- **Bends to your day.** Move any item to another day, start tomorrow's work early
+  when you're done, and watch the "done today" count go up as you work.
 - **Learns your pace.** When you check something off you can log how long it took. The
   Stats page shows your real averages and suggests better time estimates.
 - **Stays private.** It only reads your assignments, using your normal Canvas login.
@@ -79,6 +81,14 @@ npm run build      # package for signing (web-ext-artifacts/)
 ```
 
 Requirements and design decisions are in [SPEC.md](SPEC.md).
+
+## Planned
+
+- Undo when you delete an estimate rule.
+- A page per class (click it in the sidebar) to set many estimates at once.
+- Upcoming exams listed next to the forecast.
+- Your own items for things Canvas doesn't track (studying, project milestones).
+- Later: Chrome support, and a grading view for TAs.
 
 ## Changelog
 
