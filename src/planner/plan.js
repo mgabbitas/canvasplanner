@@ -9,6 +9,13 @@ const FORECAST_DAYS = 14;
 
 export const isDone = (item) => Boolean(item.manualDone || item.canvasDone);
 
+/** The local date a done item was finished: when you checked it off, else when Canvas got it. */
+export function doneDay(item) {
+  if (!isDone(item)) return null;
+  if (item.doneOn) return item.doneOn;
+  return item.canvasDone && item.submittedAt ? toLocalDate(item.submittedAt) : null;
+}
+
 const courseIncluded = (item, settings) => settings.courses?.[item.courseId]?.include !== false;
 
 /** Not done, not dismissed or hidden, and not filtered out by settings. */
@@ -25,6 +32,10 @@ function toEntry(item, settings, today) {
   // something due later today can still be done today.
   let lastDay = item.dueAt ? workDueDate(item.dueAt) : null;
   if (dueDay && dueDay >= today) lastDay = maxDate(lastDay, today);
+  const firstDay = maxDate(today, unlockDate ?? today);
+  // A day you moved it to, while that day is still in its window.
+  const p = item.plannedOn;
+  const movedTo = !inClass && p && lastDay && p >= firstDay && p <= lastDay ? p : null;
   return {
     id: item.id,
     item,
@@ -34,6 +45,8 @@ function toEntry(item, settings, today) {
     dueDay,
     lastDay,
     unlockDate,
+    firstDay,
+    movedTo,
     notOpenYet: unlockDate != null && unlockDate > today,
     pinned: Boolean(item.pinned),
     pulledIn: Boolean(item.pulledIn),
@@ -63,6 +76,7 @@ const byDueThenSizeAsc = (a, b) =>
  */
 export function plan({ items, settings, weekState = {}, now }) {
   const today = toLocalDate(now);
+  const sum = (list) => list.reduce((s, e) => s + e.minutes, 0);
   const weekStart = planningWeek(today, settings).start;
   const week = planningWeek(today, settings, weekState?.[weekStart]?.extraDays ?? 0);
   const all = Array.isArray(items) ? items : Object.values(items ?? {});
@@ -96,15 +110,26 @@ export function plan({ items, settings, weekState = {}, now }) {
   const work = scoped.filter((e) => !e.inClass);
   for (const e of scoped) if (e.inClass && e.dueDay >= today) place(e, e.dueDay);
 
+  // Work finished today keeps using today's time, so checking items off doesn't pull
+  // later work into today. (Moving an item to today is how you take on more.)
+  const finishedToday = all
+    .filter((i) => doneDay(i) === today && !i.hidden && courseIncluded(i, settings))
+    .map((i) => toEntry(i, settings, today));
+  const doneMinutes = sum(finishedToday);
+  if (doneMinutes) load.set(today, doneMinutes);
+
   const overdue = work.filter((e) => e.dueDay < today);
-  const pinned = work.filter((e) => e.dueDay >= today && e.pinned);
-  const rest = work.filter((e) => e.dueDay >= today && !e.pinned).sort(byDueThenSizeDesc);
+  const upcoming = work.filter((e) => e.dueDay >= today);
+  const moved = upcoming.filter((e) => e.movedTo);
+  const pinned = upcoming.filter((e) => !e.movedTo && e.pinned);
+  const rest = upcoming.filter((e) => !e.movedTo && !e.pinned).sort(byDueThenSizeDesc);
 
   for (const e of work) e.behind = behind;
   for (const e of overdue) {
     e.overdue = true;
     place(e, today);
   }
+  for (const e of moved) place(e, e.movedTo);
   for (const e of pinned) place(e, e.lastDay);
 
   const overflow = [];
@@ -133,6 +158,7 @@ export function plan({ items, settings, weekState = {}, now }) {
       capacityOverridden: override(date) != null,
       blocked: !usable(date),
       load: l,
+      doneMinutes: date === today ? doneMinutes : 0,
       over: l > capacity(date),
       items: onDay.get(date) ?? [],
     };
@@ -141,7 +167,6 @@ export function plan({ items, settings, weekState = {}, now }) {
   // --- pull next week ---
   // Gate: this week's own work must be done first (if the setting is on; pulled items
   // don't count), then pulling continues until unfinished pulled work reaches the cap.
-  const sum = (list) => list.reduce((s, e) => s + e.minutes, 0);
   const pulledMinutes = sum(work.filter((e) => e.pulledIn));
   const remaining = Math.max(0, (settings.pullCapMinutes ?? Infinity) - pulledMinutes);
   const weekDone = work.every((e) => e.pulledIn);
@@ -219,6 +244,11 @@ export function plan({ items, settings, weekState = {}, now }) {
     pull,
     forecast,
     done,
+    // Homework finished today: count and minutes (logged time if any, else the estimate).
+    doneToday: {
+      count: finishedToday.filter((e) => !e.inClass).length,
+      minutes: finishedToday.reduce((s, e) => s + (e.inClass ? 0 : e.item.log?.minutes ?? e.minutes), 0),
+    },
   };
 }
 

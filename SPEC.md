@@ -73,7 +73,9 @@ Item, Canvas-owned fields (overwritten on every sync): `id`, `courseId`, `title`
 `descriptionText` (plain text, truncated), `url`.
 
 Item, user-owned fields (sync never touches these): `manualDone`, `minutesOverride`,
-`pinned`, `dismissed`, `pulledIn`.
+`pinned`, `dismissed`, `pulledIn`, `inClass`, `log`, `doneOn` (local date you checked it
+off), `plannedOn` (local date you moved it to). Added 2026-10-06 with defaults of null,
+so no migration is needed.
 
 Merge rules:
 - Match on Canvas `id`. Never create duplicates.
@@ -130,14 +132,20 @@ Algorithm:
 1. Each item's eligible window: from `max(today, local date of unlockAt)` to
    `min(dueDate, cutoff)`. If the unlock date is after the cutoff, the window is
    unlock date through due date. Blocked weekdays are removed from the window.
-2. Pinned items are placed on their due date, and that counts toward the day's load.
-3. Sort the rest by due date ascending, then minutes descending, then title.
-4. Place each on the earliest eligible day where `load + minutes <= capacity`. A day
+2. Work finished today (done day = `doneOn`, else the local date of a Canvas
+   `submittedAt`) counts toward today's load at its estimate, so checking items off
+   never pulls later work into today. (Decided 2026-10-06.)
+3. Moved items are placed on their `plannedOn` day, which counts toward the day's
+   load even past capacity. A move is ignored (normal planning resumes) once that day
+   is in the past, after the item's last work day, or before it unlocks. Then pinned
+   items are placed on their due date, same rule.
+4. Sort the rest by due date ascending, then minutes descending, then title.
+5. Place each on the earliest eligible day where `load + minutes <= capacity`. A day
    with nothing on it accepts any item, even one larger than the capacity (flag the
    day as over capacity).
-5. No eligible day has room: put it in `overflow`. The UI shows a banner ("N items,
+6. No eligible day has room: put it in `overflow`. The UI shows a banner ("N items,
    X min won't fit by Wednesday") with an Add a day button.
-6. If `today > cutoff` (Wednesday has passed): use `dueDate` as the window end instead
+7. If `today > cutoff` (Wednesday has passed): use `dueDate` as the window end instead
    of the cutoff, schedule as soon as possible, and flag every remaining item
    `behind`. Items that still can't fit before their due date go in `atRisk`.
 
@@ -155,6 +163,9 @@ Pull next week:
 - Pulled items set `pulledIn` and are planned by the same algorithm. Each has a "send
   back" action. Items that aren't unlocked yet are listed as "not open yet".
 
+Done today: count of homework items finished today and their minutes (logged time if
+any, else the estimate), shown in the header.
+
 Forecast: for the next 14 days, minutes and count of undone items *due* each day,
 independent of the plan. Highlight days over that weekday's capacity.
 
@@ -167,6 +178,12 @@ independent of the plan. Highlight days over that weekday's capacity.
   change), pin toggle. Clicking a title opens the Canvas page in a new tab with
   `rel="noopener"`.
 - Forecast strip, Pull next week menu, collapsible Done section.
+- Item menu (⋮, decided 2026-10-06) on every planned item: Move to (today, tomorrow
+  or another day in the item's window this week; "Let the planner decide" clears it),
+  Pin to due day, Dismiss (any item, with Undo; restored from the Dismissed panel).
+  Moved and pinned items show a chip. When today's homework is all done and later days
+  have work, today shows a button to start the next open item from the next day
+  (moves it to today).
 - Checking an item off shows a toast (about 10 s, paused while hovered or focused)
   with Undo and Log time. Undo restores the item exactly. (Decided 2026-10-04.)
 - Layout (revised 2026-10-04): one layout. Day tabs (each with item count, load bar and

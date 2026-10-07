@@ -129,3 +129,12 @@ test('in-class: rule value and item flag validate; new settings have defaults', 
   assert.equal(s.showForecast, true);
   assert.equal(validateSettings({}).pullCapMinutes, 180);
 });
+
+test('items: doneOn and plannedOn must be dates', () => {
+  const v = validateItems({
+    1: { courseId: '9', doneOn: '2026-10-06', plannedOn: '2026-10-07' },
+    2: { courseId: '9', doneOn: 'yesterday', plannedOn: 5 },
+  });
+  assert.deepEqual([v['1'].doneOn, v['1'].plannedOn], ['2026-10-06', '2026-10-07']);
+  assert.deepEqual([v['2'].doneOn, v['2'].plannedOn], [null, null]);
+});

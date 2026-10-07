@@ -26,6 +26,7 @@ const weekdayIndex = (v, fallback) => int(v, 0, 6, fallback);
 const ID = /^\d{1,20}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_RULES = 200;
+const dateOrNull = (v) => (typeof v === 'string' && DATE.test(v) ? v : null);
 const size = (v, fallback) => (SIZES.includes(v) ? v : fallback);
 
 /** One estimate rule, or null if it has no condition or no value. */
@@ -124,6 +125,8 @@ function validateItem(id, raw) {
     pulledIn: raw.pulledIn === true,
     inClass: raw.inClass === true,
     log: validateLog(raw.log),
+    doneOn: dateOrNull(raw.doneOn),
+    plannedOn: dateOrNull(raw.plannedOn),
   };
 }
 

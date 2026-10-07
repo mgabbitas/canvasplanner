@@ -40,4 +40,6 @@ export const USER_FIELD_DEFAULTS = Object.freeze({
   pulledIn: false,
   inClass: false, // in-class activity: no homework time
   log: null, // { minutes, difficulty (1-5), finishedOn: 'YYYY-MM-DD' } once logged
+  doneOn: null, // 'YYYY-MM-DD' you checked it off (counts toward that day's load)
+  plannedOn: null, // 'YYYY-MM-DD' you moved it to (beats the planner's pick)
 });

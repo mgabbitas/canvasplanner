@@ -393,3 +393,77 @@ test('urgency flags follow the real Canvas due date, not the planned day', () =>
   assert.equal(dateOf(p, tomorrowMorning.id), '2026-09-28');
   assert.deepEqual([entry(later.id).dueToday, entry(later.id).dueTomorrow], [false, false]);
 });
+
+test('checking items off today does not pull later work into today', () => {
+  const items = many(12, { due: '2026-10-03', minutesOverride: 20 }); // 6 per day
+  const before = run(items);
+  const todayIds = placedOn(before)['2026-09-28'];
+  assert.equal(todayIds.length, 6);
+  const done = new Set(todayIds.slice(0, 3));
+  const after = run(items.map((i) => (done.has(i.id) ? { ...i, manualDone: true, doneOn: '2026-09-28' } : i)));
+  assert.deepEqual(placedOn(after)['2026-09-28'], todayIds.slice(3));
+  assert.equal(after.days[0].load, 120);
+  assert.equal(after.days[0].doneMinutes, 60);
+  assert.deepEqual(placedOn(after)['2026-09-29'], placedOn(before)['2026-09-29']);
+});
+
+test('done today: Canvas submissions today count, older ones do not', () => {
+  const todayIso = iso('2026-09-28 07:30');
+  const items = [
+    mk({ canvasDone: true, submittedAt: todayIso, minutesOverride: 30 }),
+    mk({ canvasDone: true, submittedAt: iso('2026-09-27 20:00'), minutesOverride: 30 }),
+    mk({ manualDone: true, doneOn: '2026-09-28', minutesOverride: 45, log: { minutes: 25, difficulty: null, finishedOn: '2026-09-28' } }),
+    mk({ manualDone: true, doneOn: '2026-09-28', inClass: true, minutesOverride: null }),
+    mk({ manualDone: true, minutesOverride: 20 }), // checked off before doneOn existed
+  ];
+  const p = run(items);
+  assert.deepEqual(p.doneToday, { count: 2, minutes: 55 }); // logged 25 beats the 45 estimate
+  assert.equal(p.days[0].doneMinutes, 75); // load uses estimates: 30 + 45
+});
+
+test('move to a day: tomorrow, or today even past capacity', () => {
+  const a = mk({ due: '2026-10-03', minutesOverride: 60 });
+  const b = mk({ due: '2026-10-03', minutesOverride: 60 });
+  const c = mk({ due: '2026-10-03', minutesOverride: 60 });
+  const base = run([a, b, c]);
+  assert.deepEqual(placedOn(base), { '2026-09-28': [a.id, b.id], '2026-09-29': [c.id], '2026-09-30': [] });
+
+  const later = run([{ ...a, plannedOn: '2026-09-29' }, b, c]);
+  assert.equal(dateOf(later, a.id), '2026-09-29');
+  assert.equal(later.days[0].load + later.days[1].load, 180);
+
+  const sooner = run([a, b, { ...c, plannedOn: '2026-09-28' }]);
+  assert.equal(dateOf(sooner, c.id), '2026-09-28');
+  // Moved items are placed first, so c takes today and the planner fits a and b after it.
+  assert.deepEqual(placedOn(sooner), { '2026-09-28': [c.id, a.id], '2026-09-29': [b.id], '2026-09-30': [] });
+
+  // Moving a third hour onto a full today goes over capacity rather than refusing.
+  const finished = mk({ manualDone: true, doneOn: '2026-09-28', minutesOverride: 120 });
+  const full = run([finished, a, b, { ...c, plannedOn: '2026-09-28' }]);
+  assert.deepEqual(placedOn(full)['2026-09-28'], [c.id]);
+  assert.equal(full.days[0].load, 180);
+  assert.equal(full.days[0].over, true);
+
+  // Past the cutoff but before the due date is allowed; the days list extends.
+  const thursday = run([{ ...a, plannedOn: '2026-10-01' }]);
+  assert.equal(dateOf(thursday, a.id), '2026-10-01');
+});
+
+test('a move is ignored once it is in the past, after the last work day, or before unlock', () => {
+  const past = mk({ due: '2026-10-03', plannedOn: '2026-09-27' });
+  const afterDue = mk({ due: '2026-09-29 09:00', plannedOn: '2026-09-30' }); // last work day is Mon
+  const beforeUnlock = mk({ due: '2026-10-03', unlock: '2026-09-30 00:00', plannedOn: '2026-09-28' });
+  const inClass = mk({ due: '2026-10-02', inClass: true, minutesOverride: null, plannedOn: '2026-09-28' });
+  const p = run([past, afterDue, beforeUnlock, inClass]);
+  assert.equal(dateOf(p, past.id), '2026-09-28');
+  assert.equal(dateOf(p, afterDue.id), '2026-09-28');
+  assert.equal(dateOf(p, beforeUnlock.id), '2026-09-30');
+  assert.equal(dateOf(p, inClass.id), '2026-10-02');
+  assert.ok(p.days.flatMap((d) => d.items).every((e) => e.movedTo == null));
+});
+
+test('a move beats a pin', () => {
+  const item = mk({ due: '2026-10-02', pinned: true, plannedOn: '2026-09-29' });
+  assert.equal(dateOf(run([item]), item.id), '2026-09-29');
+  assert.equal(dateOf(run([{ ...item, plannedOn: null }]), item.id), '2026-10-02');
+});
