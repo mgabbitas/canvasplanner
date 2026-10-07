@@ -111,6 +111,28 @@ async function run() {
   check('next: day tabs', $$('.day-tab').length >= 2);
   check('next: pull buttons', $$('[data-key^="pull-"]').length > 0);
 
+  // Class view: open from the sidebar, filter, set all shown, undo.
+  const classLink = document.querySelector('.legend-link');
+  const cid = classLink.getAttribute('data-key').replace('class-', '');
+  classLink.click(); await wait(250);
+  check('class view opens', location.hash === `#class/${cid}` && classLink.textContent.trim() === document.querySelector('#header h1')?.textContent.trim(), document.querySelector('#header h1')?.textContent);
+  check('class link active', !!document.querySelector(`[data-key="class-${cid}"].active`));
+  const rowsAll = $$('#days .item').length;
+  check('class view lists items', rowsAll > 0, `${rowsAll} items`);
+  const firstTitle = document.querySelector('#days .item .title')?.textContent ?? '';
+  const filter = document.querySelector('[data-key="class-filter"]');
+  filter.focus(); filter.value = firstTitle.slice(0, 6); fire(filter, 'input'); await wait(150);
+  const rowsShown = $$('#days .item').length;
+  check('class filter narrows', rowsShown >= 1 && rowsShown <= rowsAll && document.activeElement?.getAttribute('data-key') === 'class-filter', `${rowsShown} of ${rowsAll}`);
+  const shownIds = $$('#days .item input[type=checkbox]').map((b) => b.getAttribute('data-key').replace('done-', ''));
+  const prevMinutes = shownIds.map((i) => [window.__store.items[i].minutesOverride, window.__store.items[i].inClass]);
+  const setTo = document.querySelector('[data-key="class-set-to"]');
+  setTo.value = 'inclass'; fire(setTo, 'change'); await wait(100);
+  document.querySelector('[data-key="class-apply"]').click(); await wait(250);
+  check('set all shown', shownIds.every((i) => window.__store.items[i].inClass === true), document.querySelector('.toast-msg')?.textContent);
+  document.querySelector('[data-key="toast-Undo"]')?.click(); await wait(250);
+  check('set all undo', shownIds.every((i, n) => window.__store.items[i].minutesOverride === prevMinutes[n][0] && window.__store.items[i].inClass === prevMinutes[n][1]));
+
   // Stats.
   await go('#stats');
   check('stats: cards', !!document.querySelector('.stat-cards'));

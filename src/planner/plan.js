@@ -270,3 +270,19 @@ export function planNextWeek({ items, settings, weekState = {}, now }) {
 export function canPullItem(pull, minutes) {
   return pull.enabled && (minutes <= pull.remainingMinutes || pull.pulledMinutes === 0);
 }
+
+/**
+ * Every unfinished item of one class (not dismissed or hidden), as plan entries:
+ * earliest due first, items with no due date last.
+ */
+export function classEntries({ items, settings, courseId, now }) {
+  const today = toLocalDate(now);
+  return (Array.isArray(items) ? items : Object.values(items ?? {}))
+    .filter((i) => i.courseId === String(courseId) && isActive(i, settings))
+    .map((i) => toEntry(i, settings, today))
+    .sort((a, b) => {
+      const ta = a.item.dueAt ? Date.parse(a.item.dueAt) : Infinity;
+      const tb = b.item.dueAt ? Date.parse(b.item.dueAt) : Infinity;
+      return (ta === tb ? 0 : ta < tb ? -1 : 1) || a.item.title.localeCompare(b.item.title) || a.id.localeCompare(b.id);
+    });
+}

@@ -3,7 +3,7 @@ import { dayLabel, minutesLabel, el } from './dom.js';
 import { icon, logo } from './icons.js';
 import { courseColor } from './theme.js';
 import { CANVAS, LOGIN_MESSAGE } from '../sync/canvas.js';
-import { app, view, timeAgo, courseName, sync, changeExtraDays, homework, itemCount } from './app.js';
+import { app, view, classId, timeAgo, courseName, sync, changeExtraDays, homework, itemCount } from './app.js';
 
 const NAV = [
   ['', 'this', 'This week', 'week'],
@@ -46,9 +46,14 @@ export function renderSidebar() {
     }, icon(ic), el('span', {}, label)))),
     courses.length ? el('div', { className: 'side-section' },
       el('h2', {}, 'Classes'),
-      el('ul', { className: 'legend' }, courses.map((id) => el('li', {},
+      el('ul', { className: 'legend' }, courses.map((id) => el('li', {}, el('a', {
+        href: `#class/${id}`, className: `legend-link${classId() === id ? ' active' : ''}`,
+        'aria-current': classId() === id ? 'page' : null, 'data-key': `class-${id}`,
+        title: 'Everything left in this class',
+        onclick: (e) => { e.preventDefault(); setNavOpen(false); location.hash = `class/${id}`; },
+      },
         el('span', { className: 'dot', style: `--course:${courseColor(id, app.state.settings, app.state.courses)}`, 'aria-hidden': 'true' }),
-        el('span', { className: 'legend-name' }, courseName(id)))))) : null,
+        el('span', { className: 'legend-name' }, courseName(id))))))) : null,
     el('div', { className: 'side-sync' },
       el('div', { className: 'sync-status' }, status),
       el('button', { onclick: sync, disabled: app.syncing, 'data-key': 'sync' }, icon('sync'), el('span', {}, app.syncing ? 'Syncing…' : 'Sync now')),
@@ -82,7 +87,7 @@ export function renderHeader(p) {
   const v = view();
   const week = p.week;
   const weekView = v === 'this' || v === 'next';
-  const title = v === 'settings' ? 'Settings' : v === 'stats' ? 'Your stats'
+  const title = v === 'settings' ? 'Settings' : v === 'stats' ? 'Your stats' : v === 'class' ? courseName(classId())
     : `Week of ${dayLabel(week.start, { month: 'long', day: 'numeric' })}`;
 
   const menuBtn = el('button', {
@@ -93,6 +98,7 @@ export function renderHeader(p) {
   let subtitle = null;
   if (v === 'settings') subtitle = el('p', { className: 'subtitle' }, 'Changes save automatically.');
   if (v === 'stats') subtitle = el('p', { className: 'subtitle' }, 'How long your work actually takes, from the times you log.');
+  if (v === 'class') subtitle = el('p', { className: 'subtitle' }, 'Everything left in this class. Filter, then set many estimates at once.');
   if (weekView) {
     const today = v === 'this' ? p.days.find((d) => d.date === p.today) : null;
     const parts = [];

@@ -49,7 +49,7 @@ export function markDone(item) {
 // --- item rows ---------------------------------------------------------------------
 
 // Minutes you can pick for an item: 5, 10, then every 15 min up to 4 h, then 5, 6, 8 h.
-const MINUTE_CHOICES = [5, 10, ...Array.from({ length: 16 }, (_, i) => (i + 1) * 15), 300, 360, 480];
+export const MINUTE_CHOICES = [5, 10, ...Array.from({ length: 16 }, (_, i) => (i + 1) * 15), 300, 360, 480];
 
 function minutesControl(entry) {
   const { item } = entry;
@@ -122,7 +122,7 @@ function itemMenu(entry, kind) {
     }
     entries.push(el('hr'));
   }
-  if ((kind === 'plan' || kind === 'next') && entry.lastDay && !entry.overdue && !entry.inClass) {
+  if (editable(kind) && entry.lastDay && !entry.overdue && !entry.inClass) {
     entries.push(el('button', {
       role: 'menuitem', 'data-key': `pin-${item.id}`,
       onclick: () => choose(item.pinned ? { pinned: false } : { pinned: true, plannedOn: null }),
@@ -138,7 +138,10 @@ function itemMenu(entry, kind) {
   );
 }
 
-/** One item. kind: 'plan' (this week), 'next' (next week), 'done', 'dismissed'. */
+// Rows whose minutes, pin and dismiss can be changed.
+const editable = (kind) => kind === 'plan' || kind === 'next' || kind === 'class';
+
+/** One item. kind: 'plan' (this week), 'next' (next week), 'class', 'done', 'dismissed'. */
 export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = true } = {}) {
   const { item } = entry;
   const done = kind === 'done';
@@ -172,7 +175,7 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
   if (item.prevDueAt) chips.push(el('span', { className: 'chip warn', title: `Was due ${dueLabel(item.prevDueAt)}` }, 'due date changed'));
   if (entry.pulledIn && kind === 'plan') chips.push(el('span', { className: 'chip' }, 'pulled in'));
   if (entry.movedTo && kind === 'plan') chips.push(el('span', { className: 'chip', title: 'You moved this here. Use ⋮ to change it.' }, 'moved'));
-  else if (item.pinned && entry.lastDay && (kind === 'plan' || kind === 'next')) chips.push(el('span', { className: 'chip', title: 'Pinned to its due day. Use ⋮ to unpin.' }, 'pinned'));
+  else if (item.pinned && entry.lastDay && editable(kind)) chips.push(el('span', { className: 'chip', title: 'Pinned to its due day. Use ⋮ to unpin.' }, 'pinned'));
 
   const pull = app.thisWeekPlan?.pull;
   const actions = [];
@@ -198,10 +201,10 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
       onclick: () => openLog(item),
     }, l ? `logged ${[l.minutes ? minutesLabel(l.minutes) : null, l.difficulty ? `${l.difficulty}/5` : null].filter(Boolean).join(' · ')}` : 'Log time'));
   }
-  actions.push(kind === 'plan' || kind === 'next'
+  actions.push(editable(kind)
     ? minutesControl(entry)
     : el('span', { className: 'chip' }, minutesLabel(entry.minutes)));
-  if (kind === 'plan' || kind === 'next') actions.push(itemMenu(entry, kind));
+  if (editable(kind)) actions.push(itemMenu(entry, kind));
 
   return el('li', {
     className: `item${done ? ' done' : ''}${upNext ? ' up-next' : ''}${!done && (urgency.dueToday || entry.overdue) ? ' urgent' : ''}`,

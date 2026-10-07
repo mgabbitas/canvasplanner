@@ -15,15 +15,22 @@ export const app = {
   thisWeekPlan: null, // latest plan for this week (pull gate, pull candidates)
   selectedDay: null, // day tab shown ('week', a date, or null = first day)
   navOpen: false, // sidebar open on narrow screens
+  classFilter: { keyword: '', type: '', setTo: '' }, // class view filters
   render: () => {}, // set by planner.js
 };
 
 export function view() {
   const h = location.hash;
   if (h === '#settings' || h.startsWith('#settings/')) return 'settings';
+  if (classId()) return 'class';
   return ({ '#next': 'next', '#stats': 'stats' })[h] ?? 'this';
 }
 export const settingsTab = () => location.hash.split('/')[1] ?? '';
+/** Course id of the class view (#class/<id>), if it's a class we know. */
+export function classId() {
+  const m = /^#class\/(\d{1,20})$/.exec(location.hash);
+  return m && app.state?.courses[m[1]] ? m[1] : null;
+}
 
 // --- formatting ----------------------------------------------------------------
 

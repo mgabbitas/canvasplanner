@@ -200,6 +200,10 @@ independent of the plan. Highlight days over that weekday's capacity.
   only cue (class name always shown).
 - Views: This week, Next week, Stats, Settings (tabs: Schedule, Estimates, Classes,
   Sync & behavior, Appearance, Data), addressed by URL hash.
+- Class view (decided 2026-10-06, `#class/<id>`, opened from the sidebar's class list):
+  every unfinished item of that class, grouped Overdue / This week / Next week / Later /
+  No due date, with a title and type filter and "Set all shown to" (auto, in class, or
+  minutes) with Undo.
 - Respects `prefers-color-scheme`. Keyboard-reachable controls.
 - Auto-sync when the page opens if data is older than the `autoSyncMinutes` setting.
 

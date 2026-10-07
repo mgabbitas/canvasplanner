@@ -6,8 +6,9 @@ import { loadState } from '../storage/store.js';
 import { el } from './dom.js';
 import { renderSettings, resetSettingsDraft } from './settings.js';
 import { renderStats } from './statsview.js';
+import { renderClass, emptyClassFilter } from './classview.js';
 import { applyTheme } from './theme.js';
-import { app, view, settingsTab, saveState, sync, courseName } from './app.js';
+import { app, view, settingsTab, classId, saveState, sync, courseName } from './app.js';
 import { finishDay, openLog, panel } from './items.js';
 import { setNavOpen, renderSidebar, renderHeader, renderWelcome } from './shell.js';
 import { renderBanners, renderPullCard, renderForecast, renderDayLayout } from './week.js';
@@ -58,6 +59,10 @@ function render() {
     fill('banners', []);
     fill('days', renderStats({ state: app.state, saveState, courseName, finishDay, openLog: (i) => openLog(i) }));
     fill('extras', []);
+  } else if (v === 'class') {
+    fill('banners', []);
+    fill('days', renderClass(classId()));
+    fill('extras', []);
   } else if (!app.state.meta.lastSyncAt && !Object.keys(app.state.items).length) {
     fill('banners', []);
     fill('days', [renderWelcome()]);
@@ -86,7 +91,10 @@ function render() {
   }
   fill('rail', rail);
   $('content').classList.toggle('no-rail', !rail.filter(Boolean).length);
-  if (focusKey) document.querySelector(`[data-key="${CSS.escape(focusKey)}"]`)?.focus();
+  const focused = focusKey ? document.querySelector(`[data-key="${CSS.escape(focusKey)}"]`) : null;
+  focused?.focus();
+  // Typing in a filter re-renders; keep the caret at the end.
+  if (focused?.type === 'search') focused.setSelectionRange(focused.value.length, focused.value.length);
 }
 
 // --- startup -----------------------------------------------------------------------
@@ -118,6 +126,7 @@ window.addEventListener('hashchange', () => {
   if (view() !== 'settings') resetSettingsDraft(); // keep unsaved rules across settings tabs
   app.editingDay = null;
   app.selectedDay = null;
+  app.classFilter = emptyClassFilter();
   render();
 });
 

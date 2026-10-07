@@ -1,7 +1,7 @@
 process.env.TZ = 'America/Denver';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { plan } from '../src/planner/plan.js';
+import { plan, classEntries } from '../src/planner/plan.js';
 import { DEFAULT_SETTINGS as S, USER_FIELD_DEFAULTS } from '../src/storage/defaults.js';
 import { normalizeAssignment } from '../src/sync/normalize.js';
 import { mergeCourse } from '../src/storage/merge.js';
@@ -466,4 +466,16 @@ test('a move beats a pin', () => {
   const item = mk({ due: '2026-10-02', pinned: true, plannedOn: '2026-09-29' });
   assert.equal(dateOf(run([item]), item.id), '2026-09-29');
   assert.equal(dateOf(run([{ ...item, plannedOn: null }]), item.id), '2026-10-02');
+});
+
+test('class entries: one class, unfinished, earliest due first, no due date last', () => {
+  const later = mk({ due: '2026-10-20' });
+  const soon = mk({ due: '2026-09-29' });
+  const noDue = mk({ due: null });
+  const other = mk({ courseId: '2' });
+  const done = mk({ manualDone: true });
+  const gone = mk({ dismissed: true });
+  const list = classEntries({ items: [later, noDue, soon, other, done, gone], settings: S, courseId: '1', now: iso(MON) });
+  assert.deepEqual(list.map((e) => e.id), [soon.id, later.id, noDue.id]);
+  assert.equal(list[0].minutes, 20);
 });

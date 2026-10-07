@@ -78,7 +78,7 @@ button.link { border: none; background: none; padding: 0 2px; color: var(--accen
 button.icon-btn { padding: 6px; border-color: transparent; background: transparent; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--accent); }
-input[type=number], input[type=text], select {
+input[type=number], input[type=text], input[type=search], select {
   padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
 }
 .muted, .hint { color: var(--muted); }
@@ -391,3 +391,12 @@ ul.suggestions li:first-child { border-top: none; }
 .ahead { margin: 10px 0 4px; padding: 12px; border: 1px dashed var(--border); border-radius: 10px; display: grid; gap: 8px; justify-items: start; }
 .ahead p { margin: 0; }
 .ahead button { text-align: left; overflow-wrap: anywhere; }
+
+/* ---------- Class view ---------- */
+.legend-link { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 3px 6px; margin: 0 -6px; border-radius: 6px; color: inherit; text-decoration: none; }
+.legend-link:hover { background: var(--surface-2); }
+.legend-link.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.class-tools { display: grid; gap: 10px; }
+.class-tools .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.class-filter { flex: 1 1 220px; min-width: 0; }
+.class-week .items { margin-top: 6px; }
