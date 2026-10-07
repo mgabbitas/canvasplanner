@@ -59,8 +59,10 @@ async function run() {
   const slider = document.querySelector('.log-diff'); slider.value = '4'; fire(slider, 'input');
   document.querySelector('.log-form').requestSubmit(); await wait(250);
   check('log saved', window.__store.items[id]?.log?.minutes === 30 && window.__store.items[id]?.log?.difficulty === 4, JSON.stringify(window.__store.items[id]?.log));
+  check('check-off records the day', /^\d{4}-\d{2}-\d{2}$/.test(window.__store.items[id]?.doneOn ?? ''));
+  check('header shows done today', /✓ \d+ done/.test(document.querySelector('[data-key="done-today"]')?.textContent ?? ''), document.querySelector('[data-key="done-today"]')?.textContent);
 
-  // Minutes dropdown, in-class, pin.
+  // Minutes dropdown, in-class.
   const sel = document.querySelector('.day select.chip.size');
   const sid = sel.getAttribute('data-key').replace('minutes-', '');
   sel.value = '60'; fire(sel, 'change'); await wait(200);
@@ -68,7 +70,26 @@ async function run() {
   const sel2 = document.querySelector(`[data-key="minutes-${sid}"]`);
   sel2.value = 'inclass'; fire(sel2, 'change'); await wait(200);
   check('in class', window.__store.items[sid]?.inClass === true && window.__store.items[sid]?.minutesOverride === null);
-  const pin = document.querySelector('.day button.pin');
+
+  // Item menu: open, outside click closes, move to another day, back, pin.
+  const menuOf = (iid) => document.querySelector(`[data-key="menu-${iid}"]`)?.parentElement;
+  const move = document.querySelector('.day .item-menu [data-key^="move-"]:not(:disabled)');
+  const mid = move?.getAttribute('data-key').split('-')[1];
+  const mdate = move?.getAttribute('data-key').split('-').slice(2).join('-');
+  menuOf(mid)?.querySelector('summary').click(); await wait(50);
+  check('menu opens', menuOf(mid)?.open === true);
+  document.querySelector('#header').click(); await wait(50);
+  check('outside click closes menu', menuOf(mid)?.open === false);
+  menuOf(mid).querySelector('summary').click(); await wait(50);
+  document.querySelector(`[data-key="move-${mid}-${mdate}"]`)?.click(); await wait(250);
+  check('move to a day', window.__store.items[mid]?.plannedOn === mdate, `${mid} -> ${mdate}`);
+  document.querySelector(`[data-key="daytab-${mdate}"]`)?.click(); await wait(150);
+  check('moved item on that day', !!document.querySelector(`.day [data-key="done-${mid}"]`) && /moved/.test(document.querySelector(`[data-key="done-${mid}"]`)?.closest('.item')?.textContent ?? ''));
+  document.querySelector('[data-key="daytab-week"]').click(); await wait(150);
+  menuOf(mid).querySelector('summary').click(); await wait(50);
+  document.querySelector(`[data-key="unmove-${mid}"]`)?.click(); await wait(250);
+  check('let the planner decide', window.__store.items[mid]?.plannedOn === null);
+  const pin = document.querySelector('.day .item-menu [data-key^="pin-"]');
   const pid = pin.getAttribute('data-key').replace('pin-', '');
   pin.click(); await wait(200);
   check('pin', window.__store.items[pid]?.pinned === true);
@@ -132,17 +153,40 @@ async function run() {
   back?.click(); await wait(200);
   check('send back', window.__store.items[pulledId]?.pulledIn === false);
 
-  // Dismiss an overdue item, restore it from the right column.
-  const dismiss = document.querySelector('[data-key^="dismiss-"]');
+  // Dismiss any item: undo from the toast, then dismiss again and restore from the right column.
+  const dismiss = document.querySelector('.day [data-key^="dismiss-"]');
+  check('dismiss on any item', !!dismiss);
   if (dismiss) {
     const did = dismiss.getAttribute('data-key').replace('dismiss-', '');
     dismiss.click(); await wait(200);
     check('dismiss', window.__store.items[did]?.dismissed === true);
+    document.querySelector('[data-key="toast-Undo"]')?.click(); await wait(200);
+    check('dismiss undo', window.__store.items[did]?.dismissed === false);
+    document.querySelector(`[data-key="dismiss-${did}"]`)?.click(); await wait(200);
     const restore = document.querySelector(`#rail [data-key="restore-${did}"]`);
     check('dismissed panel in rail', !!restore);
     restore?.click(); await wait(200);
     check('restore', window.__store.items[did]?.dismissed === false);
   }
+
+  // Finish all of today's homework: nothing refills today, and the get-ahead button moves one item in.
+  const todayTab = document.querySelector('.day-tab:not(.week)');
+  todayTab.click(); await wait(150);
+  for (let i = 0; i < 60; i++) {
+    const b = document.querySelector('.day .item:not(.done) input[type=checkbox]:not(:disabled)');
+    if (!b || /in class/.test(b.closest('.item').textContent)) break;
+    b.checked = true; fire(b, 'change'); await wait(120);
+  }
+  const ahead = document.querySelector('[data-key="ahead"]');
+  check('today stays done (no refill)', /0 items/.test(document.querySelector('.day-tab:not(.week)')?.textContent ?? ''), document.querySelector('.day-tab:not(.week)')?.textContent);
+  check('get-ahead button', !!ahead, ahead?.textContent);
+  if (ahead) {
+    const before = Object.values(window.__store.items).filter((it) => it.plannedOn).length;
+    ahead.click(); await wait(250);
+    check('get-ahead moves one item to today', Object.values(window.__store.items).filter((it) => it.plannedOn).length === before + 1
+      && document.querySelectorAll('.day .item input[type=checkbox]:not(:disabled)').length >= 1);
+  }
+  document.querySelector('[data-key="daytab-week"]').click(); await wait(150);
 
   // Menu button opens and Escape closes the sidebar.
   document.querySelector('[data-key="menu"]').click(); await wait(100);

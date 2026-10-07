@@ -104,6 +104,16 @@ async function init() {
 document.getElementById('scrim').addEventListener('click', () => setNavOpen(false));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && app.navOpen) setNavOpen(false); });
 
+// Item ⋮ menus: one open at a time; a click outside or Escape closes it.
+const openMenus = () => document.querySelectorAll('details.item-menu[open]');
+document.addEventListener('click', (e) => {
+  for (const m of openMenus()) if (!m.contains(e.target)) m.open = false;
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  for (const m of openMenus()) { m.open = false; m.querySelector('summary').focus(); }
+});
+
 window.addEventListener('hashchange', () => {
   if (view() !== 'settings') resetSettingsDraft(); // keep unsaved rules across settings tabs
   app.editingDay = null;

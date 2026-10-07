@@ -37,7 +37,13 @@ way. Your settings and history are kept.
 ## Using it
 
 - **Check off** an item when you finish it. A message pops up with **Undo** and **Log
-  time**; logging is optional but makes your estimates better over time.
+  time**; logging is optional but makes your estimates better over time. Finished work
+  still counts toward today, so today's list doesn't refill as you go, and the header
+  shows how much you've done today.
+- **The ⋮ menu** on each item lets you **move it** to today, tomorrow or another day
+  before it's due, **pin** it to its due day, or **dismiss** it (restore it from
+  Dismissed on the right).
+- **Done for today?** A button offers to start the next item from tomorrow.
 - **Change an estimate** with the minutes button on any item (or pick **In class** for
   things you do during class, so they don't count as homework time).
 - **Pick a day** with the tabs at the top, or the **Week** tab to see everything.

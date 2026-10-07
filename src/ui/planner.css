@@ -214,9 +214,6 @@ a.title:hover { color: var(--accent); text-decoration: underline; }
 .chip.next { background: var(--accent); color: var(--on-accent); border-color: transparent; }
 select.chip.size { appearance: none; background: transparent; cursor: pointer; padding: 1px 8px; }
 select.chip.size.set { color: var(--accent); border-color: var(--accent); }
-button.pin { padding: 0 6px; border-color: transparent; background: transparent; filter: grayscale(1); opacity: 0.4; }
-button.pin.on { filter: none; opacity: 1; border-color: var(--border); }
-button.pin:hover { opacity: 1; }
 button.link.logged { text-decoration: none; color: var(--muted); }
 
 /* Day layout */
@@ -368,3 +365,29 @@ ul.suggestions li:first-child { border-top: none; }
 .log-form .muted { color: inherit; opacity: 0.7; font-size: 13px; }
 .log-diff-value { font-size: 13px; min-width: 90px; }
 .log-buttons { display: flex; gap: 6px; margin-left: auto; }
+
+/* ---------- Item menu (⋮), done today, get ahead ---------- */
+.item-menu { position: relative; }
+.item-menu > summary {
+  list-style: none; cursor: pointer; padding: 0 8px; border-radius: 8px; color: var(--muted);
+  font-size: 16px; line-height: 24px; user-select: none;
+}
+.item-menu > summary::-webkit-details-marker { display: none; }
+.item-menu > summary:hover, .item-menu[open] > summary { background: var(--surface-2); color: var(--text); }
+.item-menu .menu {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; min-width: 190px;
+  display: grid; padding: 6px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); box-shadow: 0 6px 20px rgba(16, 24, 40, 0.14);
+}
+.item-menu .menu button { border: none; background: none; text-align: left; padding: 6px 10px; border-radius: 6px; }
+.item-menu .menu button:hover:not(:disabled) { background: var(--surface-2); }
+.item-menu .menu button:disabled { color: var(--muted); cursor: default; }
+.item-menu .menu hr { border: none; border-top: 1px solid var(--border); margin: 4px 2px; }
+.item-menu .menu hr:last-child { display: none; }
+.menu-label { font-size: 12px; color: var(--muted); padding: 4px 10px 2px; }
+.bar { display: flex; }
+.day .bar > div.done { background: var(--good); }
+.good-text { color: var(--good); font-weight: 600; }
+.ahead { margin: 10px 0 4px; padding: 12px; border: 1px dashed var(--border); border-radius: 10px; display: grid; gap: 8px; justify-items: start; }
+.ahead p { margin: 0; }
+.ahead button { text-align: left; overflow-wrap: anywhere; }

@@ -6,7 +6,7 @@ import { courseColor } from './theme.js';
 import {
   app, courseName, sumMinutes, plural, updateItems, changeExtraDays, setDayCapacity, saveState, homework, itemCount,
 } from './app.js';
-import { itemRow, pullBlockedText } from './items.js';
+import { itemRow, pullBlockedText, relativeDay } from './items.js';
 
 export function renderBanners(p) {
   const out = [];
@@ -175,11 +175,43 @@ export function renderDayLayout(p, kind) {
   );
   const shown = selected === 'week' ? days : [days.find((d) => d.date === selected)];
   return [tabs, el('div', { role: 'tabpanel', className: 'day-panel' },
-    shown.map((d) => renderDay(d, p.today, kind, { upNext: kind === 'plan' && d.date === p.today })))];
+    shown.map((d) => renderDay(d, p.today, kind, {
+      upNext: kind === 'plan' && d.date === p.today,
+      ahead: kind === 'plan' && d.date === p.today ? getAhead(p) : null,
+    })))];
+}
+
+/**
+ * Today's homework is all done: offer the next open item from the next day with work.
+ * Returns { entry, date, today, finished } or null.
+ */
+function getAhead(p) {
+  const today = p.days.find((d) => d.date === p.today);
+  if (!today || homework(today.items).length) return null;
+  for (const day of p.days) {
+    if (day.date <= p.today) continue;
+    const entry = homework(day.items).find((e) => e.firstDay === p.today && !e.movedTo);
+    if (entry) return { entry, date: day.date, today: p.today, finished: p.doneToday.count > 0 };
+  }
+  return null;
+}
+
+function aheadCard({ entry, date, today, finished }) {
+  const from = relativeDay(date) === 'Tomorrow' ? 'tomorrow' : dayLabel(date, { weekday: 'long' });
+  return el('div', { className: 'ahead' },
+    el('p', {}, finished ? 'All done for today. Nice work! ' : 'Nothing left today. ',
+      el('span', { className: 'muted' }, 'Want to get ahead?')),
+    el('button', {
+      className: 'primary', 'data-key': 'ahead',
+      title: 'Moves it to today. Use ⋮ on the item to undo.',
+      onclick: () => updateItems([entry.id], { plannedOn: today, pinned: false }),
+    }, `Start one from ${from}: `,
+    el('strong', {}, entry.item.title), ` (${minutesLabel(entry.minutes)})`),
+  );
 }
 
 /** One day: header with count and load, then items grouped by class. */
-function renderDay(day, today, kind, { upNext = false } = {}) {
+function renderDay(day, today, kind, { upNext = false, ahead = null } = {}) {
   // "Up next": the most urgent homework item today (the planner's first pick).
   const nextId = upNext ? day.items.find((e) => !e.inClass)?.id : null;
   const groups = new Map();
@@ -188,16 +220,21 @@ function renderDay(day, today, kind, { upNext = false } = {}) {
     groups.get(e.item.courseId).push(e);
   }
   const ordered = [...groups].sort(([a], [b]) => courseName(a).localeCompare(courseName(b)));
-  const pct = day.capacity ? Math.min(100, (day.load / day.capacity) * 100) : 0;
+  const pctOf = (m) => (day.capacity ? Math.min(100, (m / day.capacity) * 100) : 0);
+  const done = day.doneMinutes ?? 0;
   const heading = dayLabel(day.date) + (day.date === today && kind === 'plan' ? ' · Today' : '');
   return el('section', { className: `day${day.over ? ' over' : ''}${day.blocked ? ' blocked' : ''}` },
     el('div', { className: 'day-head' },
       el('h2', {}, heading),
       el('span', { className: 'load' },
-        day.blocked && day.capacity > 0 ? 'blocked · ' : `${itemCount(day.items)} · ${minutesLabel(day.load)} of `,
+        day.blocked && day.capacity > 0 ? 'blocked · '
+          : `${itemCount(day.items)} · ${minutesLabel(day.load - done)}${done ? ` + ${minutesLabel(done)} done` : ''} of `,
         ...capacityControl(day)),
     ),
-    day.blocked ? null : el('div', { className: 'bar' }, el('div', { style: `width:${pct}%` })),
+    day.blocked ? null : el('div', { className: 'bar' },
+      done ? el('div', { className: 'done', style: `width:${pctOf(done)}%` }) : null,
+      el('div', { style: `width:${Math.max(0, pctOf(day.load) - pctOf(done))}%` })),
+    ahead ? aheadCard(ahead) : null,
     ordered.length
       ? ordered.map(([courseId, entries]) => el('div', {
         className: 'class-group', style: `--course:${courseColor(courseId, app.state.settings, app.state.courses)}`,
@@ -210,6 +247,6 @@ function renderDay(day, today, kind, { upNext = false } = {}) {
         ),
         el('ul', { className: 'items' }, entries.map((e) => itemRow(e, kind, { upNext: e.id === nextId, showCourse: false }))),
       ))
-      : el('p', { className: 'empty' }, day.blocked ? 'No work planned on this day.' : 'Nothing planned.'),
+      : ahead ? null : el('p', { className: 'empty' }, day.blocked ? 'No work planned on this day.' : 'Nothing planned.'),
   );
 }

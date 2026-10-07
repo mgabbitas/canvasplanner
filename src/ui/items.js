@@ -1,8 +1,8 @@
 // Item rows and what you can do to an item: check off (with undo), log time,
-// change minutes, pin, pull, send back, dismiss, restore.
-import { canPullItem } from '../planner/plan.js';
+// change minutes, the ⋮ menu (move to a day, pin, dismiss), pull, send back, restore.
+import { canPullItem, doneDay } from '../planner/plan.js';
 import { estimate } from '../planner/estimate.js';
-import { toLocalDate, addDays } from '../planner/dates.js';
+import { toLocalDate, addDays, dateRange, minDate } from '../planner/dates.js';
 import { validateLog } from '../storage/schema.js';
 import { el, select, dayLabel, dueLabel, minutesLabel } from './dom.js';
 import { showToast, logForm } from './toast.js';
@@ -11,11 +11,9 @@ import { app, courseName, SOURCE_LABEL, updateItem } from './app.js';
 
 // --- done, undo, and time logging -------------------------------------------------
 
-/** The day an item was finished: logged day, else Canvas submission day, else today. */
+/** The day an item was finished: logged day, else the day it was checked off or submitted, else today. */
 export function finishDay(item) {
-  if (item.log?.finishedOn) return item.log.finishedOn;
-  if (item.canvasDone && item.submittedAt) return toLocalDate(item.submittedAt);
-  return toLocalDate(Date.now());
+  return item.log?.finishedOn ?? doneDay(item) ?? toLocalDate(Date.now());
 }
 
 export function openLog(item, toast = null) {
@@ -37,8 +35,8 @@ export function openLog(item, toast = null) {
 
 /** Check an item off, with a toast offering Undo and Log time. */
 export function markDone(item) {
-  const before = { manualDone: item.manualDone, log: item.log };
-  updateItem(item.id, { manualDone: true });
+  const before = { manualDone: item.manualDone, log: item.log, doneOn: item.doneOn };
+  updateItem(item.id, { manualDone: true, doneOn: toLocalDate(Date.now()) });
   const t = showToast({
     message: `Done: ${item.title}`,
     actions: [
@@ -76,15 +74,68 @@ function minutesControl(entry) {
   );
 }
 
-function pinButton(item) {
-  return el('button', {
-    className: `pin${item.pinned ? ' on' : ''}`,
-    'aria-pressed': String(item.pinned),
-    'aria-label': `${item.pinned ? 'Unpin' : 'Pin'} "${item.title}"`,
-    title: item.pinned ? 'Pinned to its due date. Click to let the planner move it.' : 'Pin to its due date',
-    'data-key': `pin-${item.id}`,
-    onclick: () => updateItem(item.id, { pinned: !item.pinned }),
-  }, '📌');
+/** Hide an item from the plan, with Undo. Restore it from the Dismissed panel. */
+export function dismiss(item) {
+  updateItem(item.id, { dismissed: true });
+  const t = showToast({
+    message: `Dismissed: ${item.title}`,
+    actions: [{ label: 'Undo', onclick: () => { t.close(); updateItem(item.id, { dismissed: false }); } }],
+  });
+}
+
+const shortDay = (date) => dayLabel(date, { weekday: 'short', month: 'short', day: 'numeric' });
+
+/** "Today", "Tomorrow", or a short date. */
+export function relativeDay(date) {
+  const today = toLocalDate(Date.now());
+  if (date === today) return 'Today';
+  if (date === addDays(today, 1)) return 'Tomorrow';
+  return shortDay(date);
+}
+
+/** Days this item can be moved to: from when it opens to its last work day, within this week. */
+function moveDays(entry) {
+  const week = app.thisWeekPlan?.week;
+  if (!week || !entry.lastDay || entry.overdue || entry.inClass) return [];
+  return dateRange(entry.firstDay, minDate(entry.lastDay, week.end));
+}
+
+/** The ⋮ menu: move to a day, pin to the due day, dismiss. */
+function itemMenu(entry, kind) {
+  const { item } = entry;
+  const choose = (patch) => updateItem(item.id, patch);
+  const entries = [];
+  const days = kind === 'plan' ? moveDays(entry) : [];
+  if (days.length) {
+    entries.push(el('div', { className: 'menu-label' }, 'Move to'));
+    for (const d of days) {
+      const here = d === entry.date;
+      entries.push(el('button', {
+        role: 'menuitem', disabled: here, 'data-key': `move-${item.id}-${d}`,
+        onclick: () => choose({ plannedOn: d, pinned: false }),
+      }, relativeDay(d), here ? el('span', { className: 'muted' }, ' · planned') : null));
+    }
+    if (entry.movedTo) {
+      entries.push(el('button', {
+        role: 'menuitem', 'data-key': `unmove-${item.id}`, onclick: () => choose({ plannedOn: null }),
+      }, 'Let the planner decide'));
+    }
+    entries.push(el('hr'));
+  }
+  if ((kind === 'plan' || kind === 'next') && entry.lastDay && !entry.overdue && !entry.inClass) {
+    entries.push(el('button', {
+      role: 'menuitem', 'data-key': `pin-${item.id}`,
+      onclick: () => choose(item.pinned ? { pinned: false } : { pinned: true, plannedOn: null }),
+    }, item.pinned ? 'Unpin' : 'Pin to due day'));
+  }
+  entries.push(el('button', {
+    role: 'menuitem', 'data-key': `dismiss-${item.id}`, title: 'Hide it from the plan. Restore it from Dismissed.',
+    onclick: () => dismiss(item),
+  }, 'Dismiss'));
+  return el('details', { className: 'item-menu' },
+    el('summary', { 'aria-label': `More actions for "${item.title}"`, title: 'More actions', 'data-key': `menu-${item.id}` }, '⋮'),
+    el('div', { className: 'menu', role: 'menu' }, entries),
+  );
 }
 
 /** One item. kind: 'plan' (this week), 'next' (next week), 'done', 'dismissed'. */
@@ -98,7 +149,7 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     'aria-label': `Mark "${item.title}" ${done ? 'not done' : 'done'}`,
     title: done && !entry.canUncheck ? 'Submitted in Canvas' : '',
     'data-key': `done-${item.id}`,
-    onchange: (e) => (e.target.checked ? markDone(item) : updateItem(item.id, { manualDone: false })),
+    onchange: (e) => (e.target.checked ? markDone(item) : updateItem(item.id, { manualDone: false, doneOn: null })),
   });
   const title = item.url
     ? el('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', className: 'title' }, item.title)
@@ -120,12 +171,11 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
   if (entry.notOpenYet) chips.push(el('span', { className: 'chip' }, `opens ${dayLabel(entry.unlockDate, { weekday: 'short', month: 'short', day: 'numeric' })}`));
   if (item.prevDueAt) chips.push(el('span', { className: 'chip warn', title: `Was due ${dueLabel(item.prevDueAt)}` }, 'due date changed'));
   if (entry.pulledIn && kind === 'plan') chips.push(el('span', { className: 'chip' }, 'pulled in'));
+  if (entry.movedTo && kind === 'plan') chips.push(el('span', { className: 'chip', title: 'You moved this here. Use ⋮ to change it.' }, 'moved'));
+  else if (item.pinned && entry.lastDay && (kind === 'plan' || kind === 'next')) chips.push(el('span', { className: 'chip', title: 'Pinned to its due day. Use ⋮ to unpin.' }, 'pinned'));
 
   const pull = app.thisWeekPlan?.pull;
   const actions = [];
-  if (kind === 'plan' && entry.overdue) {
-    actions.push(el('button', { onclick: () => updateItem(item.id, { dismissed: true }), title: 'Hide this overdue item', 'data-key': `dismiss-${item.id}` }, 'Dismiss'));
-  }
   if (kind === 'plan' && entry.pulledIn) {
     actions.push(el('button', { onclick: () => updateItem(item.id, { pulledIn: false }), title: 'Move back to its own week', 'data-key': `back-${item.id}` }, 'Send back'));
   }
@@ -148,10 +198,10 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
       onclick: () => openLog(item),
     }, l ? `logged ${[l.minutes ? minutesLabel(l.minutes) : null, l.difficulty ? `${l.difficulty}/5` : null].filter(Boolean).join(' · ')}` : 'Log time'));
   }
-  if (kind === 'plan' || kind === 'next') actions.push(pinButton(item));
   actions.push(kind === 'plan' || kind === 'next'
     ? minutesControl(entry)
     : el('span', { className: 'chip' }, minutesLabel(entry.minutes)));
+  if (kind === 'plan' || kind === 'next') actions.push(itemMenu(entry, kind));
 
   return el('li', {
     className: `item${done ? ' done' : ''}${upNext ? ' up-next' : ''}${!done && (urgency.dueToday || entry.overdue) ? ' urgent' : ''}`,

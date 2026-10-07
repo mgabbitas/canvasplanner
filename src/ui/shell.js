@@ -96,7 +96,12 @@ export function renderHeader(p) {
   if (weekView) {
     const today = v === 'this' ? p.days.find((d) => d.date === p.today) : null;
     const parts = [];
-    if (today) parts.push(el('strong', {}, `Today: ${itemCount(today.items)} · ${minutesLabel(today.load)}`));
+    if (today) parts.push(el('strong', {}, `Today: ${itemCount(today.items)} · ${minutesLabel(today.load - today.doneMinutes)}`));
+    const { count: doneCount, minutes: doneMinutes } = v === 'this' ? p.doneToday : { count: 0 };
+    if (doneCount) {
+      parts.push(el('span', { className: 'good-text', 'data-key': 'done-today', title: 'Finished today (logged time where you logged it)' },
+        `✓ ${doneCount} done · ${minutesLabel(doneMinutes)}`));
+    }
     const work = v === 'this' ? homework(p.days.flatMap((d) => d.items)) : [];
     const dueToday = work.filter((e) => e.dueToday).length;
     const overdue = work.filter((e) => e.overdue).length;
