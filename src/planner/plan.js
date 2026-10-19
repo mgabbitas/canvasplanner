@@ -9,6 +9,13 @@ const FORECAST_DAYS = 14;
 
 export const isDone = (item) => Boolean(item.manualDone || item.canvasDone);
 
+// Canvas has no exam flag, so go by title: "exam" or "midterm" anywhere, or "final"
+// on a quiz (so "Final Reflection Document" isn't one).
+const EXAM_WORDS = /\b(exam|midterm)s?\b/i;
+const FINAL = /\bfinal\b/i;
+export const looksLikeExam = (item) => EXAM_WORDS.test(item.title) || (item.type === 'quiz' && FINAL.test(item.title));
+export const isExam = (item) => !item.notExam && looksLikeExam(item);
+
 /** The local date a done item was finished: when you checked it off, else when Canvas got it. */
 export function doneDay(item) {
   if (!isDone(item)) return null;
@@ -214,6 +221,11 @@ export function plan({ items, settings, weekState = {}, now }) {
     return { date, count: due.length, minutes, over: minutes > capacity(date) };
   });
 
+  // --- exams still ahead this week (for the side panel) ---
+  const exams = entries
+    .filter((e) => e.dueDay && e.dueDay >= today && e.dueDay <= week.end && isExam(e.item))
+    .sort((a, b) => Date.parse(a.item.dueAt) - Date.parse(b.item.dueAt));
+
   // --- dismissed (so a dismissal can be undone) ---
   const dismissed = all
     .filter((i) => i.dismissed && !isDone(i) && !i.hidden && courseIncluded(i, settings))
@@ -243,6 +255,7 @@ export function plan({ items, settings, weekState = {}, now }) {
     dismissed,
     pull,
     forecast,
+    exams,
     done,
     // Homework finished today: count and minutes (logged time if any, else the estimate).
     doneToday: {

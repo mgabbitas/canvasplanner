@@ -1,6 +1,6 @@
 // Item rows and what you can do to an item: check off (with undo), log time,
 // change minutes, the ⋮ menu (move to a day, pin, dismiss), pull, send back, restore.
-import { canPullItem, doneDay } from '../planner/plan.js';
+import { canPullItem, doneDay, looksLikeExam } from '../planner/plan.js';
 import { estimate } from '../planner/estimate.js';
 import { toLocalDate, addDays, dateRange, minDate } from '../planner/dates.js';
 import { validateLog } from '../storage/schema.js';
@@ -127,6 +127,13 @@ function itemMenu(entry, kind) {
       role: 'menuitem', 'data-key': `pin-${item.id}`,
       onclick: () => choose(item.pinned ? { pinned: false } : { pinned: true, plannedOn: null }),
     }, item.pinned ? 'Unpin' : 'Pin to due day'));
+  }
+  if (looksLikeExam(item)) {
+    entries.push(el('button', {
+      role: 'menuitem', 'data-key': `exam-${item.id}`,
+      title: item.notExam ? 'List it under Exams again' : 'Stop listing it under Exams',
+      onclick: () => choose({ notExam: !item.notExam }),
+    }, item.notExam ? "It's an exam" : 'Not an exam'));
   }
   entries.push(el('button', {
     role: 'menuitem', 'data-key': `dismiss-${item.id}`, title: 'Hide it from the plan. Restore it from Dismissed.',

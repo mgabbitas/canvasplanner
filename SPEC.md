@@ -74,7 +74,7 @@ Item, Canvas-owned fields (overwritten on every sync): `id`, `courseId`, `title`
 
 Item, user-owned fields (sync never touches these): `manualDone`, `minutesOverride`,
 `pinned`, `dismissed`, `pulledIn`, `inClass`, `log`, `doneOn` (local date you checked it
-off), `plannedOn` (local date you moved it to). Added 2026-10-06 with defaults of null,
+off), `plannedOn` (local date you moved it to), `notExam`. Added 2026-10-06 with defaults of null,
 so no migration is needed.
 
 Merge rules:
@@ -163,6 +163,12 @@ Pull next week:
 - Pulled items set `pulledIn` and are planned by the same algorithm. Each has a "send
   back" action. Items that aren't unlocked yet are listed as "not open yet".
 
+Exams (decided 2026-10-06): unfinished items whose title contains "exam" or
+"midterm", or a quiz with "final" in the title, due from today through the end of the
+week, earliest first. A user field `notExam` removes a false match. Shown in the right
+column ("Exams this week", and "Exams next week" on the Next week view), hidden when
+there are none.
+
 Done today: count of homework items finished today and their minutes (logged time if
 any, else the estimate), shown in the header.
 
@@ -180,7 +186,8 @@ independent of the plan. Highlight days over that weekday's capacity.
 - Forecast strip, Pull next week menu, collapsible Done section.
 - Item menu (⋮, decided 2026-10-06) on every planned item: Move to (today, tomorrow
   or another day in the item's window this week; "Let the planner decide" clears it),
-  Pin to due day, Dismiss (any item, with Undo; restored from the Dismissed panel).
+  Pin to due day, Not an exam / It's an exam (only on titles that look like exams),
+  Dismiss (any item, with Undo; restored from the Dismissed panel).
   Moved and pinned items show a chip. When today's homework is all done and later days
   have work, today shows a button to start the next open item from the next day
   (moves it to today).

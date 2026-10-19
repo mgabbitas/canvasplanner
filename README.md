@@ -46,6 +46,8 @@ way. Your settings and history are kept.
   before it's due, **pin** it to its due day, or **dismiss** it (restore it from
   Dismissed on the right).
 - **Done for today?** A button offers to start the next item from tomorrow.
+- **Exams** due this week are listed on the right (next week's on Next week). They're
+  found by title; use ⋮ → **Not an exam** on anything that isn't one.
 - **Click a class** in the sidebar to see everything left in it. Filter by title (e.g.
   "Teach") and set all the shown items' minutes, or mark them in class, in one go.
 - **Change an estimate** with the minutes button on any item (or pick **In class** for
@@ -86,7 +88,6 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Planned
 
-- Upcoming exams listed next to the forecast.
 - Your own items for things Canvas doesn't track (studying, project milestones).
 - Later: Chrome support, and a grading view for TAs.
 

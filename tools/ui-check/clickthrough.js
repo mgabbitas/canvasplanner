@@ -110,6 +110,20 @@ async function run() {
   check('next: pull card', !!document.querySelector('#rail .pullcard'));
   check('next: day tabs', $$('.day-tab').length >= 2);
   check('next: pull buttons', $$('[data-key^="pull-"]').length > 0);
+  // Exams card (depends on today's date, so only when the fixture has one that week).
+  document.querySelector('[data-key="daytab-week"]')?.click(); await wait(150);
+  const examBtn = document.querySelector('.day [data-key^="exam-"]');
+  const examCount = () => $$('#rail .exams li').length;
+  if (examBtn && examCount()) {
+    const eid = examBtn.getAttribute('data-key').replace('exam-', '');
+    const n = examCount();
+    examBtn.click(); await wait(200);
+    check('not an exam', window.__store.items[eid]?.notExam === true && examCount() === n - 1, `${n} -> ${examCount()}`);
+    document.querySelector(`[data-key="exam-${eid}"]`)?.click(); await wait(200);
+    check("it's an exam again", window.__store.items[eid]?.notExam === false && examCount() === n);
+  } else {
+    check('exams card hidden when none', !document.querySelector('#rail .exams'));
+  }
 
   // Class view: open from the sidebar, filter, set all shown, undo.
   const classLink = document.querySelector('.legend-link');
@@ -199,10 +213,11 @@ async function run() {
   // Finish all of today's homework: nothing refills today, and the get-ahead button moves one item in.
   const todayTab = document.querySelector('.day-tab:not(.week)');
   todayTab.click(); await wait(150);
-  for (let i = 0; i < 60; i++) {
-    const b = document.querySelector('.day .item:not(.done) input[type=checkbox]:not(:disabled)');
-    if (!b || /in class/.test(b.closest('.item').textContent)) break;
-    b.checked = true; fire(b, 'change'); await wait(120);
+  for (let i = 0; i < 150; i++) {
+    const b = $$('.day .item:not(.done) input[type=checkbox]:not(:disabled)')
+      .find((x) => ![...x.closest('.item').querySelectorAll('.chip')].some((c) => c.textContent === 'in class'));
+    if (!b) break;
+    b.checked = true; fire(b, 'change'); await wait(80);
   }
   const ahead = document.querySelector('[data-key="ahead"]');
   check('today stays done (no refill)', /0 items/.test(document.querySelector('.day-tab:not(.week)')?.textContent ?? ''), document.querySelector('.day-tab:not(.week)')?.textContent);

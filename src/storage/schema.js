@@ -127,6 +127,7 @@ function validateItem(id, raw) {
     log: validateLog(raw.log),
     doneOn: dateOrNull(raw.doneOn),
     plannedOn: dateOrNull(raw.plannedOn),
+    notExam: raw.notExam === true,
   };
 }
 

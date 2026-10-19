@@ -11,7 +11,7 @@ import { applyTheme } from './theme.js';
 import { app, view, settingsTab, classId, saveState, sync, courseName } from './app.js';
 import { finishDay, openLog, panel } from './items.js';
 import { setNavOpen, renderSidebar, renderHeader, renderWelcome } from './shell.js';
-import { renderBanners, renderPullCard, renderForecast, renderDayLayout } from './week.js';
+import { renderBanners, renderPullCard, renderForecast, renderDayLayout, renderExams } from './week.js';
 
 // --- settings view hooks ---------------------------------------------------------
 
@@ -71,7 +71,7 @@ function render() {
     fill('banners', renderBanners(p));
     fill('days', days('next'));
     fill('extras', [panel("Won't fit by next week's target day", p.overflow, 'next', true)]);
-    rail = [renderPullCard(), renderForecast(app.thisWeekPlan)];
+    rail = [renderPullCard(), renderForecast(app.thisWeekPlan), renderExams(p, 'next week')];
   } else {
     fill('banners', renderBanners(p));
     fill('days', days('plan'));
@@ -85,6 +85,7 @@ function render() {
     ]);
     rail = [
       renderForecast(p),
+      renderExams(p, 'this week'),
       panel('No due date', p.noDueDate, 'plan'),
       panel('Dismissed', p.dismissed, 'dismissed'),
     ];

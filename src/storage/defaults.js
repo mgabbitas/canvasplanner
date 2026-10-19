@@ -42,4 +42,5 @@ export const USER_FIELD_DEFAULTS = Object.freeze({
   log: null, // { minutes, difficulty (1-5), finishedOn: 'YYYY-MM-DD' } once logged
   doneOn: null, // 'YYYY-MM-DD' you checked it off (counts toward that day's load)
   plannedOn: null, // 'YYYY-MM-DD' you moved it to (beats the planner's pick)
+  notExam: false, // you said a title that looks like an exam isn't one
 });

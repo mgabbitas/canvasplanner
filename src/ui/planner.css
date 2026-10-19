@@ -400,3 +400,12 @@ ul.suggestions li:first-child { border-top: none; }
 .class-tools .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .class-filter { flex: 1 1 220px; min-width: 0; }
 .class-week .items { margin-top: 6px; }
+
+/* ---------- Exams (right column) ---------- */
+.exams h2 { font-size: 15px; margin: 0 0 8px; }
+.exam-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.exam-list li { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; font-size: 14px; }
+.exam-list .dot { margin-top: 6px; }
+.exam-title { font-weight: 600; overflow-wrap: anywhere; }
+.exam-list .muted { font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.exams .hint { font-size: 12px; margin: 10px 0 0; }

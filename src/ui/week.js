@@ -1,8 +1,9 @@
 // The plan itself: banners, day tabs, days grouped by class, day capacity editing,
 // the pull card and the forecast strip.
 import { SIZES } from '../storage/defaults.js';
-import { el, select, dayLabel, minutesLabel, readInt } from './dom.js';
+import { el, select, dayLabel, dueLabel, minutesLabel, readInt } from './dom.js';
 import { courseColor } from './theme.js';
+import { toLocalDate, addDays } from '../planner/dates.js';
 import {
   app, courseName, sumMinutes, plural, updateItems, changeExtraDays, setDayCapacity, saveState, homework, itemCount,
 } from './app.js';
@@ -88,6 +89,31 @@ export function renderForecast(p) {
         el('span', { className: 'fc-n', 'aria-hidden': 'true' }, f.count ? String(f.count) : ''),
       );
     })),
+  );
+}
+
+/** Exams still ahead in the shown week. Nothing when there are none. */
+export function renderExams(p, which) {
+  if (!p.exams.length) return null;
+  // Real dates: the Next week projection plans as if it were already next week.
+  const today = toLocalDate(Date.now());
+  return el('section', { className: 'panel exams', 'data-key': 'exams' },
+    el('h2', {}, `Exams ${which}`),
+    el('ul', { className: 'exam-list' }, p.exams.map((e) => {
+      const { item } = e;
+      return el('li', { style: `--course:${courseColor(item.courseId, app.state.settings, app.state.courses)}` },
+        el('span', { className: 'dot', 'aria-hidden': 'true' }),
+        el('div', {},
+          item.url
+            ? el('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', className: 'exam-title' }, item.title)
+            : el('span', { className: 'exam-title' }, item.title),
+          el('div', { className: 'muted' }, `${courseName(item.courseId)} · ${dueLabel(item.dueAt)}`,
+            e.dueDay === today ? el('span', { className: 'chip bad' }, 'today')
+              : e.dueDay === addDays(today, 1) ? el('span', { className: 'chip warn' }, 'tomorrow') : null),
+        ),
+      );
+    })),
+    el('p', { className: 'hint' }, 'Found by title. Use ⋮ → Not an exam on an item to remove it.'),
   );
 }
 

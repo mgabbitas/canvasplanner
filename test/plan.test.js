@@ -1,7 +1,7 @@
 process.env.TZ = 'America/Denver';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { plan, classEntries } from '../src/planner/plan.js';
+import { plan, planNextWeek, classEntries } from '../src/planner/plan.js';
 import { DEFAULT_SETTINGS as S, USER_FIELD_DEFAULTS } from '../src/storage/defaults.js';
 import { normalizeAssignment } from '../src/sync/normalize.js';
 import { mergeCourse } from '../src/storage/merge.js';
@@ -478,4 +478,19 @@ test('class entries: one class, unfinished, earliest due first, no due date last
   const list = classEntries({ items: [later, noDue, soon, other, done, gone], settings: S, courseId: '1', now: iso(MON) });
   assert.deepEqual(list.map((e) => e.id), [soon.id, later.id, noDue.id]);
   assert.equal(list[0].minutes, 20);
+});
+
+test('exams: matched by title, still ahead this week, "not an exam" removes one', () => {
+  const exam = mk({ title: 'Exam 01', type: 'quiz', due: '2026-10-01 23:59' });
+  const midterm = mk({ title: 'Physics Midterm', type: 'upload', due: '2026-09-29 17:00' });
+  const finalQuiz = mk({ title: 'CYBER201 Final', type: 'quiz', due: '2026-10-02' });
+  const finalDoc = mk({ title: 'Final Reflection Document', type: 'upload', due: '2026-10-02' });
+  const example = mk({ title: 'Example essay', due: '2026-10-02' });
+  const nextWeek = mk({ title: 'Exam 02', type: 'quiz', due: '2026-10-06' });
+  const done = mk({ title: 'Exam 00', type: 'quiz', due: '2026-10-01', manualDone: true });
+  const items = [exam, midterm, finalQuiz, finalDoc, example, nextWeek, done];
+  assert.deepEqual(run(items).exams.map((e) => e.id), [midterm.id, exam.id, finalQuiz.id]);
+  assert.deepEqual(run(items, { now: '2026-09-30 09:00' }).exams.map((e) => e.id), [exam.id, finalQuiz.id]); // past ones drop off
+  assert.deepEqual(run([{ ...exam, notExam: true }, finalQuiz]).exams.map((e) => e.id), [finalQuiz.id]);
+  assert.deepEqual(planNextWeek({ items, settings: S, now: iso(MON) }).exams.map((e) => e.id), [nextWeek.id]);
 });
