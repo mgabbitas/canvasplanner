@@ -93,6 +93,10 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Changelog
 
+- **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
+  (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
+  early, a page per class for setting many estimates at once, exams on the right, and
+  Undo when deleting a rule.
 - **1.0.1**: New logo. Fixed logging times, clearer "due today" vs "overdue", correct
   urgency labels on Next week.
 - **1.0.0**: First release.
