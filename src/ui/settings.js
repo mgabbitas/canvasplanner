@@ -338,7 +338,7 @@ function dataSection(ctx) {
       } catch (err) {
         return say(err instanceof SyntaxError ? 'That file is not valid JSON.' : err.message, true);
       }
-      if (!confirm('Replace your settings, item minutes, done checks and dismissed items with the ones in this file?')) return;
+      if (!confirm('Replace your settings, item minutes, done checks, dismissed items and streak history with the ones in this file?')) return;
       draftRules = null;
       await ctx.saveState(next);
       say('Imported.');
@@ -369,7 +369,7 @@ function dataSection(ctx) {
         },
       }, 'Clear all data'),
     ),
-    el('p', { className: 'hint' }, 'Export saves settings and your per-item changes (minutes, checks, dismissals) to a file. It contains no Canvas content.'),
+    el('p', { className: 'hint' }, 'Export saves settings and your per-item changes (minutes, checks, dismissals) and streak history to a file. It contains no Canvas content.'),
     message ? el('p', { className: message.bad ? 'warn-text' : 'hint', role: 'status' }, message.text) : null,
   );
 }

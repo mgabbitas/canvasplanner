@@ -150,13 +150,19 @@ input[type=number], input[type=text], input[type=search], select {
 
 /* ---------- 4. Header ---------- */
 #header { display: grid; gap: 14px; margin-bottom: 18px; }
-.title-row { display: flex; align-items: center; gap: 10px; }
+.title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .title-row h1 { font-size: 24px; letter-spacing: -0.01em; }
 .subtitle { margin: 0; color: var(--muted); }
 .subtitle strong { color: var(--text); }
 .subtitle-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
 .menu-btn { display: none; }
 @media (max-width: 820px) { .menu-btn { display: inline-flex; } }
+.streaks { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+.streak { display: inline-flex; align-items: baseline; gap: 5px; padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.streak strong { font-size: 15px; color: var(--text); }
+.streak.lit { border-color: var(--good); }
+.streak.lit strong { color: var(--good); }
+.streak.zero strong { color: var(--muted); }
 .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; background: var(--surface); }
 .seg button { border: none; border-radius: 0; padding: 5px 12px; background: transparent; color: var(--muted); }
 .seg button + button { border-left: 1px solid var(--border); }

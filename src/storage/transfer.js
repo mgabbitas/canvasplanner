@@ -11,7 +11,7 @@ const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const userFields = (item) => Object.fromEntries(USER_FIELDS.map((f) => [f, item[f]]));
 const isDefault = (item) => USER_FIELDS.every((f) => item[f] === USER_FIELD_DEFAULTS[f]);
 
-/** Settings, week state, and user fields of items you've changed. No Canvas content. */
+/** Settings, week state, day-on-plan history, and user fields of items you've changed. No Canvas content. */
 export function buildExport(state, nowIso) {
   const userItems = {};
   for (const [id, item] of Object.entries(state.items)) {
@@ -23,13 +23,14 @@ export function buildExport(state, nowIso) {
     exportedAt: nowIso,
     settings: state.settings,
     weekState: state.weekState,
+    dayLog: state.dayLog ?? {},
     userItems,
   };
 }
 
 /**
- * Validate an export file and return the state that replaces settings, week state and
- * all user fields. Throws with a readable message if it isn't one of our exports.
+ * Validate an export file and return the state that replaces settings, week state,
+ * day history and all user fields. Throws with a readable message if it isn't one of our exports.
  * Items not synced yet are kept as hidden stubs; the next sync fills them in.
  */
 export function applyImport(state, raw) {
@@ -37,7 +38,9 @@ export function applyImport(state, raw) {
   if (!Number.isInteger(raw.schemaVersion) || raw.schemaVersion > SCHEMA_VERSION) {
     throw new Error('This export is from a newer version of Canvas Planner.');
   }
-  const { settings, weekState } = migrate({ schemaVersion: raw.schemaVersion, settings: raw.settings, weekState: raw.weekState });
+  const { settings, weekState, dayLog } = migrate({
+    schemaVersion: raw.schemaVersion, settings: raw.settings, weekState: raw.weekState, dayLog: raw.dayLog,
+  });
 
   const items = {};
   for (const [id, item] of Object.entries(state.items)) items[id] = { ...item, ...USER_FIELD_DEFAULTS };
@@ -49,5 +52,5 @@ export function applyImport(state, raw) {
     const valid = validateItems({ [id]: { ...base, ...userFields(u) } })[id];
     if (valid) items[id] = state.items[id] ? { ...items[id], ...userFields(valid) } : valid;
   }
-  return { settings, weekState, items };
+  return { settings, weekState, dayLog, items };
 }

@@ -1,7 +1,7 @@
 process.env.TZ = 'America/Denver';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { migrate, validateSettings, validateItems, validateRule, pruneWeekState } from '../src/storage/schema.js';
+import { migrate, validateSettings, validateItems, validateRule, pruneWeekState, pruneDayLog } from '../src/storage/schema.js';
 import { DEFAULT_SETTINGS } from '../src/storage/defaults.js';
 
 test('empty or garbage storage gives defaults', () => {
@@ -137,4 +137,15 @@ test('items: doneOn and plannedOn must be dates', () => {
   });
   assert.deepEqual([v['1'].doneOn, v['1'].plannedOn], ['2026-10-06', '2026-10-07']);
   assert.deepEqual([v['2'].doneOn, v['2'].plannedOn], [null, null]);
+});
+
+test('dayLog: dates and ids validated, duplicates dropped, old days pruned', () => {
+  const s = migrate({ dayLog: {
+    '2026-10-20': { left: ['5', 5, 'x', '6'] },
+    'nope': { left: ['1'] },
+    '2026-10-21': { left: 'not a list' },
+    '2026-10-22': null,
+  } });
+  assert.deepEqual(s.dayLog, { '2026-10-20': { left: ['5', '6'] }, '2026-10-21': { left: [] } });
+  assert.deepEqual(Object.keys(pruneDayLog({ '2025-01-01': { left: [] }, '2026-10-20': { left: [] } }, '2026-10-24')), ['2026-10-20']);
 });

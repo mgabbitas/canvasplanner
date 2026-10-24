@@ -8,7 +8,7 @@ import { renderSettings, resetSettingsDraft } from './settings.js';
 import { renderStats } from './statsview.js';
 import { renderClass, emptyClassFilter } from './classview.js';
 import { applyTheme } from './theme.js';
-import { app, view, settingsTab, classId, saveState, sync, courseName } from './app.js';
+import { app, view, settingsTab, classId, saveState, sync, courseName, recordDay } from './app.js';
 import { finishDay, openLog, panel } from './items.js';
 import { setNavOpen, renderSidebar, renderHeader, renderWelcome } from './shell.js';
 import { renderBanners, renderPullCard, renderForecast, renderDayLayout, renderExams } from './week.js';
@@ -41,6 +41,7 @@ function render() {
 
   const args = { items: app.state.items, settings: app.state.settings, weekState: app.state.weekState, now: Date.now() };
   app.thisWeekPlan = plan(args);
+  if (app.state.meta.lastSyncAt) recordDay(app.thisWeekPlan);
   const v = view();
   const p = v === 'next' ? planNextWeek(args) : app.thisWeekPlan;
 

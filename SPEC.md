@@ -64,7 +64,9 @@ Keys: `settings`, `items` (map by Canvas assignment id), `meta` (`lastSyncAt`,
 `lastError`), `weekState` (keyed by week start date: `{ extraDays, capacity }`, where `capacity`
 maps a date to that day's minutes and overrides the weekday default; weeks older than
 8 weeks are pruned), `courses`
-(map by course id: `{ name }`, Canvas names from the last sync).
+(map by course id: `{ name }`, Canvas names from the last sync), `dayLog` (keyed by date:
+`{ left: [item ids] }`, the homework still planned for that day the last time the page
+drew it; kept about 13 months; exported with settings).
 
 Derived item fields set by sync: `canvasDone`, `nonSubmittable`, `prevDueAt`, `hidden`.
 
@@ -171,6 +173,20 @@ there are none.
 
 Done today: count of homework items finished today and their minutes (logged time if
 any, else the estimate), shown in the header.
+
+Streaks (decided 2026-10-24): two counters side by side in the This week header, with
+current and best on Stats. Neither needs a setting. Homework means not in-class, not
+dismissed or hidden, class included.
+- Weeks on target, computed from items: a week's homework is what's due in it. Each item
+  must be done by that week's target day plus added days, or by its due day if it opens
+  after that. A week is a miss once anything is late or still undone past its deadline,
+  a hit when all are done in time, pending otherwise (doesn't break the streak). Weeks
+  with no homework are skipped. A done item with no known finish day counts as on time.
+- Days on plan, from `dayLog`: a past day is a hit if every item left on it was done by
+  the end of that day (done day as in section 6, so a Canvas submission made with the
+  page closed counts) and something was planned or finished; a miss otherwise. Days
+  with nothing planned or done, and days never recorded, are skipped. Today counts only
+  once it's a hit. Moving or dismissing an item takes it off a day.
 
 Forecast: for the next 14 days, minutes and count of undone items *due* each day,
 independent of the plan. Highlight days over that weekday's capacity.

@@ -17,6 +17,8 @@ Wednesday instead of piling up on Saturday.
   doesn't fit is reported, never quietly pushed past its due date.
 - **Bends to your day.** Move any item to another day, start tomorrow's work early
   when you're done, and watch the "done today" count go up as you work.
+- **Keeps a streak.** Two counters in the header: weeks in a row you finished
+  everything by the target day, and days in a row you finished everything planned.
 - **Learns your pace.** When you check something off you can log how long it took. The
   Stats page shows your real averages and suggests better time estimates.
 - **Stays private.** It only reads your assignments, using your normal Canvas login.
@@ -93,6 +95,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Changelog
 
+- **Unreleased**: Streak counters (weeks on target, days on plan) in the header and on
+  Stats.
 - **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
   (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
   early, a page per class for setting many estimates at once, exams on the right, and

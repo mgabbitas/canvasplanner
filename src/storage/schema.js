@@ -175,6 +175,27 @@ export function pruneWeekState(weekState, today) {
   return Object.fromEntries(Object.entries(weekState).filter(([week]) => week >= oldest));
 }
 
+const KEEP_DAYS = 400;
+const MAX_LEFT = 200;
+
+/** dayLog: date -> { left: [item ids still planned that day] }, for the days-on-plan streak. */
+export function validateDayLog(raw) {
+  const out = {};
+  if (!isObj(raw)) return out;
+  for (const [date, d] of Object.entries(raw)) {
+    if (!DATE.test(date) || !isObj(d)) continue;
+    const left = Array.isArray(d.left) ? [...new Set(d.left.map(String).filter((id) => ID.test(id)))].slice(0, MAX_LEFT) : [];
+    out[date] = { left };
+  }
+  return out;
+}
+
+/** Drop day records older than about 13 months. */
+export function pruneDayLog(dayLog, today) {
+  const oldest = addDays(today, -KEEP_DAYS);
+  return Object.fromEntries(Object.entries(dayLog).filter(([date]) => date >= oldest));
+}
+
 export function validateMeta(raw) {
   const m = isObj(raw) ? raw : {};
   return { lastSyncAt: isoOrNull(m.lastSyncAt), lastError: str(m.lastError, 1000) };
@@ -229,5 +250,6 @@ export function migrate(raw) {
     meta: validateMeta(r.meta),
     weekState: validateWeekState(r.weekState),
     courses: validateCourses(r.courses),
+    dayLog: validateDayLog(r.dayLog),
   };
 }

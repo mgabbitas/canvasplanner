@@ -2,6 +2,7 @@
 import { computeStats, suggestRules, applySuggestion, MIN_LOGS_FOR_SUGGESTION } from '../planner/stats.js';
 import { validateSettings } from '../storage/schema.js';
 import { el, WEEKDAYS, TYPE_LABELS, minutesLabel, dayLabel } from './dom.js';
+import { streaks } from './app.js';
 
 const NEEDS_TIME_DAYS = 30;
 
@@ -96,7 +97,20 @@ export function renderStats(ctx) {
     .filter((i) => (i.manualDone || i.canvasDone) && !i.log && !i.hidden && !i.inClass && (i.submittedAt ?? i.dueAt ?? '') >= since)
     .sort((a, b) => (b.submittedAt ?? b.dueAt ?? '').localeCompare(a.submittedAt ?? a.dueAt ?? ''));
 
+  const { days, weeks } = streaks();
+  const card = (n, label) => el('div', { className: 'stat-card' }, el('strong', {}, String(n)), el('span', {}, label));
+  const streakCards = el('div', {},
+    el('div', { className: 'stat-cards' },
+      card(weeks.current, 'weeks on target'),
+      card(weeks.best, 'best weeks on target'),
+      card(days.current, 'days on plan'),
+      card(days.best, 'best days on plan'),
+    ),
+    el('p', { className: 'hint' }, 'A week is on target when everything due in it was done by the target day. A day is on plan when you finished everything planned for it. Days with nothing planned, and days you didn\'t open the planner, don\'t break a streak.'),
+  );
+
   return [
+    section('Streaks', streakCards),
     section('Overview', summary),
     section('By class', statTable(stats.byCourse, ctx.courseName, 'Class')),
     section('By assignment type', statTable(stats.byType, (t) => TYPE_LABELS[t] ?? t, 'Type')),

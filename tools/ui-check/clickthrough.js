@@ -27,6 +27,9 @@ async function run() {
   check('day tabs render', $$('.day-tab').length >= 2, `${$$('.day-tab').length} tabs`);
   check('week tab first', $$('.day-tab')[0]?.textContent.startsWith('Week'));
   check('header shows today count', /Today: \d+ items?/.test(document.querySelector('#header')?.textContent ?? ''), document.querySelector('.subtitle')?.textContent);
+  check('header streak counters', $$('#header .streak').length === 2, $$('#header .streak').map((x) => x.textContent).join(' | '));
+  const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
+  check('today recorded for streak', Array.isArray(window.__store.dayLog?.[todayKey]?.left), JSON.stringify(window.__store.dayLog?.[todayKey]));
   check('sidebar nav', $$('.nav-link').length === 4);
   check('class legend', $$('.legend li').length > 0, `${$$('.legend li').length} classes`);
   check('rail forecast', !!document.querySelector('#rail .forecast'));
@@ -151,6 +154,7 @@ async function run() {
   await go('#stats');
   check('stats: cards', !!document.querySelector('.stat-cards'));
   check('stats: tables', $$('.stat-table').length === 2);
+  check('stats: streaks first', $$('.panel.stats h2')[0]?.textContent === 'Streaks');
   const order = $$('.panel.stats h2').map((h) => h.textContent);
   check('stats: suggestions after weekday', order.indexOf('Suggested estimate rules') > order.indexOf('By day you finished'), order.join(' | '));
 

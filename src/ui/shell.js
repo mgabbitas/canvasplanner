@@ -3,7 +3,7 @@ import { dayLabel, minutesLabel, el } from './dom.js';
 import { icon, logo } from './icons.js';
 import { courseColor } from './theme.js';
 import { CANVAS, LOGIN_MESSAGE } from '../sync/canvas.js';
-import { app, view, classId, timeAgo, courseName, sync, changeExtraDays, homework, itemCount } from './app.js';
+import { app, view, classId, timeAgo, courseName, sync, changeExtraDays, homework, itemCount, streaks, plural } from './app.js';
 
 const NAV = [
   ['', 'this', 'This week', 'week'],
@@ -83,6 +83,20 @@ export function renderWelcome() {
   );
 }
 
+/** The two streak counters, side by side. `lit` when this week / today already counts. */
+function renderStreaks() {
+  const { days, weeks } = streaks();
+  const counter = (key, n, label, lit, title) => el('span', {
+    className: `streak${n ? '' : ' zero'}${lit ? ' lit' : ''}`, 'data-key': key, title,
+  }, el('strong', {}, String(n)), el('span', {}, label));
+  return el('div', { className: 'streaks', 'aria-label': 'Streaks' },
+    counter('streak-weeks', weeks.current, weeks.current === 1 ? 'week on target' : 'weeks on target', weeks.thisWeek === 'hit',
+      `Weeks in a row with everything done by the target day. Best: ${plural(weeks.best, 'week')}.`),
+    counter('streak-days', days.current, days.current === 1 ? 'day on plan' : 'days on plan', days.today === 'hit',
+      `Days in a row where you finished everything planned for the day. Best: ${plural(days.best, 'day')}.`),
+  );
+}
+
 export function renderHeader(p) {
   const v = view();
   const week = p.week;
@@ -132,7 +146,7 @@ export function renderHeader(p) {
   }
 
   return [
-    el('div', { className: 'title-row' }, menuBtn, el('h1', {}, title)),
+    el('div', { className: 'title-row' }, menuBtn, el('h1', {}, title), v === 'this' ? renderStreaks() : null),
     subtitle,
   ];
 }

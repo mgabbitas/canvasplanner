@@ -7,6 +7,7 @@ import { migrate } from '../src/storage/schema.js';
 const stored = () => migrate({
   settings: { statedScale: 70, capacity: [0, 90, 90, 90, 90, 90, 60] },
   weekState: { '2026-09-28': { extraDays: 1, capacity: { '2026-09-29': 30 } } },
+  dayLog: { '2026-10-01': { left: ['1'] } },
   items: {
     1: { courseId: '9', title: 'Changed', minutesOverride: 120, pinned: true, descriptionText: 'secret-ish' },
     2: { courseId: '9', title: 'Untouched' },
@@ -34,6 +35,7 @@ test('round trip into a fresh install keeps everything; unsynced items wait hidd
   assert.equal(next.settings.statedScale, 70);
   assert.equal(next.settings.capacity[0], 0);
   assert.equal(next.weekState['2026-09-28'].extraDays, 1);
+  assert.deepEqual(next.dayLog, { '2026-10-01': { left: ['1'] } });
   assert.equal(next.items['1'].minutesOverride, 120);
   assert.equal(next.items['1'].title, 'Changed');
   assert.equal(next.items['3'].dismissed, true);

@@ -2,7 +2,8 @@
 // and these helpers; planner.js sets app.render.
 import { planningWeek, toLocalDate } from '../planner/dates.js';
 import { loadState, save } from '../storage/store.js';
-import { pruneWeekState } from '../storage/schema.js';
+import { pruneWeekState, pruneDayLog } from '../storage/schema.js';
+import { plannedToday, dayStreak, weekStreak } from '../planner/streaks.js';
 import { runSync } from '../sync/run.js';
 import { dueLabel } from './dom.js';
 
@@ -86,6 +87,23 @@ export function setDayCapacity(date, minutes) {
     return w;
   });
 }
+
+/**
+ * Remember what's still planned for today (for the days-on-plan streak). Saves only
+ * when it changed, without a re-render, so drawing the page can call it.
+ */
+export function recordDay(p) {
+  const left = plannedToday(p);
+  const known = app.state.dayLog[p.today]?.left;
+  if (known && known.join() === left.join()) return;
+  app.state.dayLog = pruneDayLog({ ...app.state.dayLog, [p.today]: { left } }, p.today);
+  save({ dayLog: app.state.dayLog }).catch(() => {});
+}
+
+export const streaks = (now = Date.now()) => {
+  const { items, settings, weekState, dayLog } = app.state;
+  return { days: dayStreak({ items, settings, dayLog, now }), weeks: weekStreak({ items, settings, weekState, now }) };
+};
 
 export async function sync() {
   if (app.syncing) return;
