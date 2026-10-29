@@ -379,7 +379,16 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
 - **M8. Toolbar button.** Minimal popup: today's items with checkboxes and a link to
   open the planner. Badge shows the count of today's remaining items. No new
   permissions.
-- **M9. Your own tasks.** Details to be decided.
+- **M9. Your own tasks and splitting.** Tasks always belong to a class (no general
+  tasks or separate categories, to avoid becoming a calendar app). "+ Add task" on the
+  main page: class, title and time estimate required; due date and notes optional. No
+  due date: the task floats into free time this week; with one, it is planned like a
+  Canvas item; either way it can be pinned to a day with the item menu. Repeating
+  tasks on chosen weekdays use the normal daily hours. Tasks count everywhere Canvas
+  items do (hours, streaks, stats, days ahead), show a small "task" tag, open an edit
+  form instead of Canvas, and are kept in history, export/import and the calendar
+  export. **Splitting** works on any item: "Split across days" in the item menu breaks
+  it into chunks the planner spreads before the due date.
 - **M10. Themes.** Preset themes and color combinations plus a full color picker
   (accent and background tint, with a contrast warning); 4–5 more accents. Seasonal
   themes Fall and Christmas, each with light and dark versions, offered by a banner
