@@ -410,6 +410,9 @@ ol.wk-cols li { display: grid; grid-template-rows: auto 120px auto; gap: 6px; ju
 .wk-col > span { display: block; width: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: var(--accent); }
 .wk-val { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .wk-name { color: var(--muted); }
+.suggest-box { border: 1px solid var(--border); background: var(--surface-2); border-radius: 10px; padding: 12px 14px; margin: 12px 0; }
+.suggest-box .hint { margin: 2px 0 0; }
+.settings .suggest-empty { margin: 10px 0 0; }
 ul.suggestions { list-style: none; padding: 0; margin: 0; }
 ul.suggestions li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
 ul.suggestions li:first-child { border-top: none; }

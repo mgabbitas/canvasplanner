@@ -1,6 +1,7 @@
 // Settings view (#settings). Every change is validated against the last valid
 // settings and saved immediately.
 import { validateSettings, validateRule, TYPES } from '../storage/schema.js';
+import { suggestRules, applySuggestion, MIN_LOGS_FOR_SUGGESTION } from '../planner/stats.js';
 import { DEFAULT_SETTINGS, TIME_PRESETS } from '../storage/defaults.js';
 import { buildExport, applyImport, MAX_IMPORT_BYTES } from '../storage/transfer.js';
 import { el, select, WEEKDAYS, TYPE_LABELS, minutesLabel, readInt } from './dom.js';
@@ -276,6 +277,7 @@ function rulesSection(ctx) {
 
   return section('Rules', 'How long things take. Rules match on assignment type and words in the title.',
     picker,
+    suggestionsBlock(ctx),
     card,
     rulesClass ? null : typeDefaultsBlock(ctx),
     advanced('rules',
@@ -284,6 +286,39 @@ function rulesSection(ctx) {
           (v) => updateSettings(ctx, { statedScale: v })),
         'When a description says "should take about 60 minutes", plan that × this %. 70 means you usually take 70% of the stated time.'),
     ),
+  );
+}
+
+/** Rules suggested from logged times: all of them, or only the class being shown. */
+function suggestionsBlock(ctx) {
+  const s = ctx.state.settings;
+  const all = suggestRules({ items: ctx.state.items, settings: s });
+  const shown = rulesClass ? all.filter((x) => x.courseId === rulesClass) : all;
+  if (!shown.length) {
+    return rulesClass ? null : el('p', { className: 'hint suggest-empty' },
+      `Suggestions from your logged times appear here once a class has ${MIN_LOGS_FOR_SUGGESTION}+ logged items of one kind whose average is 5+ minutes off the estimate.`);
+  }
+  return el('div', { className: 'suggest-box' },
+    el('h3', {}, `Suggested from your logged times (${shown.length})`),
+    el('ul', { className: 'suggestions' }, shown.map((x) => {
+      const what = [rulesClass ? null : courseLabel(ctx, x.courseId), x.type ? TYPE_LABELS[x.type] : null, x.keyword ? `title contains "${x.keyword}"` : null]
+        .filter(Boolean).join(' · ') || 'Everything in this class';
+      return el('li', {},
+        el('div', {},
+          el('strong', { className: 'name-cell' },
+            rulesClass ? null : el('span', { className: 'dot', style: `--course:${courseColor(x.courseId, s, ctx.state.courses)}`, 'aria-hidden': 'true' }),
+            what),
+          el('div', { className: 'hint' }, `You average ${minutesLabel(x.avgMinutes)} over ${x.count} logged; the estimate is ${minutesLabel(x.currentMinutes)}.`),
+        ),
+        el('button', {
+          className: 'primary', 'data-key': `apply-${x.courseId}-${x.type}-${x.keyword}`,
+          onclick: () => {
+            draftRules = null;
+            return updateSettings(ctx, { estimateRules: applySuggestion(s.estimateRules, x) });
+          },
+        }, `Apply: ${minutesLabel(x.minutes)}`),
+      );
+    })),
   );
 }
 

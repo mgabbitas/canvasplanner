@@ -74,8 +74,8 @@ Everything is in **Settings** (left sidebar). Changes save automatically.
 Each tab has a collapsed **Advanced** section for the finer controls (exact minutes per
 day, the instructor-stated time scale, sync interval, pull limits).
 
-**Tip:** after a couple of weeks of logging times, check **Stats → Suggested estimate
-rules** and click **Apply** on the ones that look right.
+**Tip:** after a couple of weeks of logging times, check **Settings → Rules** for
+suggested rules and click **Apply** on the ones that look right.
 
 ## For developers
 
@@ -104,7 +104,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
   redesigned: day cards with hour sliders, rules by class, Advanced sections, a danger
   zone for reset and clear. XS/S/M/L sizes are gone; everything is in minutes and
   hours (your old sizes convert automatically). Stats page cleaned up: class colors, time-share bars,
-  "faster/slower than estimate" in words, and a weekday column chart.
+  "faster/slower than estimate" in words, and a weekday column chart. Suggested rules
+  moved to Settings → Rules.
 - **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
   (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
   early, a page per class for setting many estimates at once, exams on the right, and

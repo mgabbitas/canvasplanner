@@ -159,7 +159,7 @@ async function run() {
   check('stats: vs estimate in words', $$('.stat-table .vs').every((v) => /faster|slower|about right/.test(v.textContent)));
   check('stats: 7 weekday columns', $$('ol.wk-cols li').length === 7);
   const order = $$('.panel.stats h2').map((h) => h.textContent);
-  check('stats: suggestions after weekday', order.indexOf('Suggested estimate rules') > order.indexOf('By day you finished'), order.join(' | '));
+  check('stats: no suggestions section', !order.includes('Suggested estimate rules'), order.join(' | '));
 
   // Settings tabs.
   for (const tab of ['week', 'rules', 'classes', 'appearance', 'general', 'data']) {
@@ -201,6 +201,26 @@ async function run() {
   document.querySelector('[data-key="add-rule"]').click(); await wait(150);
   check('add rule shows incomplete row', !!document.querySelector('.rule.incomplete'));
   check('type defaults on All classes', $$('.type-grid .field').length === 5);
+  check('suggestions live on Rules', !!document.querySelector('.suggest-box, .suggest-empty'));
+  // Log three quizzes in one class at 90m each, so a rule gets suggested, then apply it.
+  {
+    const items = structuredClone(window.__store.items);
+    const quizzes = Object.values(items).filter((i) => i.type === 'quiz' && !i.log);
+    const course = quizzes.find((q) => quizzes.filter((x) => x.courseId === q.courseId).length >= 3)?.courseId;
+    for (const q of quizzes.filter((x) => x.courseId === course).slice(0, 3)) {
+      items[q.id] = { ...q, manualDone: true, log: { minutes: 90, difficulty: 3, finishedOn: '2026-10-20' } };
+    }
+    await browser.storage.local.set({ items }); await wait(300);
+    const pickAll = document.querySelector('[data-key="rules-class"]');
+    pickAll.value = ''; fire(pickAll, 'change'); await wait(150);
+    const apply = document.querySelector(`.suggest-box [data-key^="apply-${course}-"]`);
+    check('suggestion shown on Rules', !!apply, course);
+    apply?.click(); await wait(200);
+    const label = apply?.textContent;
+    const minutes = Number(label?.match(/(\d+)h/)?.[1] ?? 0) * 60 + Number(label?.match(/(\d+)m/)?.[1] ?? 0);
+    check('apply adds the class rule', window.__store.settings.estimateRules.some((r) => r.courseId === course && r.minutes === minutes),
+      `${label} → ${JSON.stringify(window.__store.settings.estimateRules.filter((r) => r.courseId === course))}`);
+  }
   const typeQuiz = document.querySelector('[data-key="type-quiz"]');
   typeQuiz.value = '30'; fire(typeQuiz, 'change'); await wait(200);
   check('type default saves minutes', window.__store.settings.typeDefaults.quiz === 30);

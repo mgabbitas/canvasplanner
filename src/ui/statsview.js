@@ -1,6 +1,5 @@
 // Stats view (#stats): how long things actually take, from logged times.
-import { computeStats, suggestRules, applySuggestion, MIN_LOGS_FOR_SUGGESTION } from '../planner/stats.js';
-import { validateSettings } from '../storage/schema.js';
+import { computeStats, suggestRules } from '../planner/stats.js';
 import { el, WEEKDAYS, TYPE_LABELS, minutesLabel, dayLabel } from './dom.js';
 import { courseColor } from './theme.js';
 import { streaks } from './app.js';
@@ -94,25 +93,6 @@ export function renderStats(ctx) {
     );
   }));
 
-  const suggestionList = suggestions.length
-    ? el('ul', { className: 'suggestions' }, suggestions.map((s) => {
-      const what = [ctx.courseName(s.courseId), s.type ? TYPE_LABELS[s.type] : null, s.keyword ? `title contains "${s.keyword}"` : null]
-        .filter(Boolean).join(' · ');
-      return el('li', {},
-        el('div', {},
-          el('strong', { className: 'name-cell' }, dot(s.courseId), what),
-          el('div', { className: 'hint' }, `You average ${minutesLabel(s.avgMinutes)} over ${s.count} logged; the estimate is ${minutesLabel(s.currentMinutes)}.`),
-        ),
-        el('button', {
-          className: 'primary', 'data-key': `apply-${s.courseId}-${s.type}-${s.keyword}`,
-          onclick: () => ctx.saveState({
-            settings: validateSettings({ ...state.settings, estimateRules: applySuggestion(state.settings.estimateRules, s) }, state.settings),
-          }),
-        }, `Apply: ${minutesLabel(s.minutes)}`),
-      );
-    }))
-    : el('p', { className: 'hint' }, `Suggestions appear once a class has ${MIN_LOGS_FOR_SUGGESTION}+ logged items of one kind whose average is 5+ minutes off the estimate.`);
-
   const since = (() => {
     const d = new Date();
     d.setDate(d.getDate() - NEEDS_TIME_DAYS);
@@ -133,10 +113,13 @@ export function renderStats(ctx) {
 
   return [
     section('Overview', streakCards, streakHelp, summary),
-    section('By class', statTable(stats.byCourse, { nameOf: ctx.courseName, colorOf, header: 'Class' })),
+    section('By class', statTable(stats.byCourse, { nameOf: ctx.courseName, colorOf, header: 'Class' }),
+      suggestions.length
+        ? el('p', { className: 'hint' }, `${suggestions.length} suggested rule${suggestions.length === 1 ? '' : 's'} from your logged times: `,
+          el('a', { href: '#settings/rules', 'data-key': 'to-suggestions' }, 'review in Settings → Rules'), '.')
+        : null),
     section('By assignment type', statTable(stats.byType, { nameOf: (t) => TYPE_LABELS[t] ?? t, header: 'Type' })),
     section('By day you finished', el('p', { className: 'hint' }, 'Share of your logged time by weekday.'), weekdays),
-    section('Suggested estimate rules', suggestionList),
     section(`Finished in the last ${NEEDS_TIME_DAYS} days without a time (${needTime.length})`,
       needTime.length
         ? el('ul', { className: 'items' }, needTime.map((i) => el('li', { className: 'item done' },
