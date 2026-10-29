@@ -15,6 +15,7 @@ import { finishDay, openLog, panel } from './items.js';
 import { setNavOpen, renderSidebar, renderHeader, renderWelcome } from './shell.js';
 import { renderBanners, renderPullCard, renderForecast, renderDayLayout, renderExams } from './week.js';
 import { renderThemeOffer } from './offers.js';
+import { updateDecorations } from './decor.js';
 
 // --- settings view hooks ---------------------------------------------------------
 
@@ -60,7 +61,8 @@ function render() {
   const p = v === 'next' ? planNextWeek(args) : app.thisWeekPlan;
 
   const $ = (id) => document.getElementById(id);
-  applyTheme(app.state.settings);
+  app.look = applyTheme(app.state.settings);
+  updateDecorations(app.look, app.state.settings);
   $('sidebar').replaceChildren(...renderSidebar().filter(Boolean));
   $('header').replaceChildren(...renderHeader(p).filter(Boolean));
   const fill = (id, nodes) => $(id).replaceChildren(...nodes.filter(Boolean));

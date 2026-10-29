@@ -137,7 +137,8 @@ if (process.argv.includes('--screenshot')) {
   for (const [name, hash, size, query] of [['this', '', '1400,1000'], ['next', 'next', '1400,1000'], ['stats', 'stats', '1400,1700'], ['settings', 'settings/rules', '1400,1000'], ['settings-week', 'settings/week', '1400,1000'], ['settings-data', 'settings/data', '1400,1000'], ['settings-classes', 'settings/classes', '1400,1000'], ['narrow', '', '700,1000'],
     ['loginerror', '', '1400,1000', '?loginerror'], ['noaccess', '', '1400,1000', '?noaccess'],
     ['appearance', 'settings/appearance', '1400,1000'], ['fall', '', '1400,1000', '?look=fall'],
-    ['christmas-dark', '', '1400,1000', '?look=christmas&mode=dark'], ['custom-dark', 'settings/appearance', '1400,1000', '?look=custom&mode=dark']]) {
+    ['christmas-dark', '', '1400,1000', '?look=christmas&mode=dark'], ['custom-dark', 'settings/appearance', '1400,1000', '?look=custom&mode=dark'],
+    ['halloween', '', '1400,1000', '?date=2026-10-31&holiday'], ['july4-dark', '', '1400,1000', '?date=2027-07-04&holiday&mode=dark']]) {
     const file = join(REPO, 'web-ext-artifacts', `ui-${name}.png`);
     await new Promise((r) => firefox(['--screenshot', file, '--window-size', size, `${base}${query ?? ''}#${hash}`]).on('exit', r));
     console.log(`Screenshot: ${file}`);

@@ -14,6 +14,12 @@
     : q.has('noaccess') ? "Canvas Planner isn't allowed to read Canvas yet" : null;
   const store = failed ? { meta: { lastSyncAt: null, lastError: failed } }
     : q.has('empty') ? {} : JSON.parse(xhr.responseText);
+  // ?date=2026-10-31: pretend it's that day (noon), for holiday screenshots.
+  if (q.get('date')) {
+    const shift = new Date(`${q.get('date')}T12:00:00`).getTime() - Date.now();
+    const realNow = Date.now.bind(Date);
+    Date.now = () => realNow() + shift;
+  }
   // ?look=fall&mode=dark: start in a theme (for screenshots).
   if (q.get('look') && store.settings) store.settings.look = q.get('look');
   if (q.get('mode') && store.settings) store.settings.theme = q.get('mode');

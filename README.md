@@ -72,7 +72,7 @@ Everything is in **Settings** (left sidebar). Changes save automatically.
 | **Week** | A card per day: drag the slider for how much homework time you have, mark days off, and pick the day to finish by (Wednesday by default). |
 | **Rules** | How long things take. Pick a class to see its rules, e.g. "*report* → 25 min" for Physics, or use All classes for rules like "any *quiz* → 15 min" and the default time per assignment type. |
 | **Classes** | Hide classes you don't want planned, give them shorter names, and pick a color for each. |
-| **Appearance** | Light, dark or system theme, and an accent color. |
+| **Appearance** | Light, dark or system mode; a theme (Plain, Ocean, Forest, Sunset, Lavender, Fall, Christmas, or your own colors); holiday looks and falling snow and leaves. |
 | **General** | Whether visiting Canvas opens the planner. |
 | **Data** | Export a backup, import one (for example on a new computer), or reset. |
 
@@ -114,7 +114,9 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
   (it has to be done by Sunday), so it no longer shows up as a surprise. **+ Add task**
   for your own tasks: one-off (with a due date, or any time this week) or repeating. Split
   big items across days from the ⋮ menu ("Split across days"); each part is checked off
-  on its own.
+  on its own. Themes: preset color combinations, seasonal Fall and Christmas themes
+  (offered when the season starts), your own colors, holiday looks on Halloween,
+  Thanksgiving, Christmas Day and the 4th of July, and optional falling snow and leaves.
 - **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
   (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
   early, a page per class for setting many estimates at once, exams on the right, and

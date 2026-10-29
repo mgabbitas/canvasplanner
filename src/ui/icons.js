@@ -9,7 +9,22 @@ const ICONS = {
   sync: ['M20 12a8 8 0 1 1-2.34-5.66', 'M20 4v5h-5'],
   menu: ['M4 6h16', 'M4 12h16', 'M4 18h16'],
   close: ['M6 6l12 12', 'M18 6L6 18'],
+  // Theme decorations, shown next to the name.
+  leaf: ['M5 19C5 10 11 4 20 4c0 9-6 15-15 15z', 'M5 19l8-8'],
+  snowflake: ['M12 3v18', 'M4.2 7.5l15.6 9', 'M4.2 16.5l15.6-9', 'M10 4.5l2 1.5 2-1.5', 'M10 19.5l2-1.5 2 1.5'],
+  pumpkin: ['M12 8c-5 0-8 2.5-8 6s3 6 8 6 8-2.5 8-6-3-6-8-6z', 'M12 8v12', 'M12 8c0-2 1-3.5 3-4'],
+  star: ['M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5l-5.3 2.9 1.2-6-4.5-4.1 6-.7z'],
 };
+
+const LOOK_ICONS = { fall: 'leaf', thanksgiving: 'leaf', christmas: 'snowflake', halloween: 'pumpkin', july4: 'star' };
+
+/** The little seasonal mark next to the name, or null for themes without one. */
+export function lookIcon(look) {
+  if (!LOOK_ICONS[look]) return null;
+  const svg = icon(LOOK_ICONS[look]);
+  svg.classList.add('look-icon');
+  return svg;
+}
 
 export function icon(name) {
   const svg = document.createElementNS(SVG, 'svg');
