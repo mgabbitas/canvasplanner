@@ -1,6 +1,6 @@
 // Item rows and what you can do to an item: check off (with undo), log time,
 // change minutes, the ⋮ menu (move to a day, pin, dismiss), pull, send back, restore.
-import { canPullItem, doneDay, looksLikeExam } from '../planner/plan.js';
+import { canPullItem, doneDay, looksLikeExam, checkOffPatch, MAX_PARTS } from '../planner/plan.js';
 import { estimate } from '../planner/estimate.js';
 import { toLocalDate, addDays, dateRange, minDate } from '../planner/dates.js';
 import { validateLog } from '../storage/schema.js';
@@ -34,17 +34,45 @@ export function openLog(item, toast = null) {
   }));
 }
 
-/** Check an item off, with a toast offering Undo and Log time. */
+/** Check an item (or the next part of a split item) off, with a toast offering Undo and Log time. */
 export function markDone(item) {
-  const before = { manualDone: item.manualDone, log: item.log, doneOn: item.doneOn };
-  updateItem(item.id, { manualDone: true, doneOn: toLocalDate(Date.now()) });
+  const before = { manualDone: item.manualDone, log: item.log, doneOn: item.doneOn, partsDone: item.partsDone };
+  const patch = checkOffPatch(item, toLocalDate(Date.now()));
+  updateItem(item.id, patch);
+  const finished = Boolean(patch.manualDone);
   const t = showToast({
-    message: `Done: ${item.title}`,
+    message: finished ? `Done: ${item.title}` : `Done: part ${patch.partsDone.length} of ${item.splitParts} of ${item.title}`,
     actions: [
       { label: 'Undo', onclick: () => { t.close(); updateItem(item.id, before); } },
-      ...(item.inClass ? [] : [{ label: 'Log time', onclick: () => openLog(app.state.items[item.id], t) }]),
+      ...(item.inClass || !finished ? [] : [{ label: 'Log time', onclick: () => openLog(app.state.items[item.id], t) }]),
     ],
   });
+}
+
+/** Uncheck a finished item; a split item gets its last part back. */
+const uncheck = (item) => updateItem(item.id, {
+  manualDone: false, doneOn: null,
+  ...(item.splitParts ? { partsDone: item.partsDone?.slice(0, -1).length ? item.partsDone.slice(0, -1) : null } : {}),
+});
+
+/** "Split across days": 2-4 parts (up to 8 for long items), or back to one piece. */
+function splitMenu(entry) {
+  const { item } = entry;
+  const total = estimate(item, app.state.settings).minutes;
+  if (entry.inClass || entry.overdue || total < 10) return [];
+  const most = Math.min(MAX_PARTS, Math.max(4, Math.floor(total / 30)));
+  const out = [el('div', { className: 'menu-label' }, 'Split across days')];
+  for (let n = 2; n <= most; n++) {
+    out.push(el('button', {
+      role: 'menuitem', disabled: item.splitParts === n || (item.partsDone?.length ?? 0) >= n, 'data-key': `split-${item.id}-${n}`,
+      onclick: () => updateItem(item.id, { splitParts: n, plannedOn: null, pinned: false }),
+    }, `${n} parts · ${minutesLabel(Math.ceil(total / n))} each`, item.splitParts === n ? el('span', { className: 'muted' }, ' · now') : null));
+  }
+  if (item.splitParts && !item.partsDone?.length) {
+    out.push(el('button', { role: 'menuitem', 'data-key': `unsplit-${item.id}`, onclick: () => updateItem(item.id, { splitParts: null }) }, "Don't split"));
+  }
+  out.push(el('hr'));
+  return out;
 }
 
 // --- item rows ---------------------------------------------------------------------
@@ -97,7 +125,7 @@ export function relativeDay(date) {
 /** Days this item can be moved to: from when it opens to its last work day, within this week. */
 function moveDays(entry) {
   const week = app.thisWeekPlan?.week;
-  if (!week || !entry.lastDay || entry.overdue || entry.inClass) return [];
+  if (!week || !entry.lastDay || entry.overdue || entry.inClass || entry.part) return [];
   return dateRange(entry.firstDay, minDate(entry.lastDay, week.end));
 }
 
@@ -128,7 +156,8 @@ function itemMenu(entry, kind) {
     }
     entries.push(el('hr'));
   }
-  if (editable(kind) && entry.lastDay && !entry.overdue && !entry.inClass) {
+  if (kind === 'plan' || kind === 'next') entries.push(...splitMenu(entry));
+  if (editable(kind) && entry.lastDay && !entry.overdue && !entry.inClass && !entry.part) {
     entries.push(el('button', {
       role: 'menuitem', 'data-key': `pin-${item.id}`,
       onclick: () => choose(item.pinned ? { pinned: false } : { pinned: true, plannedOn: null }),
@@ -146,7 +175,7 @@ function itemMenu(entry, kind) {
     onclick: () => dismiss(item),
   }, 'Dismiss'));
   return el('details', { className: 'item-menu' },
-    el('summary', { 'aria-label': `More actions for "${item.title}"`, title: 'More actions', 'data-key': `menu-${item.id}` }, '⋮'),
+    el('summary', { 'aria-label': `More actions for "${item.title}"`, title: 'More actions', 'data-key': `menu-${entry.id}` }, '⋮'),
     el('div', { className: 'menu', role: 'menu' }, entries),
   );
 }
@@ -166,8 +195,8 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     disabled: (done && !entry.canUncheck) || kind === 'dismissed',
     'aria-label': `Mark "${item.title}" ${done ? 'not done' : 'done'}`,
     title: done && !entry.canUncheck ? 'Submitted in Canvas' : '',
-    'data-key': `done-${item.id}`,
-    onchange: (e) => (e.target.checked ? markDone(item) : updateItem(item.id, { manualDone: false, doneOn: null })),
+    'data-key': `done-${entry.part ? entry.id : item.id}`,
+    onchange: (e) => (e.target.checked ? markDone(item) : uncheck(item)),
   });
   const canEditTask = item.task && (!item.task.seriesId || app.state.taskSeries?.[item.task.seriesId]);
   const title = item.url
@@ -184,6 +213,7 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     : entry;
   const chips = [];
   if (upNext) chips.push(el('span', { className: 'chip next' }, 'up next'));
+  if (entry.part) chips.push(el('span', { className: 'chip task', title: 'Split across days. Use ⋮ to change.' }, `part ${entry.part.n} of ${entry.part.of}`));
   if (item.task) {
     chips.push(el('span', { className: 'chip task', title: 'Your own task' }, item.task.seriesId ? 'repeats' : 'task'));
     if (entry.floating && kind !== 'done') chips.push(el('span', { className: 'chip', title: 'No due date: any time this week' }, 'this week'));
@@ -223,9 +253,10 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
       onclick: () => openLog(item),
     }, l ? `logged ${[l.minutes ? minutesLabel(l.minutes) : null, l.difficulty ? `${l.difficulty}/5` : null].filter(Boolean).join(' · ')}` : 'Log time'));
   }
-  actions.push(editable(kind)
+  // A part shows its own share; the item's time is changed on the whole (⋮ → Don't split).
+  actions.push(editable(kind) && !entry.part
     ? minutesControl(entry)
-    : el('span', { className: 'chip' }, minutesLabel(entry.minutes)));
+    : el('span', { className: 'chip', title: entry.part ? `Part of ${minutesLabel(entry.minutes * entry.part.of)}` : '' }, minutesLabel(entry.minutes)));
   if (editable(kind)) actions.push(itemMenu(entry, kind));
 
   return el('li', {

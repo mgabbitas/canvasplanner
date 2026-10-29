@@ -510,3 +510,36 @@ test("Monday-morning work belongs to the week before; Monday-night work doesn't"
   const nextIds = next.days.flatMap((d) => d.items.map((e) => e.id));
   assert.deepEqual(nextIds, [night.id]);
 });
+
+test('split item: parts on different days in order, sharing a day only when needed', () => {
+  const big = mk({ due: '2026-10-03 23:59', minutesOverride: 120, splitParts: 4 }); // 4 x 30m, target Wed 09-30
+  const p = run([big]);
+  const parts = p.days.flatMap((d) => d.items.map((e) => [e.id, d.date, e.minutes]));
+  assert.deepEqual(parts, [
+    [`${big.id}#1`, '2026-09-28', 30], [`${big.id}#2`, '2026-09-29', 30],
+    [`${big.id}#3`, '2026-09-30', 30], [`${big.id}#4`, '2026-09-30', 30], // only 3 days before the target
+  ]);
+  // Two parts done (one today): only parts 3 and 4 are left, and today's done part uses today's time.
+  const half = { ...big, partsDone: ['2026-09-27', '2026-09-28'] };
+  const q = run([half]);
+  assert.deepEqual(q.days.flatMap((d) => d.items.map((e) => e.id)), [`${big.id}#3`, `${big.id}#4`]);
+  assert.equal(q.days[0].load, 30 + (dateOf(q, `${big.id}#3`) === '2026-09-28' ? 30 : 0));
+  assert.deepEqual(q.doneToday, { count: 1, minutes: 30 });
+});
+
+test('checking off a split item adds a part; the last part finishes it', async () => {
+  const { checkOffPatch } = await import('../src/planner/plan.js');
+  assert.deepEqual(checkOffPatch({ splitParts: null }, '2026-09-28'), { manualDone: true, doneOn: '2026-09-28' });
+  assert.deepEqual(checkOffPatch({ splitParts: 3, partsDone: null }, '2026-09-28'), { partsDone: ['2026-09-28'] });
+  assert.deepEqual(checkOffPatch({ splitParts: 2, partsDone: ['2026-09-27'] }, '2026-09-28'),
+    { partsDone: ['2026-09-27', '2026-09-28'], manualDone: true, doneOn: '2026-09-28' });
+});
+
+test('day streak counts a split part done that day', async () => {
+  const { dayStreak } = await import('../src/planner/streaks.js');
+  const big = mk({ due: '2026-10-03 23:59', minutesOverride: 120, splitParts: 4, partsDone: ['2026-09-28'] });
+  const dayLog = { '2026-09-28': { left: [`${big.id}#1`] }, '2026-09-29': { left: [`${big.id}#2`] } };
+  const s = dayStreak({ items: [big], settings: S, dayLog, now: iso('2026-09-30 12:00') });
+  assert.equal(s.current, 0); // part 2 wasn't done on the 29th
+  assert.equal(s.best, 1);
+});

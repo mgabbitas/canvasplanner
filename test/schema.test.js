@@ -172,3 +172,15 @@ test('dayLog: dates and ids validated, duplicates dropped, old days pruned', () 
   assert.deepEqual(s.dayLog, { '2026-10-20': { left: ['5', '6'] }, '2026-10-21': { left: [] } });
   assert.deepEqual(Object.keys(pruneDayLog({ '2025-01-01': { left: [] }, '2026-10-20': { left: [] } }, '2026-10-24')), ['2026-10-20']);
 });
+
+test('split parts validate; day log keeps part ids', () => {
+  const items = validateItems({
+    1: { courseId: '9', splitParts: 12, partsDone: ['2026-10-01', 'junk', '2026-10-02'] },
+    2: { courseId: '9', splitParts: 1, partsDone: ['2026-10-01'] },
+    3: { courseId: '9', splitParts: 2, partsDone: ['2026-10-01', '2026-10-02', '2026-10-03'] },
+  });
+  assert.deepEqual([items['1'].splitParts, items['1'].partsDone], [8, ['2026-10-01', '2026-10-02']]);
+  assert.deepEqual([items['2'].splitParts, items['2'].partsDone], [2, ['2026-10-01']]); // clamped up to 2
+  assert.deepEqual(items['3'].partsDone, ['2026-10-01', '2026-10-02']);
+  assert.deepEqual(migrate({ dayLog: { '2026-10-01': { left: ['5#2', '5', 'x#2', '5#22'] } } }).dayLog['2026-10-01'].left, ['5#2', '5']);
+});

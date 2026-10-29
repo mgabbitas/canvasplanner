@@ -49,4 +49,6 @@ export const USER_FIELD_DEFAULTS = Object.freeze({
   doneOn: null, // 'YYYY-MM-DD' you checked it off (counts toward that day's load)
   plannedOn: null, // 'YYYY-MM-DD' you moved it to (beats the planner's pick)
   notExam: false, // you said a title that looks like an exam isn't one
+  splitParts: null, // split into this many parts (2-8), planned on different days
+  partsDone: null, // ['YYYY-MM-DD', …]: the day each finished part was checked off, in order
 });

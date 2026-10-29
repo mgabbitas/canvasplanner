@@ -26,6 +26,7 @@ function int(v, min, max, fallback) {
 const weekdayIndex = (v, fallback) => int(v, 0, 6, fallback);
 const ID = /^\d{1,20}$/;
 const itemId = (id) => ID.test(id) || TASK_ID.test(id); // Canvas ids, or your tasks
+const plannedId = (id) => itemId(id.replace(/#\d$/, '')); // an item, or one part of a split item
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_RULES = 200;
 const dateOrNull = (v) => (typeof v === 'string' && DATE.test(v) ? v : null);
@@ -126,7 +127,15 @@ function validateItem(id, raw) {
     doneOn: dateOrNull(raw.doneOn),
     plannedOn: dateOrNull(raw.plannedOn),
     notExam: raw.notExam === true,
+    ...validateSplit(raw),
   };
+}
+
+/** Split parts: 2-8, with the days parts were done (never more than the parts). */
+function validateSplit(raw) {
+  const splitParts = raw.splitParts == null ? null : int(raw.splitParts, 2, 8, null);
+  const done = splitParts && Array.isArray(raw.partsDone) ? raw.partsDone.filter((d) => typeof d === 'string' && DATE.test(d)) : [];
+  return { splitParts, partsDone: done.length ? done.slice(0, splitParts) : null };
 }
 
 /** A task's own fields. A task with no due date floats; a repeat copy never does. */
@@ -214,7 +223,7 @@ export function validateDayLog(raw) {
   if (!isObj(raw)) return out;
   for (const [date, d] of Object.entries(raw)) {
     if (!DATE.test(date) || !isObj(d)) continue;
-    const left = Array.isArray(d.left) ? [...new Set(d.left.map(String).filter(itemId))].slice(0, MAX_LEFT) : [];
+    const left = Array.isArray(d.left) ? [...new Set(d.left.map(String).filter(plannedId))].slice(0, MAX_LEFT) : [];
     out[date] = { left };
   }
   return out;

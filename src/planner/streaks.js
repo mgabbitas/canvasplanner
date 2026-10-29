@@ -50,12 +50,16 @@ export function dayStreak({ items, settings, dayLog = {}, now }) {
   for (const i of all) {
     const d = doneDay(i);
     if (d && counts(i, settings)) finished.set(d, (finished.get(d) ?? 0) + 1);
+    for (const p of i.partsDone ?? []) if (counts(i, settings)) finished.set(p, (finished.get(p) ?? 0) + 1);
   }
   const status = (date) => {
     const left = dayLog[date]?.left ?? [];
     const allDone = left.every((id) => {
-      const i = byId.get(id);
-      return !i || !counts(i, settings) || doneBy(i, date);
+      // "id#n" is part n of a split item: done once n parts were checked off by then.
+      const [itemId, part] = id.split('#');
+      const i = byId.get(itemId);
+      if (!i || !counts(i, settings) || doneBy(i, date)) return true;
+      return part != null && (i.partsDone?.[Number(part) - 1] ?? '9999') <= date;
     });
     if (!allDone) return date === today ? 'open' : 'miss';
     return left.length || finished.get(date) ? 'hit' : 'none';

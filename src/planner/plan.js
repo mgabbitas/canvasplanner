@@ -12,6 +12,33 @@ export const PULL_AMOUNTS = [15, 30, 60, 120, 180];
 
 export const isDone = (item) => Boolean(item.manualDone || item.canvasDone);
 
+export const MAX_PARTS = 8;
+
+/**
+ * The change that checks an item off today. A split item gets one more part done,
+ * and is done once every part is.
+ */
+export function checkOffPatch(item, today) {
+  if (!item.splitParts) return { manualDone: true, doneOn: today };
+  const partsDone = [...(item.partsDone ?? []), today];
+  return partsDone.length >= item.splitParts ? { partsDone, manualDone: true, doneOn: today } : { partsDone };
+}
+
+/** Split parts still to do: entries for parts n..of, each with an even share of the time. */
+function splitEntries(e) {
+  const of = e.item.splitParts;
+  if (!of || e.inClass) return [e];
+  const per = Math.max(1, Math.ceil(e.minutes / of));
+  const out = [];
+  for (let n = (e.item.partsDone?.length ?? 0) + 1; n <= of; n++) {
+    out.push({ ...e, id: `${e.id}#${n}`, part: { n, of }, minutes: per, movedTo: null, pinned: false });
+  }
+  return out;
+}
+
+/** Minutes of one part of a split item. */
+const partMinutes = (item, settings) => Math.max(1, Math.ceil(estimate(item, settings).minutes / item.splitParts));
+
 // Canvas has no exam flag, so go by title: "exam" or "midterm" anywhere, or "final"
 // on a quiz (so "Final Reflection Document" isn't one).
 const EXAM_WORDS = /\b(exam|midterm)s?\b/i;
@@ -131,15 +158,20 @@ export function plan({ items, settings, weekState = {}, now }) {
 
   // In-class activities take no homework time: they sit on their class day at 0 min,
   // and past ones simply drop off (they aren't homework to catch up on).
-  const work = scoped.filter((e) => !e.inClass);
+  // A split item is planned as its remaining parts (see splitEntries).
+  const work = scoped.filter((e) => !e.inClass).flatMap(splitEntries);
   for (const e of scoped) if (e.inClass && e.dueDay >= today) place(e, e.dueDay);
 
   // Work finished today keeps using today's time, so checking items off doesn't pull
   // later work into today. (Moving an item to today is how you take on more.)
+  // A split item counts the parts done today, not its whole time.
   const finishedToday = all
-    .filter((i) => doneDay(i) === today && !i.hidden && courseIncluded(i, settings))
+    .filter((i) => doneDay(i) === today && !i.hidden && courseIncluded(i, settings) && !i.splitParts)
     .map((i) => toEntry(i, settings, today));
-  const doneMinutes = sum(finishedToday);
+  const partsToday = all
+    .filter((i) => i.splitParts && !i.hidden && courseIncluded(i, settings))
+    .flatMap((i) => (i.partsDone ?? []).filter((d) => d === today).map(() => partMinutes(i, settings)));
+  const doneMinutes = sum(finishedToday) + partsToday.reduce((s, m) => s + m, 0);
   if (doneMinutes) load.set(today, doneMinutes);
 
   const overdue = work.filter((e) => e.dueDay < today);
@@ -158,17 +190,22 @@ export function plan({ items, settings, weekState = {}, now }) {
 
   const overflow = [];
   const atRisk = [];
+  // Parts of a split item go on different days in order when they can (part 2 the day
+  // after part 1 at the earliest), and share a day only when nothing else fits.
+  const partDay = new Map(); // item id -> day of its last placed part
   for (const e of rest) {
-    const start = maxDate(today, e.unlockDate ?? today);
+    const prev = e.part ? partDay.get(e.item.id) : null;
+    const start = maxDate(maxDate(today, e.unlockDate ?? today), prev ? addDays(prev, 1) : today);
     const opensLate = e.unlockDate != null && e.unlockDate > week.cutoff;
     const end = behind || opensLate ? e.lastDay : minDate(e.lastDay, week.cutoff);
-    const day = dateRange(start, end).find((d) => {
-      if (!usable(d)) return false;
-      const l = load.get(d) ?? 0;
-      return l === 0 || l + e.minutes <= capacity(d); // an empty day takes anything
-    });
-    if (day) place(e, day);
-    else (behind ? atRisk : overflow).push(e);
+    // An empty day takes anything.
+    const fits = (d) => usable(d) && ((load.get(d) ?? 0) === 0 || (load.get(d) ?? 0) + e.minutes <= capacity(d));
+    const day = dateRange(start, end).find(fits);
+    const sameDay = !day && prev && prev <= end && fits(prev) ? prev : null;
+    if (day || sameDay) {
+      place(e, day ?? sameDay);
+      if (e.part) partDay.set(e.item.id, day ?? sameDay);
+    } else (behind ? atRisk : overflow).push(e);
   }
 
   const lastPlaced = [...onDay.keys()].reduce(maxDate, week.cutoff);
@@ -276,8 +313,9 @@ export function plan({ items, settings, weekState = {}, now }) {
     done,
     // Homework finished today: count and minutes (logged time if any, else the estimate).
     doneToday: {
-      count: finishedToday.filter((e) => !e.inClass).length,
-      minutes: finishedToday.reduce((s, e) => s + (e.inClass ? 0 : e.item.log?.minutes ?? e.minutes), 0),
+      count: finishedToday.filter((e) => !e.inClass).length + partsToday.length,
+      minutes: finishedToday.reduce((s, e) => s + (e.inClass ? 0 : e.item.log?.minutes ?? e.minutes), 0)
+        + partsToday.reduce((s, m) => s + m, 0),
     },
   };
 }

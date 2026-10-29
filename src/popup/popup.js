@@ -2,6 +2,7 @@
 // Checked items stay listed (and can be unchecked) until the popup closes.
 import { loadState, save } from '../storage/store.js';
 import { todaySummary } from '../planner/today.js';
+import { checkOffPatch } from '../planner/plan.js';
 import { syncSeries } from '../planner/tasks.js';
 import { toLocalDate } from '../planner/dates.js';
 import { applyTheme, courseColor } from '../ui/theme.js';
@@ -22,18 +23,26 @@ function dueText(e, today) {
 }
 const summary = () => todaySummary({ items: state.items, settings: state.settings, weekState: state.weekState, now: Date.now() });
 
-/** Same change the planner page makes when you check an item off (or uncheck it). */
-async function setDone(id, done) {
+const before = new Map(); // entry id -> the item as it was before you checked it here (unsplit items)
+
+/** Same change the planner page makes when you check an item (or a part) off; unchecking puts it back. */
+async function setDone(entry, done) {
   state = await loadState(); // the planner may have changed things since we opened
+  const id = entry.item.id;
   const item = state.items[id];
   if (!item) return;
-  const items = { ...state.items, [id]: { ...item, manualDone: done, doneOn: done ? toLocalDate(Date.now()) : null } };
+  if (done) before.set(entry.id, item);
+  const next = done ? { ...item, ...checkOffPatch(item, toLocalDate(Date.now())) }
+    : item.splitParts ? { ...item, manualDone: false, doneOn: null, partsDone: item.partsDone?.slice(0, -1).length ? item.partsDone.slice(0, -1) : null }
+      : { ...item, ...pickUser(before.get(entry.id)) };
+  const items = { ...state.items, [id]: next };
   state.items = items;
   await save({ items });
-  if (done) checked.add(id);
-  else checked.delete(id);
+  if (done) checked.add(entry.id);
+  else checked.delete(entry.id);
   render();
 }
+const pickUser = (old) => ({ manualDone: old.manualDone, doneOn: old.doneOn, partsDone: old.partsDone });
 
 function openPlanner() {
   browser.tabs.create({ url: browser.runtime.getURL('src/ui/planner.html') });
@@ -51,12 +60,13 @@ function render() {
       return el('li', { className: `popup-item${isChecked ? ' done' : ''}`, style: `--course:${courseColor(e.item.courseId, state.settings, state.courses)}` },
         el('input', {
           type: 'checkbox', checked: isChecked, 'aria-label': `Done: ${e.item.title}`, 'data-key': `done-${e.id}`,
-          onchange: (ev) => setDone(e.id, ev.target.checked),
+          onchange: (ev) => setDone(e, ev.target.checked),
         }),
         el('div', { className: 'popup-text' },
           e.item.url
             ? el('a', { href: e.item.url, target: '_blank', rel: 'noopener noreferrer', className: 'popup-title' }, e.item.title)
             : el('span', { className: 'popup-title' }, e.item.title),
+          e.part ? el('span', { className: 'popup-sub' }, `Part ${e.part.n} of ${e.part.of}`) : null,
           el('span', { className: 'popup-sub' },
             courseName(e.item.courseId),
             e.item.dueAt ? ` · ${dueText(e, date)}` : '',

@@ -361,6 +361,20 @@ async function checkTasks() {
   check('task deleted', !window.__store.items[added.id]);
   document.querySelector('[data-key="toast-Undo"]')?.click(); await wait(250);
   check('task delete undo', !!window.__store.items[added.id]);
+
+  // Split the task (1h) into 3 parts: three rows on different days, checked off one at a time.
+  document.querySelector('[data-key="daytab-week"]').click(); await wait(150);
+  document.querySelector(`[data-key="menu-${added.id}"]`)?.click(); await wait(50);
+  document.querySelector(`[data-key="split-${added.id}-3"]`)?.click(); await wait(250);
+  check('split saved', window.__store.items[added.id]?.splitParts === 3);
+  const partRows = $$(`[data-key^="done-${added.id}#"]`);
+  const partDays = partRows.map((b) => b.closest('.day')?.getAttribute('data-date') ?? b.closest('section')?.textContent.slice(0, 12));
+  check('three part rows', partRows.length === 3 && /part 1 of 3/.test(partRows[0].closest('.item').textContent), `${partRows.length} rows`);
+  partRows[0].checked = true; fire(partRows[0], 'change'); await wait(250);
+  check('part checked off', window.__store.items[added.id]?.partsDone?.length === 1 && !window.__store.items[added.id]?.manualDone);
+  check('two parts left', $$(`[data-key^="done-${added.id}#"]`).length === 2, partDays.join(' | '));
+  document.querySelector('[data-key="toast-Undo"]')?.click(); await wait(250);
+  check('part undo', !window.__store.items[added.id]?.partsDone);
 }
 
 run().catch((e) => report.errors.push(`harness: ${e.stack}`)).finally(() => {

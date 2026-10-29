@@ -216,7 +216,8 @@ function getAhead(p) {
   if (!today || homework(today.items).length) return null;
   for (const day of p.days) {
     if (day.date <= p.today) continue;
-    const entry = homework(day.items).find((e) => e.firstDay === p.today && !e.movedTo);
+    // A split part can't be moved on its own (the planner places parts), so skip those.
+    const entry = homework(day.items).find((e) => e.firstDay === p.today && !e.movedTo && !e.part);
     if (entry) return { entry, date: day.date, today: p.today, finished: p.doneToday.count > 0 };
   }
   return null;
