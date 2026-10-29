@@ -96,7 +96,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 ## Changelog
 
 - **Unreleased**: Streak counters (weeks on target, days on plan) in the header and on
-  Stats.
+  Stats. Sync login errors now say what Canvas answered and list what to check, with an
+  **Allow access** button if Firefox hasn't given the add-on access to Canvas.
 - **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
   (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
   early, a page per class for setting many estimates at once, exams on the right, and

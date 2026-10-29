@@ -94,9 +94,10 @@ for (const [label, query] of [['Real data', ''], ['First run (empty)', 'empty']]
 }
 
 if (process.argv.includes('--screenshot')) {
-  for (const [name, hash, size] of [['this', '', '1400,1000'], ['next', 'next', '1400,1000'], ['stats', 'stats', '1400,1000'], ['settings', 'settings/estimates', '1400,1000'], ['narrow', '', '700,1000']]) {
+  for (const [name, hash, size, query] of [['this', '', '1400,1000'], ['next', 'next', '1400,1000'], ['stats', 'stats', '1400,1000'], ['settings', 'settings/estimates', '1400,1000'], ['narrow', '', '700,1000'],
+    ['loginerror', '', '1400,1000', '?loginerror'], ['noaccess', '', '1400,1000', '?noaccess']]) {
     const file = join(REPO, 'web-ext-artifacts', `ui-${name}.png`);
-    await new Promise((r) => firefox(['--screenshot', file, '--window-size', size, `${base}#${hash}`]).on('exit', r));
+    await new Promise((r) => firefox(['--screenshot', file, '--window-size', size, `${base}${query ?? ''}#${hash}`]).on('exit', r));
     console.log(`Screenshot: ${file}`);
   }
 }

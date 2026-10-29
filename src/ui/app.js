@@ -4,7 +4,7 @@ import { planningWeek, toLocalDate } from '../planner/dates.js';
 import { loadState, save } from '../storage/store.js';
 import { pruneWeekState, pruneDayLog } from '../storage/schema.js';
 import { plannedToday, dayStreak, weekStreak } from '../planner/streaks.js';
-import { runSync } from '../sync/run.js';
+import { runSync, CANVAS_ORIGINS } from '../sync/run.js';
 import { dueLabel } from './dom.js';
 
 export const app = {
@@ -115,6 +115,11 @@ export async function sync() {
   app.syncMessage = result.ok ? null : result.error;
   app.state = await loadState();
   app.render();
+}
+
+/** Ask Firefox for access to Canvas (must run straight from a click), then sync. */
+export async function allowCanvasAccess() {
+  if (await browser.permissions.request(CANVAS_ORIGINS).catch(() => false)) await sync();
 }
 
 export const homework = (entries) => entries.filter((e) => !e.inClass);

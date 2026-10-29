@@ -2,8 +2,8 @@
 import { dayLabel, minutesLabel, el } from './dom.js';
 import { icon, logo } from './icons.js';
 import { courseColor } from './theme.js';
-import { CANVAS, LOGIN_MESSAGE } from '../sync/canvas.js';
-import { app, view, classId, timeAgo, courseName, sync, changeExtraDays, homework, itemCount, streaks, plural } from './app.js';
+import { CANVAS, ACCESS_MESSAGE, isLoginError } from '../sync/canvas.js';
+import { app, view, classId, timeAgo, courseName, sync, allowCanvasAccess, changeExtraDays, homework, itemCount, streaks, plural } from './app.js';
 
 const NAV = [
   ['', 'this', 'This week', 'week'],
@@ -26,7 +26,8 @@ export function renderSidebar() {
   const status = app.syncing
     ? el('span', {}, 'Syncing…')
     : error
-      ? el('span', { className: 'error' }, error, error === LOGIN_MESSAGE ? [' ', loginLink()] : null)
+      ? el('span', { className: 'error' }, error, isLoginError(error) ? [' ', loginLink()] : null,
+        error === ACCESS_MESSAGE ? [' ', allowButton()] : null)
       : el('span', {}, meta.lastSyncAt ? `Synced ${timeAgo(meta.lastSyncAt)}` : 'Never synced');
 
   const courses = Object.keys(app.state.courses)
@@ -62,6 +63,18 @@ export function renderSidebar() {
 }
 
 export const loginLink = () => el('a', { href: `${CANVAS}/`, target: '_blank', rel: 'noopener noreferrer' }, 'Open Canvas');
+const allowButton = () => el('button', { className: 'link', onclick: allowCanvasAccess, 'data-key': 'allow-access' }, 'Allow access');
+
+/** What to try when Canvas doesn't see the login. Shown on the welcome card. */
+const loginHelp = () => el('div', {},
+  el('p', {}, 'Things to check:'),
+  el('ol', { className: 'help-list' },
+    el('li', {}, 'Open Canvas in a normal (not private) window and make sure you see your Dashboard. Then come back and sync.'),
+    el('li', {}, 'In the address bar, go to about:addons, click Canvas Planner, open the Permissions tab, and make sure access to byui.instructure.com is turned on.'),
+    el('li', {}, 'If you changed Firefox privacy settings to block cookies, add byui.instructure.com as an exception: Settings → Privacy & Security → Cookies and Site Data → Manage Exceptions → Allow.'),
+    el('li', {}, 'Still stuck? Send a screenshot of the message above to whoever gave you the add-on.'),
+  ),
+);
 
 /** Shown instead of the plan until the first successful sync. */
 export function renderWelcome() {
@@ -72,12 +85,16 @@ export function renderWelcome() {
       ? el('p', { className: 'hint' }, 'This takes a few seconds the first time.')
       : el('div', {},
         error ? el('p', { className: 'warn-text' }, error) : null,
-        el('p', {}, error === LOGIN_MESSAGE
-          ? 'Log into Canvas in this browser, then come back and sync.'
-          : 'Sync to bring in your assignments. It uses your existing Canvas login in this browser.'),
+        error === ACCESS_MESSAGE
+          ? el('p', {}, 'Firefox needs your OK before the add-on can read your assignments from byui.instructure.com.')
+          : isLoginError(error)
+            ? loginHelp()
+            : el('p', {}, 'Sync to bring in your assignments. It uses your existing Canvas login in this browser.'),
         el('div', { className: 'row' },
-          el('button', { className: 'primary', onclick: sync, 'data-key': 'welcome-sync' }, 'Sync now'),
-          error === LOGIN_MESSAGE ? loginLink() : null,
+          error === ACCESS_MESSAGE
+            ? el('button', { className: 'primary', onclick: allowCanvasAccess, 'data-key': 'welcome-allow' }, 'Allow access')
+            : el('button', { className: 'primary', onclick: sync, 'data-key': 'welcome-sync' }, 'Sync now'),
+          isLoginError(error) ? loginLink() : null,
         ),
       ),
   );

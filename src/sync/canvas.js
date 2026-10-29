@@ -4,16 +4,22 @@ import { normalizeAssignment, normalizeCourse } from './normalize.js';
 import { mergeCourse } from '../storage/merge.js';
 
 export const CANVAS = 'https://byui.instructure.com';
-export const LOGIN_MESSAGE = 'Log into Canvas, then sync';
+export const LOGIN_MESSAGE = "Canvas didn't recognize your login";
+export const ACCESS_MESSAGE = "Canvas Planner isn't allowed to read Canvas yet";
+export const isLoginError = (msg) => String(msg ?? '').startsWith(LOGIN_MESSAGE);
 
 const MAX_PAGES = 50;
 const MAX_RETRIES = 3;
 
-/** Not logged in (401/403, or Canvas answered with its login page instead of JSON). */
+/**
+ * Not logged in (401/403, or Canvas answered with its login page instead of JSON).
+ * `reason` says which, so a report from someone else's browser tells us what happened.
+ */
 export class AuthError extends Error {
-  constructor() {
-    super(LOGIN_MESSAGE);
+  constructor(reason) {
+    super(`${LOGIN_MESSAGE} (${reason}).`);
     this.name = 'AuthError';
+    this.reason = reason;
   }
 }
 
@@ -48,7 +54,7 @@ export async function getAll(path, deps) {
   for (let page = 0; url; page++) {
     if (page >= MAX_PAGES) throw new Error('Too many pages from Canvas');
     const res = await fetchWithBackoff(url, deps);
-    if (res.status === 401 || res.status === 403) throw new AuthError();
+    if (res.status === 401 || res.status === 403) throw new AuthError(`HTTP ${res.status}`);
     if (res.status >= 500) throw new Error(`Canvas is having trouble (HTTP ${res.status}). Try again later.`);
     if (!res.ok) throw new Error(`Canvas returned HTTP ${res.status}`);
     const text = await res.text();
@@ -56,7 +62,8 @@ export async function getAll(path, deps) {
     try {
       data = JSON.parse(text.replace(/^while\(1\);/, ''));
     } catch {
-      throw new AuthError(); // an HTML page: the login screen
+      // An HTML page: usually the login screen after a redirect.
+      throw new AuthError(res.redirected && /\/login/.test(res.url) ? 'sent to the login page' : 'got a web page instead of data');
     }
     if (!Array.isArray(data)) throw new Error('Unexpected response from Canvas');
     out.push(...data);

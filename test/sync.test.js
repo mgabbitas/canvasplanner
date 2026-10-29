@@ -1,7 +1,7 @@
 process.env.TZ = 'America/Denver';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchCanvas, applySync, parseNextLink, AuthError, CANVAS } from '../src/sync/canvas.js';
+import { fetchCanvas, applySync, parseNextLink, AuthError, CANVAS, isLoginError } from '../src/sync/canvas.js';
 import { migrate } from '../src/storage/schema.js';
 
 const json = (data, { status = 200, headers = {}, prefix = '' } = {}) =>
@@ -51,10 +51,27 @@ test('follows pagination, strips while(1);, sends credentials, skips restricted 
   assert.ok(fake.calls.every((c) => c.url.startsWith(CANVAS + '/api/v1/')));
 });
 
-test('login page or 401 is an AuthError', async () => {
-  const html = new Response('<!DOCTYPE html><html>Log in</html>', { status: 200, headers: { 'content-type': 'text/html' } });
-  await assert.rejects(fetchCanvas(fakeCanvas({ '/api/v1/courses?': [html] })), AuthError);
-  await assert.rejects(fetchCanvas(fakeCanvas({ '/api/v1/courses?': [json({}, { status: 401 })] })), AuthError);
+test('login page or 401 is an AuthError that says which', async () => {
+  const html = () => new Response('<!DOCTYPE html><html>Log in</html>', { status: 200, headers: { 'content-type': 'text/html' } });
+  const redirected = () => {
+    const r = html();
+    Object.defineProperties(r, { redirected: { value: true }, url: { value: `${CANVAS}/login/saml` } });
+    return r;
+  };
+  const failure = (res) => fetchCanvas(fakeCanvas({ '/api/v1/courses?': [res] })).catch((e) => e);
+  for (const [res, reason] of [
+    [json({}, { status: 401 }), 'HTTP 401'],
+    [json({}, { status: 403 }), 'HTTP 403'],
+    [redirected, 'sent to the login page'],
+    [html, 'got a web page instead of data'],
+  ]) {
+    const e = await failure(res);
+    assert.ok(e instanceof AuthError);
+    assert.equal(e.reason, reason);
+    assert.ok(isLoginError(e.message));
+    assert.match(e.message, new RegExp(`\\(${reason}\\)\\.$`));
+  }
+  assert.equal(isLoginError('Canvas is busy right now.'), false);
 });
 
 test('backs off on 429, then succeeds', async () => {
