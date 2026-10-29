@@ -21,6 +21,22 @@ const { normalizeAssignment, normalizeCourse } = await import(join(REPO, 'src/sy
 const { mergeCourse } = await import(join(REPO, 'src/storage/merge.js'));
 const { migrate } = await import(join(REPO, 'src/storage/schema.js'));
 
+// The fixture is a Canvas snapshot from this day. Its dates are moved forward by whole
+// weeks so it always looks recent (same weekdays); otherwise, as weeks pass, nearly
+// everything turns overdue and piles onto today.
+const FIXTURE_TAKEN = '2026-09-29';
+const DAY_MS = 24 * 60 * 60 * 1000;
+const shiftDays = Math.max(0, Math.floor((Date.now() - new Date(`${FIXTURE_TAKEN}T12:00:00`).getTime()) / (7 * DAY_MS)) * 7);
+
+/** Move an ISO timestamp by shiftDays on the local calendar (keeps wall-clock time across DST). */
+function shiftIso(iso) {
+  if (!iso) return iso;
+  const d = new Date(iso);
+  d.setDate(d.getDate() + shiftDays);
+  return d.toISOString();
+}
+const shiftDate = (ymd) => shiftIso(`${ymd}T12:00:00`).slice(0, 10);
+
 // Stored state as a sync would leave it, plus a few logged times for Stats.
 function buildState() {
   const fx = JSON.parse(readFileSync(FIXTURE, 'utf8'));
@@ -32,8 +48,11 @@ function buildState() {
     courses[course.id] = { name: course.name };
     items = mergeCourse(items, c.course.id, c.assignments.map((a) => normalizeAssignment(a, c.course.id)));
   }
+  for (const item of Object.values(items)) {
+    for (const k of ['dueAt', 'unlockAt', 'lockAt', 'submittedAt', 'prevDueAt']) item[k] = shiftIso(item[k]);
+  }
   Object.keys(items).filter((id) => items[id].canvasDone).slice(0, 8).forEach((id, i) => {
-    items[id].log = { minutes: 15 + i * 5, difficulty: (i % 5) + 1, finishedOn: `2026-09-2${i % 9}` };
+    items[id].log = { minutes: 15 + i * 5, difficulty: (i % 5) + 1, finishedOn: shiftDate(`2026-09-2${i % 9}`) };
   });
   return { ...migrate({ items, courses }), meta: { lastSyncAt: new Date().toISOString(), lastError: null } };
 }
