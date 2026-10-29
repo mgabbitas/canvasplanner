@@ -406,9 +406,12 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
   falling leaves (Fall), behind the panels, with an Effects slider (Off / Light /
   Normal / Lots); CSS and small inline SVGs only, off under `prefers-reduced-motion`.
   Preset scenes (decided 2026-10-29): Ocean a horizon, Sunset a gradient, Forest a
-  thick leaf pattern, Lavender sprigs, Patriotic (also the 4th of July look) a faint
-  flag imprint. Every theme but Plain and Custom has its own load bars, also on days
-  over capacity (a red frame and the red numbers carry the warning). Holiday looks are a surprise: Settings only
+  thick leaf pattern, Lavender sprigs, Patriotic (also the 4th of July look) faint red,
+  white and blue stars. Load bars (revised 2026-10-29): neutral grey track, planned time
+  in a tint of the accent, finished time in solid accent; over capacity the whole bar is
+  red, overriding any theme. Seasonal and holiday looks (Fall, Christmas, Patriotic,
+  Halloween, Thanksgiving) draw the finished part as their pattern; red-accent themes
+  tint planned time in their other color so red only means over capacity. Holiday looks are a surprise: Settings only
   says "a surprise on a few special days"; on the day a tilted splash line sits under
   the logo. `?preview=july4` (or christmasday, halloween, thanksgiving) on the
   planner page shows a holiday look without saving anything, for testing. Class colors stay as

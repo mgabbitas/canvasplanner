@@ -24,6 +24,15 @@
   if (q.get('look') && store.settings) store.settings.look = q.get('look');
   if (q.get('mode') && store.settings) store.settings.theme = q.get('mode');
   if (q.has('holiday') && store.settings) store.settings.holidayLooks = true;
+  // ?roomy: 8 hours every day, so today isn't over capacity.
+  if (q.has('roomy') && store.settings) store.settings.capacity = Array(7).fill(480);
+  // ?somedone: check off three items due in the next week today (to see the done part of the bars).
+  if (q.has('somedone') && store.items) {
+    const now = Date.now();
+    const today = new Date(now - new Date(now).getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    Object.values(store.items).filter((i) => !i.canvasDone && i.dueAt && Date.parse(i.dueAt) > now && Date.parse(i.dueAt) < now + 7 * 864e5)
+      .slice(0, 3).forEach((i) => { i.manualDone = true; i.doneOn = today; });
+  }
   window.__store = store;
   const listeners = [];
   const clone = (v) => JSON.parse(JSON.stringify(v));

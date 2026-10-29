@@ -116,7 +116,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
   big items across days from the ⋮ menu ("Split across days"); each part is checked off
   on its own. Themes: preset color combinations, seasonal Fall and Christmas themes
   (offered when the season starts), your own colors, a few holiday surprises, and
-  falling snow and leaves with an Effects slider.
+  falling snow and leaves with an Effects slider. Load bars show planned time and, in
+  solid color, what you've finished; red only when a day is overbooked.
 - **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
   (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
   early, a page per class for setting many estimates at once, exams on the right, and

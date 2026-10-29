@@ -163,13 +163,13 @@ export function renderDayLayout(p, kind) {
     app.render();
     document.querySelector(`[data-key="daytab-${CSS.escape(id)}"]`)?.focus();
   };
-  const tab = (id, i, { name, date, items, load, capacity, over, blocked }) => {
+  const tab = (id, i, { name, date, items, load, done = 0, capacity, over, blocked }) => {
     const active = id === selected;
-    const pct = capacity ? Math.min(100, (load / capacity) * 100) : 0;
+    const pct = (m) => (capacity ? Math.min(100, (m / capacity) * 100) : 0);
     return el('button', {
       role: 'tab', 'aria-selected': String(active), tabIndex: active ? 0 : -1, 'data-key': `daytab-${id}`,
       className: `day-tab${active ? ' active' : ''}${over ? ' over' : ''}${blocked ? ' blocked' : ''}${id === 'week' ? ' week' : ''}`,
-      'aria-label': `${name}, ${date}: ${itemCount(items)}, ${minutesLabel(load)} planned of ${minutesLabel(capacity)}`,
+      'aria-label': `${name}, ${date}: ${itemCount(items)}, ${minutesLabel(load)} planned of ${minutesLabel(capacity)}${done ? `, ${minutesLabel(done)} done` : ''}`,
       onclick: () => pick(id),
       onkeydown: (e) => {
         const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
@@ -180,7 +180,9 @@ export function renderDayLayout(p, kind) {
     },
       el('span', { className: 'dt-name' }, name),
       el('span', { className: 'dt-date' }, date),
-      el('span', { className: 'dt-bar', 'aria-hidden': 'true' }, el('span', { style: `width:${pct}%` })),
+      el('span', { className: 'dt-bar', 'aria-hidden': 'true' },
+        done ? el('span', { className: 'done', style: `width:${pct(done)}%` }) : null,
+        el('span', { className: 'planned', style: `width:${Math.max(0, pct(load) - pct(done))}%` })),
       el('span', { className: 'dt-count' }, itemCount(items)),
       el('span', { className: 'dt-load' }, capacity === 0 && id !== 'week' ? 'day off' : `${minutesLabel(load)} / ${minutesLabel(capacity)}`),
     );
@@ -192,11 +194,11 @@ export function renderDayLayout(p, kind) {
   const tabs = el('div', { className: 'day-tabs', role: 'tablist', 'aria-label': 'Days' },
     tab('week', 0, {
       name: 'Week', date: `${short(days[0].date)} – ${short(days.at(-1).date)}`,
-      items: all, load: weekLoad, capacity: weekCap, over: weekLoad > weekCap, blocked: false,
+      items: all, load: weekLoad, done: days.reduce((s, d) => s + (d.doneMinutes ?? 0), 0), capacity: weekCap, over: weekLoad > weekCap, blocked: false,
     }),
     days.map((d, i) => tab(d.date, i + 1, {
       name: d.date === p.today && kind === 'plan' ? 'Today' : dayLabel(d.date, { weekday: 'short' }),
-      date: short(d.date), items: d.items, load: d.load, capacity: d.capacity, over: d.over, blocked: d.blocked,
+      date: short(d.date), items: d.items, load: d.load, done: d.doneMinutes ?? 0, capacity: d.capacity, over: d.over, blocked: d.blocked,
     })),
   );
   const shown = selected === 'week' ? days : [days.find((d) => d.date === selected)];
@@ -260,7 +262,7 @@ function renderDay(day, today, kind, { upNext = false, ahead = null } = {}) {
     ),
     day.blocked ? null : el('div', { className: 'bar' },
       done ? el('div', { className: 'done', style: `width:${pctOf(done)}%` }) : null,
-      el('div', { style: `width:${Math.max(0, pctOf(day.load) - pctOf(done))}%` })),
+      el('div', { className: 'planned', style: `width:${Math.max(0, pctOf(day.load) - pctOf(done))}%` })),
     ahead ? aheadCard(ahead) : null,
     ordered.length
       ? ordered.map(([courseId, entries]) => el('div', {
