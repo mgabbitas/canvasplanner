@@ -26,6 +26,17 @@ async function run() {
   await wait(300);
   check('day tabs render', $$('.day-tab').length >= 2, `${$$('.day-tab').length} tabs`);
   check('week tab first', $$('.day-tab')[0]?.textContent.startsWith('Week'));
+  // Date-dependent questions: answer whichever shows today.
+  if (document.querySelector('[data-key="holiday-offer"]')) {
+    document.querySelector('[data-key="holiday-no"]').click(); await wait(200);
+    check('holiday question answered', window.__store.settings.holidayLooks === false);
+  }
+  const seasonOffer = document.querySelector('[data-key="season-offer"]');
+  if (seasonOffer) {
+    check('season offer wording', /Switch to the (Fall|Christmas) theme/.test(seasonOffer.textContent), seasonOffer.textContent);
+    document.querySelector('[data-key="season-later"]').click(); await wait(200);
+    check('season offer: not now', window.__store.settings.seasonAnswered.length === 1 && !document.querySelector('[data-key="season-offer"]'));
+  }
   check('header shows today count', /Today: \d+ items?/.test(document.querySelector('#header')?.textContent ?? ''), document.querySelector('.subtitle')?.textContent);
   check('header streak counters', $$('#header .streak').length === 2, $$('#header .streak').map((x) => x.textContent).join(' | '));
   const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();

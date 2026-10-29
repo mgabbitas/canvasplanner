@@ -14,6 +14,7 @@ import { app, view, settingsTab, classId, saveState, sync, courseName, recordDay
 import { finishDay, openLog, panel } from './items.js';
 import { setNavOpen, renderSidebar, renderHeader, renderWelcome } from './shell.js';
 import { renderBanners, renderPullCard, renderForecast, renderDayLayout, renderExams } from './week.js';
+import { renderThemeOffer } from './offers.js';
 
 // --- settings view hooks ---------------------------------------------------------
 
@@ -87,7 +88,7 @@ function render() {
     fill('extras', [panel("Won't fit by next week's target day", p.overflow, 'next', true)]);
     rail = [renderPullCard(), renderForecast(app.thisWeekPlan), renderExams(p, 'next week')];
   } else {
-    fill('banners', renderBanners(p));
+    fill('banners', [renderThemeOffer(), ...renderBanners(p)]);
     fill('days', days('plan'));
     fill('extras', [
       panel("Won't fit by the target day", p.overflow, 'plan', true),

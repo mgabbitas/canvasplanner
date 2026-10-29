@@ -178,6 +178,8 @@ input[type=number], input[type=text], input[type=search], select {
 }
 .banner.warn { background: var(--warn-bg); color: var(--warn-text); }
 .banner.bad { background: var(--bad-bg); color: var(--bad-text); }
+.banner.offer { background: var(--accent-soft); color: var(--text); flex-wrap: wrap; }
+.offer-buttons { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
 .day, .panel {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
