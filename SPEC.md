@@ -365,8 +365,8 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
     highlights the target day.
   - **Rules** (was Estimates): a class picker at the top ("All classes" first). A class
     shows a card edged in its color with that class's rules; All classes also shows
-    the type defaults. **Precedence changes:** a class's own rules always beat
-    All-classes rules; order matters only within a group (migrate existing lists).
+    the type defaults. A class's own rules always beat All-classes rules (already how
+    estimates worked); order matters only within a group.
   - **Sizes removed.** Rules and type defaults pick a time from presets (5m, 10m, 15m,
     20m, 30m, 45m, 1h, 1.5h, 2h, 3h, or custom); existing sizes convert to minutes.
     Pull-by-amount uses fixed amounts instead of sizes.

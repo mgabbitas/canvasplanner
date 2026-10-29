@@ -145,7 +145,7 @@ test('scenario 7c: pinned item sits on its due date and counts toward load', () 
   assert.equal(tight.overflow.length, 1); // Wed is full with the pinned 120 min
 });
 
-test('scenario 8: pull next week, by day and by size', () => {
+test('scenario 8: pull next week, by day and by amount', () => {
   const doneThisWeek = mk({ canvasDone: true, canvasStatus: 'submitted' });
   const monA = mk({ due: '2026-10-05', minutesOverride: 45 });
   const monB = mk({ due: '2026-10-05', minutesOverride: 5 });
@@ -158,9 +158,9 @@ test('scenario 8: pull next week, by day and by size', () => {
   assert.equal(p.pull.nextDay.date, '2026-10-05');
   assert.deepEqual(p.pull.nextDay.entries.map((e) => e.id), [monB.id, monA.id]);
   // Budgets: earliest due first, ties smallest first, stop at the first that doesn't fit.
-  assert.deepEqual(p.pull.bySize.XS.map((e) => e.id), [monB.id]); // 5
-  assert.deepEqual(p.pull.bySize.S.map((e) => e.id), [monB.id]); // 5, then 45 doesn't fit 20
-  assert.deepEqual(p.pull.bySize.L.map((e) => e.id), [monB.id, monA.id, tue.id, locked.id]); // 5+45+20+20
+  assert.deepEqual(p.pull.byAmount[15].map((e) => e.id), [monB.id]); // 5
+  assert.deepEqual(p.pull.byAmount[30].map((e) => e.id), [monB.id]); // 5, then 45 doesn't fit 30
+  assert.deepEqual(p.pull.byAmount[120].map((e) => e.id), [monB.id, monA.id, tue.id, locked.id]); // 5+45+20+20
 
   // Gate: undone work this week disables it unless the setting is off.
   const busy = [...items, mk()];
@@ -365,7 +365,7 @@ test('pull gate: pulled items do not re-close it; cap limits unfinished pulled w
   assert.equal(b.pull.remainingMinutes, 30);
   assert.equal(canPullItem(b.pull, 45), false); // would pass the cap
   assert.equal(b.pull.nextDay.fits, false);
-  assert.deepEqual(b.pull.bySize.L.map((e) => e.id), []); // 45m doesn't fit in 30m left
+  assert.deepEqual(b.pull.byAmount[120].map((e) => e.id), []); // 45m doesn't fit in 30m left
 
   // Finishing a pulled item frees room again.
   const c = run([doneThisWeek, { ...next[0], pulledIn: true, manualDone: true }, { ...next[1], pulledIn: true }, next[2], next[3]], { settings });

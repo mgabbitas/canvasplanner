@@ -1,9 +1,9 @@
 // The plan itself: banners, day tabs, days grouped by class, day capacity editing,
 // the pull card and the forecast strip.
-import { SIZES } from '../storage/defaults.js';
 import { el, select, dayLabel, dueLabel, minutesLabel, readInt } from './dom.js';
 import { courseColor } from './theme.js';
 import { toLocalDate, addDays } from '../planner/dates.js';
+import { PULL_AMOUNTS } from '../planner/plan.js';
 import {
   app, courseName, sumMinutes, plural, updateItems, changeExtraDays, setDayCapacity, saveState, homework, itemCount,
 } from './app.js';
@@ -36,7 +36,7 @@ export function renderBanners(p) {
 export function renderPullCard() {
   const { pull } = app.thisWeekPlan;
   const day = pull.nextDay;
-  const bySize = pull.bySize[app.pullSize] ?? [];
+  const byAmount = pull.byAmount[app.pullAmount] ?? [];
   const pullAll = (entries) => updateItems(entries.map((e) => e.id), { pulledIn: true });
   const cap = pull.capMinutes ?? 0;
   const pct = cap ? Math.min(100, (pull.pulledMinutes / cap) * 100) : 0;
@@ -52,15 +52,15 @@ export function renderPullCard() {
       ? `Pull ${dayLabel(day.date, { weekday: 'long' })}'s ${day.entries.length} (${minutesLabel(sumMinutes(day.entries))})`
       : 'Nothing left to pull'),
     el('div', { className: 'pull-amount' },
-      select(SIZES.map((z) => [z, `About ${minutesLabel(app.state.settings.sizeMinutes[z])}`]), app.pullSize, {
+      select(PULL_AMOUNTS.map((m) => [String(m), `About ${minutesLabel(m)}`]), String(app.pullAmount), {
         'aria-label': 'Amount of work to pull', 'data-key': 'pull-size',
-        onchange: (e) => { app.pullSize = e.target.value; app.render(); },
+        onchange: (e) => { app.pullAmount = Number(e.target.value); app.render(); },
       }),
       el('button', {
-        disabled: !pull.enabled || !bySize.length, 'data-key': 'pull-size-btn',
+        disabled: !pull.enabled || !byAmount.length, 'data-key': 'pull-size-btn',
         title: 'Earliest due first, smallest first when due the same day',
-        onclick: () => pullAll(bySize),
-      }, `Pull ${bySize.length}`),
+        onclick: () => pullAll(byAmount),
+      }, `Pull ${byAmount.length}`),
     ),
     pull.enabled
       ? el('p', { className: 'hint' }, 'Or use Pull → on any item. Pulled items can be sent back from This week.')

@@ -129,7 +129,7 @@ const specificity = (r) => (r.courseId ? 1 : 0) + (r.type ? 1 : 0) + (r.keyword 
  * rule before the first less specific rule so a broader rule can't shadow it.
  */
 export function applySuggestion(rules, s) {
-  const rule = { courseId: s.courseId, type: s.type, keyword: s.keyword, size: null, minutes: s.minutes, inClass: false };
+  const rule = { courseId: s.courseId, type: s.type, keyword: s.keyword, minutes: s.minutes, inClass: false };
   const rest = rules.filter((r) => ruleKey(r) !== ruleKey(rule));
   const at = rest.findIndex((r) => specificity(r) < specificity(rule));
   return at === -1 ? [...rest, rule] : [...rest.slice(0, at), rule, ...rest.slice(at)];

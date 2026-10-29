@@ -18,7 +18,7 @@ const stored = () => migrate({
 test('export has settings, week state, and only changed user fields', () => {
   const e = buildExport(stored(), '2026-10-04T12:00:00.000Z');
   assert.equal(e.app, 'canvas-planner');
-  assert.equal(e.schemaVersion, 3);
+  assert.equal(e.schemaVersion, 4);
   assert.equal(e.settings.statedScale, 70);
   assert.deepEqual(e.weekState['2026-09-28'].capacity, { '2026-09-29': 30 });
   assert.deepEqual(Object.keys(e.userItems), ['1', '3']);
@@ -62,7 +62,7 @@ test('import rejects other files and clamps bad values', () => {
     userItems: { 1: { courseId: '9', minutesOverride: 'HUGE', manualDone: 'yes' }, evil: { courseId: '9' }, 5: 'junk' },
   });
   assert.equal(next.settings.capacity[0], 1440);
-  assert.deepEqual(next.settings.estimateRules, [{ courseId: null, type: 'quiz', keyword: '', size: 'XS', minutes: null, inClass: false }]);
+  assert.deepEqual(next.settings.estimateRules, [{ courseId: null, type: 'quiz', keyword: '', minutes: 5, inClass: false }]);
   assert.deepEqual(next.weekState, {});
   assert.equal(next.items['1'].minutesOverride, null);
   assert.equal(next.items['1'].manualDone, false);
@@ -73,7 +73,7 @@ test('a v1-shaped export still imports (keyword rules migrate)', () => {
   const next = applyImport(stored(), {
     app: 'canvas-planner', schemaVersion: 1, settings: { keywordRules: [{ keyword: 'essay', size: 'L' }] },
   });
-  assert.deepEqual(next.settings.estimateRules, [{ courseId: null, type: null, keyword: 'essay', size: 'L', minutes: null, inClass: false }]);
+  assert.deepEqual(next.settings.estimateRules, [{ courseId: null, type: null, keyword: 'essay', minutes: 120, inClass: false }]);
 });
 
 test('a v2 export with size overrides imports as minutes', () => {
@@ -82,4 +82,13 @@ test('a v2 export with size overrides imports as minutes', () => {
     userItems: { 1: { courseId: '9', sizeOverride: 'L' } },
   });
   assert.equal(next.items['1'].minutesOverride, 90);
+  assert.equal(next.settings.typeDefaults.upload, 45);
+});
+
+test('a v3 export with sizes in rules imports with its own size minutes', () => {
+  const next = applyImport(stored(), {
+    app: 'canvas-planner', schemaVersion: 3,
+    settings: { sizeMinutes: { XS: 5, S: 15, M: 45, L: 90 }, estimateRules: [{ keyword: 'essay', size: 'L' }] },
+  });
+  assert.equal(next.settings.estimateRules[0].minutes, 90);
 });

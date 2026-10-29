@@ -1,13 +1,13 @@
 // Storage schema: validate, clamp and migrate everything read from storage. Pure.
 // Anything malformed falls back to the default rather than throwing.
-import { DEFAULT_SETTINGS, SIZES, USER_FIELD_DEFAULTS } from './defaults.js';
+import { DEFAULT_SETTINGS, LEGACY_SIZES, USER_FIELD_DEFAULTS } from './defaults.js';
 import { addDays } from '../planner/dates.js';
 
 // Kept in sync with src/ui/theme.js (schema stays free of UI imports).
 const ACCENT_KEYS = ['blue', 'teal', 'purple', 'green', 'orange', 'pink'];
 const CLASS_COLOR_KEYS = ['blue', 'orange', 'green', 'purple', 'red', 'teal', 'pink', 'amber', 'indigo', 'slate'];
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const TYPES = ['quiz', 'discussion', 'upload', 'external_tool', 'other'];
 const MAX_MINUTES = 24 * 60;
@@ -27,7 +27,6 @@ const ID = /^\d{1,20}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_RULES = 200;
 const dateOrNull = (v) => (typeof v === 'string' && DATE.test(v) ? v : null);
-const size = (v, fallback) => (SIZES.includes(v) ? v : fallback);
 
 /** One estimate rule, or null if it has no condition or no value. */
 export function validateRule(r) {
@@ -37,10 +36,9 @@ export function validateRule(r) {
   const keyword = (str(r.keyword, 100) ?? '').trim();
   const inClass = r.inClass === true;
   const minutes = inClass || r.minutes == null ? null : int(r.minutes, 1, MAX_MINUTES, null);
-  const size = !inClass && minutes == null && SIZES.includes(r.size) ? r.size : null;
   if (!courseId && !type && !keyword) return null;
-  if (!inClass && minutes == null && !size) return null;
-  return { courseId, type, keyword, size, minutes, inClass };
+  if (!inClass && minutes == null) return null;
+  return { courseId, type, keyword, minutes, inClass };
 }
 
 /**
@@ -53,10 +51,8 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
   const capacity = Array.isArray(s.capacity) && s.capacity.length === 7
     ? s.capacity.map((c, i) => int(c, 0, MAX_MINUTES, d.capacity[i]))
     : [...d.capacity];
-  const sizeMinutes = {};
-  for (const k of SIZES) sizeMinutes[k] = int(s.sizeMinutes?.[k], 1, MAX_MINUTES, d.sizeMinutes[k]);
   const typeDefaults = {};
-  for (const t of TYPES) typeDefaults[t] = size(s.typeDefaults?.[t], d.typeDefaults[t]);
+  for (const t of TYPES) typeDefaults[t] = int(s.typeDefaults?.[t], 1, MAX_MINUTES, d.typeDefaults[t]);
   const estimateRules = Array.isArray(s.estimateRules)
     ? s.estimateRules.map(validateRule).filter(Boolean).slice(0, MAX_RULES)
     : d.estimateRules.map((r) => ({ ...r }));
@@ -80,7 +76,6 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     targetDay: weekdayIndex(s.targetDay, d.targetDay),
     capacity,
     blockedWeekdays: blocked.length < 7 ? blocked : [...d.blockedWeekdays],
-    sizeMinutes,
     typeDefaults,
     estimateRules,
     statedScale: int(s.statedScale, 10, 300, d.statedScale),
@@ -210,11 +205,18 @@ export function validateCourses(raw) {
   return out;
 }
 
+/** Your XS/S/M/L minutes from schema v3 or older settings (defaults where missing or bad). */
+export function legacySizeMinutes(rawSettings) {
+  const out = {};
+  for (const [k, fallback] of Object.entries(LEGACY_SIZES)) out[k] = int(rawSettings?.sizeMinutes?.[k], 1, MAX_MINUTES, fallback);
+  return out;
+}
+
 /** v2 -> v3 helper: replace an item's sizeOverride with minutesOverride. */
 export function sizeToMinutes(item, sizeMinutes) {
   if (!isObj(item) || !('sizeOverride' in item)) return item;
   const { sizeOverride, ...rest } = item;
-  const minutes = SIZES.includes(sizeOverride) ? sizeMinutes[sizeOverride] : null;
+  const minutes = Object.hasOwn(sizeMinutes, sizeOverride) ? sizeMinutes[sizeOverride] : null;
   return { ...rest, minutesOverride: rest.minutesOverride ?? minutes };
 }
 
@@ -234,8 +236,24 @@ function upgrade(raw) {
   }
   if (version < 3 && isObj(r.items)) {
     // v2 -> v3: per-item size override (XS/S/M/L) became exact minutes.
-    const sizeMinutes = validateSettings(r.settings).sizeMinutes;
+    const sizeMinutes = legacySizeMinutes(r.settings);
     r.items = Object.fromEntries(Object.entries(r.items).map(([id, item]) => [id, sizeToMinutes(item, sizeMinutes)]));
+  }
+  if (version < 4 && isObj(r.settings)) {
+    // v3 -> v4: sizes removed. Rules and type defaults that named a size get its minutes.
+    const sizeMinutes = legacySizeMinutes(r.settings);
+    const minutesOf = (size) => (Object.hasOwn(sizeMinutes, size) ? sizeMinutes[size] : null);
+    const settings = { ...r.settings };
+    delete settings.sizeMinutes;
+    if (Array.isArray(settings.estimateRules)) {
+      settings.estimateRules = settings.estimateRules.map((rule) => (isObj(rule) && rule.minutes == null && minutesOf(rule.size)
+        ? { ...rule, minutes: minutesOf(rule.size) } : rule));
+    }
+    if (isObj(settings.typeDefaults)) {
+      settings.typeDefaults = Object.fromEntries(Object.entries(settings.typeDefaults)
+        .map(([t, v]) => [t, minutesOf(v) ?? v]));
+    }
+    r.settings = settings;
   }
   return r;
 }

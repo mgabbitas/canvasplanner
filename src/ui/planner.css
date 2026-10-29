@@ -308,19 +308,66 @@ nav.subtabs .tab.active { background: var(--accent-soft); color: var(--accent); 
 .grid7 .mini { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 13px; }
 .grid7 input[type=number] { width: 100%; }
 @media (max-width: 560px) { .grid7 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-ol.rules { padding-left: 22px; margin: 8px 0 12px; }
-.rule { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 0; border-top: 1px solid var(--border); }
+/* Advanced: a collapsed area at the bottom of a tab. */
+details.advanced { margin: 14px 0 8px; border-top: 1px solid var(--border); padding-top: 10px; }
+details.advanced > summary { cursor: pointer; color: var(--muted); font-size: 14px; font-weight: 500; width: max-content; }
+details.advanced > summary:hover { color: var(--text); }
+details.advanced[open] > summary { margin-bottom: 4px; }
+.settings h3 { font-size: 15px; margin: 0 0 2px; display: flex; align-items: center; gap: 8px; }
+.settings .inline { display: flex; gap: 8px; align-items: center; }
+/* Week: one card per day. */
+.daycards { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin: 6px 0 4px; }
+@media (max-width: 1180px) { .daycards { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); } }
+.daycard {
+  display: grid; gap: 8px; padding: 12px 10px; border: 1px solid var(--border); border-radius: 10px; min-width: 0;
+  background: var(--surface); transition: opacity 0.15s;
+}
+.daycard-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 22px; }
+.daycard-hours { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.daycard input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
+.daycard-opt { display: flex; align-items: center; gap: 7px; font-size: 13px; cursor: pointer; }
+.daycard-opt input { margin: 0; accent-color: var(--accent); }
+.daycard.target { border: 2px solid var(--accent); padding: 11px 9px; background: var(--accent-soft); }
+.daycard.off { background: var(--surface-2); }
+.daycard.off .daycard-hours, .daycard.off .daycard-head strong { color: var(--muted); }
+.daycard.off .daycard-hours { font-size: 16px; padding: 4px 0 3px; }
+/* Rules: one card per class, edged in the class color. */
+.rule-card {
+  border: 1px solid var(--border); border-left: 4px solid var(--course, var(--accent)); border-radius: 10px;
+  padding: 12px 14px; margin: 12px 0;
+}
+.rule-card .hint { margin: 2px 0 6px; }
+ol.rules { list-style: none; padding: 0; margin: 4px 0 12px; }
+.rule { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--border); }
 .rule:first-child { border-top: none; }
 .rule.incomplete { opacity: 0.85; }
-.rule input[type=text] { width: 150px; }
+.rule .rule-when { display: flex; flex-wrap: wrap; gap: 6px; }
+.rule input[type=text] { width: 170px; }
 .rule .arrow { color: var(--muted); }
+.time-pick { display: inline-flex; gap: 6px; align-items: center; }
+.time-pick select { width: auto; min-width: 96px; }
+.settings .rules-picker { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+.settings .rules-picker select { max-width: 360px; }
+.time-pick input[type=number] { width: 70px; }
+.time-pick .unit { color: var(--muted); font-size: 13px; }
 .rule .rule-tools { display: flex; gap: 4px; margin-left: auto; }
 .rule .rule-tools button { padding: 2px 8px; }
 .rule small { flex-basis: 100%; }
+.type-defaults { margin-top: 16px; }
+.type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 4px 18px; }
+.settings .type-grid .field { grid-template-columns: 110px auto; border-top: none; padding: 6px 0; }
 ul.courses { list-style: none; padding: 0; margin: 0; }
 ul.courses li { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); }
 ul.courses li:first-child { border-top: none; }
 ul.courses input[type=text] { flex: 1 1 200px; max-width: 320px; }
+ul.courses .swatches { margin-left: auto; }
+/* Data: reset and clear, set apart. */
+.danger-zone { margin: 18px 0 8px; border: 1px solid var(--bad-text); border-radius: 10px; padding: 12px 14px; }
+.danger-zone h3 { color: var(--bad-text); margin-bottom: 4px; }
+.danger-row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 10px 0; }
+.danger-row + .danger-row { border-top: 1px solid var(--border); }
+.danger-row small { display: block; color: var(--muted); font-size: 13px; }
+button.warn { color: var(--warn-text); border-color: var(--warn-text); background: var(--warn-bg); }
 .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
 .swatch {
   width: 26px; height: 26px; padding: 0; border-radius: 50%; background: var(--swatch);

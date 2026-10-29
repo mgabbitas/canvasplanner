@@ -64,12 +64,15 @@ Everything is in **Settings** (left sidebar). Changes save automatically.
 
 | Tab | What to set |
 |---|---|
-| **Schedule** | Which day your week starts, your target day to finish by (Wednesday by default), and how many minutes you have each weekday. Block days you never do homework. |
-| **Estimates** | Rules for how long things take, e.g. "Physics + *report* → 25 min" or "any *quiz* → 15 min". If you usually work faster than the time an instructor states, lower the stated-time scale (70% = you take 70% of it). |
+| **Week** | A card per day: drag the slider for how much homework time you have, mark days off, and pick the day to finish by (Wednesday by default). |
+| **Rules** | How long things take. Pick a class to see its rules, e.g. "*report* → 25 min" for Physics, or use All classes for rules like "any *quiz* → 15 min" and the default time per assignment type. |
 | **Classes** | Hide classes you don't want planned, give them shorter names, and pick a color for each. |
 | **Appearance** | Light, dark or system theme, and an accent color. |
-| **Sync & behavior** | How often to refresh from Canvas, whether visiting Canvas opens the planner, and how much of next week's work you can pull in at once. |
+| **General** | Whether visiting Canvas opens the planner. |
 | **Data** | Export a backup, import one (for example on a new computer), or reset. |
+
+Each tab has a collapsed **Advanced** section for the finer controls (exact minutes per
+day, the instructor-stated time scale, sync interval, pull limits).
 
 **Tip:** after a couple of weeks of logging times, check **Stats → Suggested estimate
 rules** and click **Apply** on the ones that look right.
@@ -97,7 +100,10 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 - **Unreleased**: Streak counters (weeks on target, days on plan) in the header and on
   Stats. Sync login errors now say what Canvas answered and list what to check, with an
-  **Allow access** button if Firefox hasn't given the add-on access to Canvas.
+  **Allow access** button if Firefox hasn't given the add-on access to Canvas. Settings
+  redesigned: day cards with hour sliders, rules by class, Advanced sections, a danger
+  zone for reset and clear. XS/S/M/L sizes are gone; everything is in minutes and
+  hours (your old sizes convert automatically).
 - **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
   (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
   early, a page per class for setting many estimates at once, exams on the right, and

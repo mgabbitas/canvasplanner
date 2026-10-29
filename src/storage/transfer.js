@@ -1,5 +1,5 @@
 // Export / import of settings and user-owned data. Pure.
-import { migrate, validateItems, sizeToMinutes, SCHEMA_VERSION } from './schema.js';
+import { migrate, validateItems, sizeToMinutes, legacySizeMinutes, SCHEMA_VERSION } from './schema.js';
 import { USER_FIELD_DEFAULTS } from './defaults.js';
 
 export const EXPORT_APP = 'canvas-planner';
@@ -44,10 +44,11 @@ export function applyImport(state, raw) {
 
   const items = {};
   for (const [id, item] of Object.entries(state.items)) items[id] = { ...item, ...USER_FIELD_DEFAULTS };
+  const oldSizes = legacySizeMinutes(raw.settings);
   const incoming = isObj(raw.userItems) ? Object.entries(raw.userItems).slice(0, MAX_IMPORT_ITEMS) : [];
   for (const [id, rawUser] of incoming) {
     if (!isObj(rawUser)) continue;
-    const u = raw.schemaVersion < 3 ? sizeToMinutes(rawUser, settings.sizeMinutes) : rawUser;
+    const u = raw.schemaVersion < 3 ? sizeToMinutes(rawUser, oldSizes) : rawUser;
     const base = items[id] ?? { courseId: u.courseId, title: '(waiting for sync)', hidden: true };
     const valid = validateItems({ [id]: { ...base, ...userFields(u) } })[id];
     if (valid) items[id] = state.items[id] ? { ...items[id], ...userFields(valid) } : valid;

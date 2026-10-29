@@ -7,7 +7,7 @@ import { DEFAULT_SETTINGS } from '../src/storage/defaults.js';
 test('empty or garbage storage gives defaults', () => {
   for (const raw of [undefined, null, 42, [], {}]) {
     const s = migrate(raw);
-    assert.equal(s.schemaVersion, 3);
+    assert.equal(s.schemaVersion, 4);
     assert.deepEqual(s.settings, validateSettings(DEFAULT_SETTINGS));
     assert.equal(s.settings.estimateRules.length, 12);
     assert.deepEqual(s.items, {});
@@ -22,7 +22,7 @@ test('migration v1 -> v2: keyword rules become estimate rules', () => {
     weekState: { '2026-09-28': { extraDays: 1 } },
   };
   const s = migrate(v1);
-  assert.deepEqual(s.settings.estimateRules, [{ courseId: null, type: null, keyword: 'reading', size: 'S', minutes: null, inClass: false }]);
+  assert.deepEqual(s.settings.estimateRules, [{ courseId: null, type: null, keyword: 'reading', minutes: 20, inClass: false }]);
   assert.equal(s.settings.capacity[1], 60);
   assert.equal('keywordRules' in s.settings, false);
   assert.deepEqual(s.weekState, { '2026-09-28': { extraDays: 1, capacity: {} } });
@@ -48,19 +48,43 @@ test('migration v2 -> v3: item size override becomes minutes', () => {
   assert.equal(migrate({ schemaVersion: 3, items: { 1: { courseId: '9', minutesOverride: 37 } } }).items['1'].minutesOverride, 37);
 });
 
+test('migration v3 -> v4: sizes in rules and type defaults become your minutes', () => {
+  const s = migrate({
+    schemaVersion: 3,
+    settings: {
+      sizeMinutes: { XS: 10, S: 15, M: 40, L: 90 },
+      typeDefaults: { quiz: 'S', discussion: 'M', upload: 'L', external_tool: 'XS', other: 'toString' },
+      estimateRules: [
+        { keyword: 'essay', size: 'L', minutes: null },
+        { keyword: 'lab', size: 'L', minutes: 50 }, // exact minutes already won
+        { keyword: 'teach', size: null, inClass: true },
+        { keyword: 'odd', size: 'constructor' },
+      ],
+    },
+  });
+  assert.deepEqual(s.settings.typeDefaults, { quiz: 15, discussion: 40, upload: 90, external_tool: 10, other: 45 });
+  assert.deepEqual(s.settings.estimateRules, [
+    { courseId: null, type: null, keyword: 'essay', minutes: 90, inClass: false },
+    { courseId: null, type: null, keyword: 'lab', minutes: 50, inClass: false },
+    { courseId: null, type: null, keyword: 'teach', minutes: null, inClass: true },
+  ]);
+  assert.equal('sizeMinutes' in s.settings, false);
+  // Without stored size minutes, the old defaults apply.
+  assert.equal(migrate({ schemaVersion: 3, settings: { typeDefaults: { quiz: 'L' } } }).settings.typeDefaults.quiz, 120);
+});
+
 test('settings are clamped and bad values fall back', () => {
   const s = validateSettings({
     weekStartDay: 9, targetDay: 'x', capacity: [0, -5, 99999, '60', null, 120, 120],
-    sizeMinutes: { XS: 0, S: 'abc', M: 30 }, typeDefaults: { quiz: 'XXL', upload: 'L' },
+    typeDefaults: { quiz: 'XXL', upload: 90, other: 0 },
     blockedWeekdays: [0, 0, 6, 12], autoSyncMinutes: 1, gatePullOnCompletion: 'yes', statedScale: 5,
     courses: { 5: { include: false, displayName: ' Phys ' }, 6: 'junk', abc: { include: true } },
   });
   assert.equal(s.weekStartDay, 6);
   assert.equal(s.targetDay, 3);
   assert.deepEqual(s.capacity, [0, 0, 1440, 60, 120, 120, 120]);
-  assert.deepEqual(s.sizeMinutes, { XS: 1, S: 20, M: 30, L: 120 });
-  assert.equal(s.typeDefaults.quiz, 'S');
-  assert.equal(s.typeDefaults.upload, 'L');
+  assert.equal('sizeMinutes' in s, false);
+  assert.deepEqual(s.typeDefaults, { quiz: 20, discussion: 45, upload: 90, external_tool: 5, other: 1 });
   assert.deepEqual(s.blockedWeekdays, [0, 6]);
   assert.equal(s.autoSyncMinutes, 15);
   assert.equal(s.statedScale, 10);
@@ -76,15 +100,14 @@ test('bad input falls back to the last valid settings, not the defaults', () => 
   assert.equal(next.statedScale, 70);
 });
 
-test('estimate rules: need a condition and a value; minutes beat size', () => {
+test('estimate rules: need a condition and a value', () => {
   assert.deepEqual(validateRule({ courseId: 7, keyword: ' Report ', minutes: '25', size: 'L' }),
-    { courseId: '7', type: null, keyword: 'Report', size: null, minutes: 25, inClass: false });
-  assert.deepEqual(validateRule({ type: 'quiz', size: 'S' }),
-    { courseId: null, type: 'quiz', keyword: '', size: 'S', minutes: null, inClass: false });
-  assert.equal(validateRule({ size: 'S' }), null); // no condition
+    { courseId: '7', type: null, keyword: 'Report', minutes: 25, inClass: false });
+  assert.equal(validateRule({ minutes: 20 }), null); // no condition
   assert.equal(validateRule({ keyword: 'x' }), null); // no value
+  assert.equal(validateRule({ type: 'quiz', size: 'S' }), null); // sizes are gone (migrated before this)
   assert.equal(validateRule({ keyword: 'x', minutes: 0 }).minutes, 1); // clamped, not dropped
-  assert.equal(validateRule({ courseId: 'evil', type: 'nope', keyword: '', size: 'S' }), null);
+  assert.equal(validateRule({ courseId: 'evil', type: 'nope', keyword: '', minutes: 20 }), null);
   assert.equal(validateSettings({ estimateRules: 'junk' }).estimateRules.length, 12);
   assert.deepEqual(validateSettings({ estimateRules: [] }).estimateRules, []);
 });
@@ -120,8 +143,8 @@ test('old weeks are pruned after 8 weeks', () => {
 });
 
 test('in-class: rule value and item flag validate; new settings have defaults', () => {
-  assert.deepEqual(validateRule({ keyword: 'teach', inClass: true, size: 'L', minutes: 30 }),
-    { courseId: null, type: null, keyword: 'teach', size: null, minutes: null, inClass: true });
+  assert.deepEqual(validateRule({ keyword: 'teach', inClass: true, minutes: 30 }),
+    { courseId: null, type: null, keyword: 'teach', minutes: null, inClass: true });
   assert.equal(validateItems({ 1: { courseId: '9', inClass: 'yes' } })['1'].inClass, false);
   assert.equal(validateItems({ 1: { courseId: '9', inClass: true } })['1'].inClass, true);
   const s = validateSettings({ pullCapMinutes: 5, showForecast: 'no' });

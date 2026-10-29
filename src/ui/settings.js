@@ -1,27 +1,29 @@
 // Settings view (#settings). Every change is validated against the last valid
 // settings and saved immediately.
 import { validateSettings, validateRule, TYPES } from '../storage/schema.js';
-import { DEFAULT_SETTINGS, SIZES } from '../storage/defaults.js';
+import { DEFAULT_SETTINGS, TIME_PRESETS } from '../storage/defaults.js';
 import { buildExport, applyImport, MAX_IMPORT_BYTES } from '../storage/transfer.js';
 import { el, select, WEEKDAYS, TYPE_LABELS, minutesLabel, readInt } from './dom.js';
-import { ACCENTS, CLASS_COLORS, courseColorKey } from './theme.js';
+import { ACCENTS, CLASS_COLORS, courseColorKey, courseColor } from './theme.js';
 import { showToast } from './toast.js';
 
-// Rules being edited, including incomplete ones that aren't saved yet.
+// Rules being edited, including new and incomplete ones that aren't saved yet.
 let draftRules = null;
 let message = null; // { text, bad }
+let rulesClass = ''; // class shown on the Rules tab ('' = All classes)
+const openAdvanced = new Set(); // tabs whose Advanced section is open
+const customTypes = new Set(); // type defaults showing the custom-minutes box
 
 export function resetSettingsDraft() {
   draftRules = null;
   message = null;
 }
 
-const toDraft = (r) => ({ ...r, mode: r.inClass ? 'inclass' : r.minutes != null ? 'minutes' : 'size' });
+const toDraft = (r) => ({ ...r, mode: r.inClass ? 'inclass' : 'minutes' });
 const fromDraft = (d) => ({
   courseId: d.courseId || null,
   type: d.type || null,
   keyword: d.keyword,
-  size: d.mode === 'size' ? d.size : null,
   minutes: d.mode === 'minutes' ? d.minutes : null,
   inClass: d.mode === 'inclass',
 });
@@ -31,16 +33,18 @@ function updateSettings(ctx, patch) {
   return ctx.saveState({ settings });
 }
 
+// A just-added rule stays out of the saved list until you change something in it.
 function saveRules(ctx) {
-  return updateSettings(ctx, { estimateRules: draftRules.map(fromDraft) });
+  return updateSettings(ctx, { estimateRules: draftRules.filter((d) => !d.fresh).map(fromDraft) });
 }
+
+const courseLabel = (ctx, id) => ctx.state.settings.courses[id]?.displayName || ctx.state.courses[id]?.name || `Class ${id}`;
 
 /** "Physics + Quiz + "report" → 25m", for the undo message. */
 function ruleText(d, ctx) {
-  const s = ctx.state.settings;
-  const course = d.courseId ? s.courses[d.courseId]?.displayName || ctx.state.courses[d.courseId]?.name : null;
+  const course = d.courseId ? courseLabel(ctx, d.courseId) : null;
   const when = [course, d.type ? TYPE_LABELS[d.type] : null, d.keyword ? `"${d.keyword}"` : null].filter(Boolean);
-  const value = d.mode === 'inclass' ? 'in class' : d.mode === 'minutes' ? minutesLabel(d.minutes ?? 0) : d.size;
+  const value = d.mode === 'inclass' ? 'in class' : minutesLabel(d.minutes ?? 0);
   return `${when.join(' + ') || 'new rule'} → ${value}`;
 }
 
@@ -48,6 +52,7 @@ function ruleText(d, ctx) {
 function deleteRule(ctx, i) {
   const [removed] = draftRules.splice(i, 1);
   saveRules(ctx);
+  if (removed.fresh) return ctx.render();
   const t = showToast({
     message: `Deleted rule: ${ruleText(removed, ctx)}`,
     actions: [{
@@ -69,6 +74,14 @@ function section(title, intro, ...children) {
     ...children);
 }
 
+/** Collapsed "Advanced" area at the bottom of a tab; stays open across re-renders. */
+function advanced(key, ...children) {
+  return el('details', {
+    className: 'advanced', open: openAdvanced.has(key), 'data-key': `adv-${key}`,
+    ontoggle: (e) => (e.target.open ? openAdvanced.add(key) : openAdvanced.delete(key)),
+  }, el('summary', {}, 'Advanced'), ...children);
+}
+
 const field = (label, control, hint) =>
   el('label', { className: 'field' }, el('span', {}, label), control, hint ? el('small', {}, hint) : null);
 
@@ -80,75 +93,102 @@ function numberInput(key, value, { min, max, step = 1, label }, onSave) {
   });
 }
 
+/**
+ * Time picker: preset times, "Custom…" (shows a minutes box) and optional extra
+ * choices such as "In class" (`extra` is the chosen one). onPick(value, typed) gets a
+ * preset's minutes, 'custom', an extra key, or typed minutes with typed = true.
+ */
+function timePicker(key, label, { minutes, extra = null, custom = false, extras = [] }, onPick) {
+  const isPreset = TIME_PRESETS.includes(minutes);
+  const showCustom = minutes != null && (custom || !isPreset);
+  const current = extra ?? (showCustom ? 'custom' : String(minutes));
+  const options = [
+    ...TIME_PRESETS.map((m) => [String(m), minutesLabel(m)]),
+    ['custom', 'Custom…'],
+    ...extras,
+  ];
+  return el('span', { className: 'time-pick' },
+    select(options, current, {
+      'aria-label': label, 'data-key': key,
+      onchange: (e) => onPick(e.target.value),
+    }),
+    showCustom && !extra
+      ? numberInput(`${key}-min`, minutes, { min: 1, max: 1440, label: `${label}, minutes` }, (v) => onPick(v, true))
+      : null,
+    showCustom && !extra ? el('span', { className: 'unit' }, 'min') : null,
+  );
+}
+
 // --- sections ----------------------------------------------------------------------
 
-function scheduleSection(ctx) {
+const MAX_SLIDER = 8 * 60;
+const hoursLabel = (minutes) => (minutes ? minutesLabel(minutes) : '0h');
+
+function weekSection(ctx) {
   const s = ctx.state.settings;
   const dayOptions = WEEKDAYS.map((d, i) => [String(i), d]);
   const order = Array.from({ length: 7 }, (_, i) => (s.weekStartDay + i) % 7);
+  const setCapacity = (i, v) => {
+    const capacity = [...s.capacity];
+    capacity[i] = v;
+    return updateSettings(ctx, { capacity });
+  };
 
-  const capacityRow = el('div', { className: 'grid7' }, order.map((i) => el('label', { className: 'mini' },
-    el('span', {}, WEEKDAYS[i].slice(0, 3)),
-    numberInput(`cap-${i}`, s.capacity[i], { min: 0, max: 1440, step: 5, label: `${WEEKDAYS[i]} minutes` }, (v) => {
-      const capacity = [...s.capacity];
-      capacity[i] = v;
-      return updateSettings(ctx, { capacity });
-    }),
-    el('input', {
-      type: 'checkbox', checked: s.blockedWeekdays.includes(i), title: 'Blocked: never schedule work',
-      'aria-label': `Block ${WEEKDAYS[i]}`, 'data-key': `block-${i}`,
-      onchange: (e) => updateSettings(ctx, {
-        blockedWeekdays: e.target.checked ? [...s.blockedWeekdays, i] : s.blockedWeekdays.filter((w) => w !== i),
+  const cards = el('div', { className: 'daycards' }, order.map((i) => {
+    const off = s.blockedWeekdays.includes(i);
+    const target = s.targetDay === i;
+    const hours = el('output', { className: 'daycard-hours', 'aria-hidden': 'true' }, off ? 'Day off' : hoursLabel(s.capacity[i]));
+    return el('div', { className: `daycard${off ? ' off' : ''}${target ? ' target' : ''}`, 'data-key': `day-${i}` },
+      el('div', { className: 'daycard-head' },
+        el('strong', {}, WEEKDAYS[i])),
+      hours,
+      el('input', {
+        type: 'range', min: 0, max: MAX_SLIDER, step: 15, value: Math.min(s.capacity[i], MAX_SLIDER),
+        disabled: off, 'aria-label': `${WEEKDAYS[i]}: time for homework`, 'aria-valuetext': hoursLabel(s.capacity[i]),
+        'data-key': `cap-${i}`,
+        oninput: (e) => { hours.textContent = hoursLabel(Number(e.target.value)); },
+        onchange: (e) => setCapacity(i, Number(e.target.value)),
       }),
-    }),
-  )));
+      el('label', { className: 'daycard-opt' },
+        el('input', {
+          type: 'checkbox', checked: off, 'data-key': `block-${i}`,
+          onchange: (e) => updateSettings(ctx, {
+            blockedWeekdays: e.target.checked ? [...s.blockedWeekdays, i] : s.blockedWeekdays.filter((w) => w !== i),
+          }),
+        }),
+        el('span', {}, 'Day off')),
+      el('label', { className: 'daycard-opt' },
+        el('input', {
+          type: 'radio', name: 'target-day', checked: target, 'data-key': `target-${i}`,
+          onchange: () => updateSettings(ctx, { targetDay: i }),
+        }),
+        el('span', {}, 'Finish by')),
+    );
+  }));
 
-  const setAll = el('input', { type: 'number', min: 0, max: 1440, step: 5, placeholder: 'minutes', 'aria-label': 'Minutes for every day', 'data-key': 'cap-all' });
-  return section('Schedule', 'When your week starts, when you want its work finished, and how much time you have each day.',
+  const allHours = Array.from({ length: 17 }, (_, k) => k * 30);
+  const setAll = select(allHours.map((m) => [String(m), hoursLabel(m)]), '120', { 'aria-label': 'Time for every day', 'data-key': 'cap-all' });
+
+  return section('Week', 'Set how much homework time you have each day, which days are off, and the day you want the week\'s work finished by.',
     el('div', { className: 'row' },
       field('Week starts on', select(dayOptions, String(s.weekStartDay), {
         'data-key': 'week-start', onchange: (e) => updateSettings(ctx, { weekStartDay: Number(e.target.value) }),
       })),
-      field('Target day', select(dayOptions, String(s.targetDay), {
-        'data-key': 'target-day', onchange: (e) => updateSettings(ctx, { targetDay: Number(e.target.value) }),
-      }), 'Finish the week\'s work by this day.'),
+      el('div', { className: 'field set-all' },
+        el('span', {}, 'Set every day to'),
+        el('div', { className: 'inline' }, setAll,
+          el('button', {
+            'data-key': 'cap-all-btn',
+            onclick: () => updateSettings(ctx, { capacity: Array(7).fill(Number(setAll.value)) }),
+          }, 'Apply'))),
     ),
-    el('p', { className: 'label' }, 'Minutes available per day. Check the box to block a day entirely.'),
-    capacityRow,
-    el('div', { className: 'row' },
-      setAll,
-      el('button', {
-        'data-key': 'cap-all-btn',
-        onclick: () => {
-          const v = readInt(setAll);
-          if (v != null) updateSettings(ctx, { capacity: Array(7).fill(v) });
-        },
-      }, 'Set all days'),
-    ),
-    el('p', { className: 'hint' }, 'To change a single date, click its minutes in the planner.'),
-  );
-}
-
-function sizesSection(ctx) {
-  const s = ctx.state.settings;
-  return section('Sizes and defaults', 'Sizes are shorthand used by type defaults, rules and pull-by-amount.',
-    el('div', { className: 'row' },
-      SIZES.map((size) => field(`${size} minutes`,
-        numberInput(`size-${size}`, s.sizeMinutes[size], { min: 1, max: 1440, label: `${size} minutes` },
-          (v) => updateSettings(ctx, { sizeMinutes: { ...s.sizeMinutes, [size]: v } })))),
-    ),
-    el('div', { className: 'row' },
-      field('Instructor-stated time scale (%)',
-        numberInput('stated-scale', s.statedScale, { min: 10, max: 300, step: 5, label: 'Stated time scale percent' },
-          (v) => updateSettings(ctx, { statedScale: v })),
-        'When a description says "should take about 60 minutes", plan that × this %. 70 means you usually take 70% of the stated time.'),
-    ),
-    el('p', { className: 'label' }, 'Default size by assignment type (used when nothing else matches):'),
-    el('div', { className: 'row' },
-      TYPES.map((t) => field(TYPE_LABELS[t], select(SIZES.map((z) => [z, `${z} · ${minutesLabel(s.sizeMinutes[z])}`]), s.typeDefaults[t], {
-        'data-key': `type-${t}`,
-        onchange: (e) => updateSettings(ctx, { typeDefaults: { ...s.typeDefaults, [t]: e.target.value } }),
-      }))),
+    cards,
+    advanced('week',
+      el('p', { className: 'label' }, 'Exact minutes per day (for days over 8 hours, or odd amounts)'),
+      el('div', { className: 'grid7' }, order.map((i) => el('label', { className: 'mini' },
+        el('span', {}, WEEKDAYS[i].slice(0, 3)),
+        numberInput(`capmin-${i}`, s.capacity[i], { min: 0, max: 1440, step: 5, label: `${WEEKDAYS[i]} minutes` }, (v) => setCapacity(i, v))))),
+      el('p', { className: 'hint' }, 'To change a single date (a busy Tuesday, a free Saturday), click its time in the planner.'),
     ),
   );
 }
@@ -156,74 +196,111 @@ function sizesSection(ctx) {
 function rulesSection(ctx) {
   const s = ctx.state.settings;
   if (!draftRules) draftRules = s.estimateRules.map(toDraft);
-  const courses = Object.entries(ctx.state.courses).sort((a, b) => a[1].name.localeCompare(b[1].name));
-  const courseOptions = [['', 'Any class'], ...courses.map(([id, c]) => [id, s.courses[id]?.displayName || c.name])];
-  const typeOptions = [['', 'Any type'], ...TYPES.map((t) => [t, TYPE_LABELS[t]])];
-  const valueOptions = [
-    ...SIZES.map((z) => [z, `${z} · ${minutesLabel(s.sizeMinutes[z])}`]),
-    ['minutes', 'Exact minutes'],
-    ['inclass', 'In class (0m)'],
-  ];
+  const courses = Object.keys(ctx.state.courses).sort((a, b) => courseLabel(ctx, a).localeCompare(courseLabel(ctx, b)));
+  if (rulesClass && !courses.includes(rulesClass)) rulesClass = '';
+  const inGroup = (d) => (d.courseId || '') === rulesClass;
+  const count = (id) => draftRules.filter((d) => (d.courseId || '') === id && !d.fresh).length;
+  const ruleCount = (n) => (n ? ` (${n} rule${n === 1 ? '' : 's'})` : '');
+
+  const picker = el('label', { className: 'field rules-picker' }, el('span', {}, 'Show rules for'), select(
+    [['', `All classes${ruleCount(count(''))}`], ...courses.map((id) => [id, `${courseLabel(ctx, id)}${ruleCount(count(id))}`])],
+    rulesClass, { 'data-key': 'rules-class', onchange: (e) => { rulesClass = e.target.value; ctx.render(); } },
+  ));
 
   const edit = (i, patch) => {
-    draftRules[i] = { ...draftRules[i], ...patch };
+    draftRules[i] = { ...draftRules[i], ...patch, fresh: false };
     return saveRules(ctx);
   };
-  const move = (i, delta) => {
-    const j = i + delta;
-    if (j < 0 || j >= draftRules.length) return;
+  // Move within this group only: order matters only among the same class's rules.
+  const group = draftRules.map((d, i) => (inGroup(d) ? i : -1)).filter((i) => i >= 0);
+  const move = (pos, delta) => {
+    const i = group[pos];
+    const j = group[pos + delta];
+    if (j == null) return;
     [draftRules[i], draftRules[j]] = [draftRules[j], draftRules[i]];
     return saveRules(ctx);
   };
+  const typeOptions = [['', 'Any type'], ...TYPES.map((t) => [t, TYPE_LABELS[t]])];
 
-  const rows = draftRules.map((d, i) => {
-    const incomplete = !validateRule(fromDraft(d));
+  const rows = group.map((i, pos) => {
+    const d = draftRules[i];
+    const incomplete = d.fresh || !validateRule(fromDraft(d));
+    const pick = (v, typed) => {
+      if (v === 'inclass') return edit(i, { mode: 'inclass' });
+      if (v === 'custom') return edit(i, { mode: 'minutes', custom: true, minutes: d.minutes ?? 30 });
+      return edit(i, { mode: 'minutes', custom: Boolean(typed), minutes: Number(v) });
+    };
     return el('li', { className: `rule${incomplete ? ' incomplete' : ''}` },
-      select(courseOptions, d.courseId ?? '', { 'aria-label': 'Class', 'data-key': `r${i}-course`, onchange: (e) => edit(i, { courseId: e.target.value || null }) }),
-      select(typeOptions, d.type ?? '', { 'aria-label': 'Assignment type', 'data-key': `r${i}-type`, onchange: (e) => edit(i, { type: e.target.value || null }) }),
-      el('input', {
-        type: 'text', value: d.keyword, placeholder: 'title contains…', maxLength: 100,
-        'aria-label': 'Title keyword', 'data-key': `r${i}-kw`,
-        onchange: (e) => edit(i, { keyword: e.target.value.trim() }),
-      }),
-      el('span', { className: 'arrow' }, '→'),
-      select(valueOptions, d.mode === 'size' ? d.size ?? 'M' : d.mode, {
-        'aria-label': 'Estimate', 'data-key': `r${i}-value`,
-        onchange: (e) => {
-          const v = e.target.value;
-          if (v === 'inclass') return edit(i, { mode: 'inclass' });
-          if (v === 'minutes') return edit(i, { mode: 'minutes', minutes: d.minutes ?? s.sizeMinutes[d.size ?? 'M'] });
-          return edit(i, { mode: 'size', size: v });
-        },
-      }),
-      d.mode === 'minutes'
-        ? numberInput(`r${i}-min`, d.minutes, { min: 1, max: 1440, label: 'Minutes' }, (v) => edit(i, { minutes: v }))
-        : null,
+      el('span', { className: 'rule-when' },
+        select(typeOptions, d.type ?? '', { 'aria-label': 'Assignment type', 'data-key': `r${i}-type`, onchange: (e) => edit(i, { type: e.target.value || null }) }),
+        el('input', {
+          type: 'text', value: d.keyword, placeholder: 'title contains…', maxLength: 100,
+          'aria-label': 'Title keyword', 'data-key': `r${i}-kw`,
+          onchange: (e) => edit(i, { keyword: e.target.value.trim() }),
+        })),
+      el('span', { className: 'arrow', 'aria-hidden': 'true' }, '→'),
+      timePicker(`r${i}-value`, 'Time', {
+        minutes: d.mode === 'inclass' ? null : d.minutes, extra: d.mode === 'inclass' ? 'inclass' : null, custom: d.custom,
+        extras: [['inclass', 'In class (0m)']],
+      }, pick),
       el('span', { className: 'rule-tools' },
-        el('button', { 'aria-label': 'Move up', title: 'Move up', disabled: i === 0, 'data-key': `r${i}-up`, onclick: () => move(i, -1) }, '↑'),
-        el('button', { 'aria-label': 'Move down', title: 'Move down', disabled: i === draftRules.length - 1, 'data-key': `r${i}-down`, onclick: () => move(i, 1) }, '↓'),
-        el('button', {
-          'aria-label': 'Delete rule', title: 'Delete', 'data-key': `r${i}-del`,
-          onclick: () => deleteRule(ctx, i),
-        }, '✕'),
+        el('button', { 'aria-label': 'Move up', title: 'Move up', disabled: pos === 0, 'data-key': `r${i}-up`, onclick: () => move(pos, -1) }, '↑'),
+        el('button', { 'aria-label': 'Move down', title: 'Move down', disabled: pos === group.length - 1, 'data-key': `r${i}-down`, onclick: () => move(pos, 1) }, '↓'),
+        el('button', { 'aria-label': 'Delete rule', title: 'Delete', 'data-key': `r${i}-del`, onclick: () => deleteRule(ctx, i) }, '✕'),
       ),
-      incomplete ? el('small', { className: 'warn-text' }, 'Not saved yet: pick a class, a type or a keyword.') : null,
+      incomplete
+        ? el('small', { className: 'warn-text' }, rulesClass
+          ? 'Not saved yet: pick a type, a keyword or a time. With neither type nor keyword, it applies to everything in this class.'
+          : 'Not saved yet: pick a type or a title keyword.')
+        : null,
     );
   });
 
-  return section('Estimate rules', null,
-    el('p', { className: 'hint' },
-      'First matching rule wins, top to bottom. A rule must match everything it sets. ',
-      'Rules that name a class beat instructor-stated times; rules for any class don\'t. ',
-      'Put specific rules above general ones (e.g. "Physics + report → 25 min" above "report → L").'),
-    el('ol', { className: 'rules' }, rows),
+  const name = rulesClass ? courseLabel(ctx, rulesClass) : 'All classes';
+  const card = el('div', {
+    className: 'rule-card', style: rulesClass ? `--course:${courseColor(rulesClass, s, ctx.state.courses)}` : null,
+  },
+    el('h3', {}, rulesClass ? el('span', { className: 'dot', 'aria-hidden': 'true' }) : null, name),
+    el('p', { className: 'hint' }, rulesClass
+      ? `These come first for ${name}, ahead of instructor-stated times and All-classes rules. Top to bottom, the first match wins.`
+      : 'Used for every class when the class has no matching rule of its own. A time stated in the description ("should take about 30 minutes") beats these. Top to bottom, the first match wins.'),
+    rows.length ? el('ol', { className: 'rules' }, rows) : el('p', { className: 'hint' }, 'No rules yet.'),
     el('button', {
       'data-key': 'add-rule',
       onclick: () => {
-        draftRules.push({ courseId: null, type: null, keyword: '', mode: 'size', size: 'M', minutes: null });
+        draftRules.push({ courseId: rulesClass || null, type: null, keyword: '', mode: 'minutes', minutes: 30, fresh: true });
         ctx.render();
       },
     }, '+ Add rule'),
+  );
+
+  return section('Rules', 'How long things take. Rules match on assignment type and words in the title.',
+    picker,
+    card,
+    rulesClass ? null : typeDefaultsBlock(ctx),
+    advanced('rules',
+      field('Instructor-stated time scale (%)',
+        numberInput('stated-scale', s.statedScale, { min: 10, max: 300, step: 5, label: 'Stated time scale percent' },
+          (v) => updateSettings(ctx, { statedScale: v })),
+        'When a description says "should take about 60 minutes", plan that × this %. 70 means you usually take 70% of the stated time.'),
+    ),
+  );
+}
+
+function typeDefaultsBlock(ctx) {
+  const s = ctx.state.settings;
+  return el('div', { className: 'type-defaults' },
+    el('h3', {}, 'When no rule matches'),
+    el('p', { className: 'hint' }, 'The time each kind of assignment gets by default.'),
+    el('div', { className: 'type-grid' }, TYPES.map((t) => {
+      const pick = (v, typed) => {
+        if (v === 'custom') { customTypes.add(t); return ctx.render(); }
+        if (!typed) customTypes.delete(t);
+        return updateSettings(ctx, { typeDefaults: { ...s.typeDefaults, [t]: Number(v) } });
+      };
+      return el('div', { className: 'field' }, el('span', {}, TYPE_LABELS[t]),
+        timePicker(`type-${t}`, `${TYPE_LABELS[t]} default time`, { minutes: s.typeDefaults[t], custom: customTypes.has(t) }, pick));
+    })),
   );
 }
 
@@ -237,10 +314,8 @@ function coursesSection(ctx) {
   return section('Classes', 'Uncheck a class to leave it out of planning, give it a shorter name, or pick its color.',
     courses.length
       ? el('ul', { className: 'courses' }, courses.map(([id, c]) => el('li', {},
-        swatches(`color-${id}`, `Color for ${c.name}`, Object.keys(CLASS_COLORS),
-          courseColorKey(id, s, ctx.state.courses), (k) => CLASS_COLORS[k], (color) => setCourse(id, { color }), true),
         el('input', {
-          type: 'checkbox', checked: s.courses[id]?.include !== false, 'aria-label': `Include ${c.name}`,
+          type: 'checkbox', checked: s.courses[id]?.include !== false, 'aria-label': `Plan ${c.name}`, title: 'Plan this class',
           'data-key': `inc-${id}`, onchange: (e) => setCourse(id, { include: e.target.checked }),
         }),
         el('input', {
@@ -248,6 +323,8 @@ function coursesSection(ctx) {
           'aria-label': `Display name for ${c.name}`, 'data-key': `name-${id}`,
           onchange: (e) => setCourse(id, { displayName: e.target.value.trim() }),
         }),
+        swatches(`color-${id}`, `Color for ${c.name}`, Object.keys(CLASS_COLORS),
+          courseColorKey(id, s, ctx.state.courses), (k) => CLASS_COLORS[k], (color) => setCourse(id, { color }), true),
       )))
       : el('p', { className: 'hint' }, 'Sync once to list your classes.'),
   );
@@ -290,23 +367,25 @@ function appearanceSection(ctx) {
   );
 }
 
-function behaviorSection(ctx) {
+function generalSection(ctx) {
   const s = ctx.state.settings;
   const toggle = (key, label, hint) => el('label', { className: 'check' },
     el('input', { type: 'checkbox', checked: s[key], 'data-key': key, onchange: (e) => updateSettings(ctx, { [key]: e.target.checked }) }),
     el('span', {}, label), hint ? el('small', {}, hint) : null);
-  return section('Sync and behavior', null,
+  return section('General', null,
     toggle('openOnCanvasVisit', 'Open the planner when I visit Canvas',
-      'The first Canvas visit in each browser session opens the planner and syncs. Visiting Canvas also syncs quietly in the background whenever your data is stale.'),
-    field('Auto-sync when data is older than (minutes)',
-      numberInput('auto-sync', s.autoSyncMinutes, { min: 15, max: 10080, label: 'Auto-sync minutes' },
-        (v) => updateSettings(ctx, { autoSyncMinutes: v })), 'Minimum 15.'),
+      'The first Canvas visit in each browser session opens the planner and syncs. Visiting Canvas also syncs quietly whenever your data is stale.'),
     toggle('includeNonSubmittable', 'Plan items that can\'t be submitted online', 'e.g. "no submission" or "on paper" assignments.'),
-    toggle('gatePullOnCompletion', 'Only allow pulling next week\'s work once this week\'s own work is done'),
-    field('Most unfinished pulled work allowed in this week (minutes)',
-      numberInput('pull-cap', s.pullCapMinutes, { min: 15, max: 2400, step: 5, label: 'Pull limit minutes' },
-        (v) => updateSettings(ctx, { pullCapMinutes: v })),
-      'Finish pulled items to make room for more. 180 = 3 hours.'),
+    advanced('general',
+      field('Auto-sync when data is older than (minutes)',
+        numberInput('auto-sync', s.autoSyncMinutes, { min: 15, max: 10080, label: 'Auto-sync minutes' },
+          (v) => updateSettings(ctx, { autoSyncMinutes: v })), 'Minimum 15.'),
+      toggle('gatePullOnCompletion', 'Only allow pulling next week\'s work once this week\'s own work is done'),
+      field('Most unfinished pulled work allowed in this week (minutes)',
+        numberInput('pull-cap', s.pullCapMinutes, { min: 15, max: 2400, step: 5, label: 'Pull limit minutes' },
+          (v) => updateSettings(ctx, { pullCapMinutes: v })),
+        'Finish pulled items to make room for more. 180 = 3 hours.'),
+    ),
   );
 }
 
@@ -350,41 +429,51 @@ function dataSection(ctx) {
       el('button', { onclick: exportData, 'data-key': 'export' }, 'Export'),
       el('button', { onclick: () => importInput.click(), 'data-key': 'import' }, 'Import…'),
       importInput,
-      el('button', {
-        'data-key': 'reset',
-        onclick: () => {
-          if (!confirm('Reset all settings to defaults? Your done checks and item minutes are kept.')) return;
-          draftRules = null;
-          ctx.saveState({ settings: validateSettings(DEFAULT_SETTINGS) });
-          say('Settings reset to defaults.');
-        },
-      }, 'Reset to defaults'),
-      el('button', {
-        className: 'danger', 'data-key': 'clear',
-        onclick: async () => {
-          if (!confirm('Delete ALL stored data (settings, items, done checks)? This can\'t be undone. Export first if you want a backup.')) return;
-          await browser.storage.local.clear();
-          resetSettingsDraft();
-          ctx.afterClear();
-        },
-      }, 'Clear all data'),
     ),
     el('p', { className: 'hint' }, 'Export saves settings and your per-item changes (minutes, checks, dismissals) and streak history to a file. It contains no Canvas content.'),
     message ? el('p', { className: message.bad ? 'warn-text' : 'hint', role: 'status' }, message.text) : null,
+    el('div', { className: 'danger-zone' },
+      el('h3', {}, 'Danger zone'),
+      el('div', { className: 'danger-row' },
+        el('div', {}, el('strong', {}, 'Reset settings'), el('small', {}, 'Settings go back to defaults. Done checks, item times and history are kept.')),
+        el('button', {
+          className: 'warn', 'data-key': 'reset',
+          onclick: () => {
+            if (!confirm('Reset all settings to defaults? Your done checks and item minutes are kept.')) return;
+            draftRules = null;
+            ctx.saveState({ settings: validateSettings(DEFAULT_SETTINGS) });
+            say('Settings reset to defaults.');
+          },
+        }, 'Reset settings')),
+      el('div', { className: 'danger-row' },
+        el('div', {}, el('strong', {}, 'Clear all data'), el('small', {}, 'Deletes everything: settings, items, checks and history. Export first if you want a backup.')),
+        el('button', {
+          className: 'danger', 'data-key': 'clear',
+          onclick: async () => {
+            if (!confirm('Delete ALL stored data (settings, items, done checks)? This can\'t be undone. Export first if you want a backup.')) return;
+            await browser.storage.local.clear();
+            resetSettingsDraft();
+            ctx.afterClear();
+          },
+        }, 'Clear all data')),
+    ),
   );
 }
 
 const TABS = [
-  ['schedule', 'Schedule', [scheduleSection]],
-  ['estimates', 'Estimates', [rulesSection, sizesSection]],
+  ['week', 'Week', [weekSection]],
+  ['rules', 'Rules', [rulesSection]],
   ['classes', 'Classes', [coursesSection]],
   ['appearance', 'Appearance', [appearanceSection]],
-  ['behavior', 'Sync & behavior', [behaviorSection]],
+  ['general', 'General', [generalSection]],
   ['data', 'Data', [dataSection]],
 ];
+// Tab names before 1.2, so old links still land on the right tab.
+const OLD_TABS = { schedule: 'week', estimates: 'rules', behavior: 'general' };
 
 export function renderSettings(ctx) {
-  const current = TABS.find(([key]) => key === ctx.tab) ?? TABS[0];
+  const tab = OLD_TABS[ctx.tab] ?? ctx.tab;
+  const current = TABS.find(([key]) => key === tab) ?? TABS[0];
   const nav = el('nav', { className: 'tabs subtabs', 'aria-label': 'Settings sections' },
     TABS.map(([key, label]) => el('a', {
       href: `#settings/${key}`, className: `tab${key === current[0] ? ' active' : ''}`,

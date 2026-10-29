@@ -159,16 +159,37 @@ async function run() {
   check('stats: suggestions after weekday', order.indexOf('Suggested estimate rules') > order.indexOf('By day you finished'), order.join(' | '));
 
   // Settings tabs.
-  for (const tab of ['schedule', 'estimates', 'classes', 'appearance', 'behavior', 'data']) {
+  for (const tab of ['week', 'rules', 'classes', 'appearance', 'general', 'data']) {
     await go(`#settings/${tab}`);
     check(`settings/${tab}`, $$('.panel.settings').length > 0 && document.querySelector('nav.subtabs .tab.active')?.getAttribute('href') === `#settings/${tab}`);
   }
+  await go('#settings/estimates');
+  check('old tab link lands on Rules', document.querySelector('nav.subtabs .tab.active')?.getAttribute('href') === '#settings/rules');
+
+  // Week: day cards.
+  await go('#settings/week');
+  check('week: 7 day cards', $$('.daycard').length === 7);
+  check('week: target card highlighted', $$('.daycard.target').length === 1 && !!document.querySelector('[data-key="day-3"].target'));
+  const fri = document.querySelector('[data-key="target-5"]');
+  fri.checked = true; fire(fri, 'change'); await wait(200);
+  check('week: finish by Friday', window.__store.settings.targetDay === 5 && !!document.querySelector('[data-key="day-5"].target'));
+  const thuSlider = document.querySelector('[data-key="cap-4"]');
+  thuSlider.value = '150'; fire(thuSlider, 'input');
+  check('week: slider label updates live', document.querySelector('[data-key="day-4"] .daycard-hours')?.textContent === '2h 30m',
+    document.querySelector('[data-key="day-4"] .daycard-hours')?.textContent);
+  fire(thuSlider, 'change'); await wait(200);
+  check('week: slider saves', window.__store.settings.capacity[4] === 150);
+  const sunOff = document.querySelector('[data-key="block-0"]');
+  sunOff.checked = true; fire(sunOff, 'change'); await wait(200);
+  check('week: day off greys the card', window.__store.settings.blockedWeekdays.includes(0)
+    && !!document.querySelector('[data-key="day-0"].off') && document.querySelector('[data-key="cap-0"]').disabled);
+  check('week: advanced closed', !document.querySelector('[data-key="adv-week"]').open);
   await go('#settings/appearance');
   document.querySelector('[data-key="theme-dark"]').click(); await wait(200);
   check('theme dark', document.documentElement.dataset.theme === 'dark');
   document.querySelector('[data-key="accent-teal"]').click(); await wait(200);
   check('accent teal', document.documentElement.dataset.accent === 'teal');
-  await go('#settings/estimates');
+  await go('#settings/rules');
   const rulesBefore = JSON.stringify(window.__store.settings.estimateRules);
   document.querySelector('[data-key="r0-del"]').click(); await wait(200);
   check('delete rule', window.__store.settings.estimateRules.length === JSON.parse(rulesBefore).length - 1, document.querySelector('.toast-msg')?.textContent);
@@ -176,13 +197,34 @@ async function run() {
   check('undo rule delete', JSON.stringify(window.__store.settings.estimateRules) === rulesBefore);
   document.querySelector('[data-key="add-rule"]').click(); await wait(150);
   check('add rule shows incomplete row', !!document.querySelector('.rule.incomplete'));
+  check('type defaults on All classes', $$('.type-grid .field').length === 5);
+  const typeQuiz = document.querySelector('[data-key="type-quiz"]');
+  typeQuiz.value = '30'; fire(typeQuiz, 'change'); await wait(200);
+  check('type default saves minutes', window.__store.settings.typeDefaults.quiz === 30);
+  // Pick a class: its own card, colored, and new rules belong to it but wait for an edit.
+  const classPick = document.querySelector('[data-key="rules-class"]');
+  const classId = classPick.options[1].value;
+  classPick.value = classId; fire(classPick, 'change'); await wait(150);
+  check('class rules card', !!document.querySelector('.rule-card[style*="--course"]') && !document.querySelector('.type-grid'));
+  const rulesCount = window.__store.settings.estimateRules.length;
+  document.querySelector('[data-key="add-rule"]').click(); await wait(150);
+  check('new class rule not saved yet', window.__store.settings.estimateRules.length === rulesCount);
+  const newRow = $$('.rule-card .rule').at(-1);
+  const kw = newRow.querySelector('input[type=text]');
+  kw.value = 'lab'; fire(kw, 'change'); await wait(200);
+  const saved = window.__store.settings.estimateRules.at(-1);
+  check('class rule saved after edit', window.__store.settings.estimateRules.length === rulesCount + 1
+    && saved.courseId === classId && saved.keyword === 'lab' && saved.minutes === 30, JSON.stringify(saved));
+  const valuePick = $$('.rule-card .rule').at(-1).querySelector('select[data-key$="-value"]');
+  valuePick.value = 'custom'; fire(valuePick, 'change'); await wait(200);
+  check('custom time shows a minutes box', !!$$('.rule-card .rule').at(-1).querySelector('input[type=number]'));
   await go('#settings/classes');
   const sw = document.querySelector('ul.courses .swatch:not(.on)');
   sw.click(); await wait(200);
   check('class color pick', Object.values(window.__store.settings.courses).some((c) => c.color));
 
   // Turn the pull gate off, then pull an item and send it back.
-  await go('#settings/behavior');
+  await go('#settings/general');
   const gate = document.querySelector('[data-key="gatePullOnCompletion"]');
   gate.checked = false; fire(gate, 'change'); await wait(200);
   check('gate off', window.__store.settings.gatePullOnCompletion === false);

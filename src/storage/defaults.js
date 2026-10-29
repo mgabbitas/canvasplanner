@@ -1,21 +1,20 @@
 // Single source of default settings. Placeholder values (SPEC section 8).
 // Weekday indexes follow Date#getDay: 0 = Sunday ... 6 = Saturday.
 
-const rules = (size, words) => words.map((keyword) => ({ courseId: null, type: null, keyword, size, minutes: null, inClass: false }));
+const rules = (minutes, words) => words.map((keyword) => ({ courseId: null, type: null, keyword, minutes, inClass: false }));
 
 export const DEFAULT_SETTINGS = Object.freeze({
   weekStartDay: 1,
   targetDay: 3,
   capacity: [120, 120, 120, 120, 120, 120, 120],
   blockedWeekdays: [],
-  sizeMinutes: { XS: 5, S: 20, M: 45, L: 120 },
-  typeDefaults: { quiz: 'S', discussion: 'M', upload: 'M', external_tool: 'XS', other: 'M' },
-  // Estimate rules: optional courseId/type/keyword (at least one), and a size or exact
-  // minutes. Rules naming a course beat instructor-stated times; others don't.
+  typeDefaults: { quiz: 20, discussion: 45, upload: 45, external_tool: 5, other: 45 }, // minutes
+  // Estimate rules: optional courseId/type/keyword (at least one), and minutes (or in
+  // class). Rules naming a course beat instructor-stated times; others don't.
   estimateRules: [
-    ...rules('L', ['report', 'essay', 'paper', 'project', 'exam', 'midterm', 'final']),
-    ...rules('XS', ['evaluation', 'feedback', 'survey']),
-    ...rules('S', ['quiz', 'reading']),
+    ...rules(120, ['report', 'essay', 'paper', 'project', 'exam', 'midterm', 'final']),
+    ...rules(5, ['evaluation', 'feedback', 'survey']),
+    ...rules(20, ['quiz', 'reading']),
   ],
   statedScale: 100, // percent applied to instructor-stated minutes
   courses: {}, // courseId -> { include, displayName, color }
@@ -29,7 +28,14 @@ export const DEFAULT_SETTINGS = Object.freeze({
   openOnCanvasVisit: true, // first Canvas visit each browser session opens the planner
 });
 
-export const SIZES = ['XS', 'S', 'M', 'L'];
+/** Fallback when nothing else gives an estimate. */
+export const DEFAULT_MINUTES = 45;
+
+/** Size names from schema v3 and older, and their default minutes (for migrations). */
+export const LEGACY_SIZES = Object.freeze({ XS: 5, S: 20, M: 45, L: 120 });
+
+/** Preset times offered for rules and type defaults. */
+export const TIME_PRESETS = [5, 10, 15, 20, 30, 45, 60, 90, 120, 180];
 
 /** User-owned item fields. Sync never touches these. */
 export const USER_FIELD_DEFAULTS = Object.freeze({

@@ -6,6 +6,8 @@ import {
 import { estimate } from './estimate.js';
 
 const FORECAST_DAYS = 14;
+/** "Pull about …" choices, in minutes. */
+export const PULL_AMOUNTS = [15, 30, 60, 120, 180];
 
 export const isDone = (item) => Boolean(item.manualDone || item.canvasDone);
 
@@ -186,8 +188,8 @@ export function plan({ items, settings, weekState = {}, now }) {
     .sort(byDueThenSizeAsc);
   const nextDue = candidates[0]?.dueDay ?? null;
   const nextDayEntries = candidates.filter((e) => e.dueDay === nextDue);
-  const bySize = {};
-  for (const [size, budget] of Object.entries(settings.sizeMinutes)) {
+  const byAmount = {};
+  for (const budget of PULL_AMOUNTS) {
     const limit = Math.min(budget, remaining);
     const picked = [];
     let total = 0;
@@ -197,7 +199,7 @@ export function plan({ items, settings, weekState = {}, now }) {
       picked.push(e);
       total += e.minutes;
     }
-    bySize[size] = picked;
+    byAmount[budget] = picked;
   }
   const pull = {
     enabled: unlocked && remaining > 0,
@@ -211,7 +213,7 @@ export function plan({ items, settings, weekState = {}, now }) {
       fits: nextDayEntries.length > 0
         && (sum(nextDayEntries) <= remaining || (pulledMinutes === 0 && nextDayEntries.length === 1)),
     },
-    bySize,
+    byAmount,
   };
 
   // --- forecast: what's *due* each day, independent of the plan ---

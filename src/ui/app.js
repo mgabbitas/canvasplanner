@@ -12,7 +12,7 @@ export const app = {
   syncing: false,
   syncMessage: null,
   editingDay: null, // date whose capacity is being edited
-  pullSize: 'M', // amount picked in the "pull about …" control
+  pullAmount: 60, // minutes picked in the "pull about …" control
   thisWeekPlan: null, // latest plan for this week (pull gate, pull candidates)
   selectedDay: null, // day tab shown ('week', a date, or null = first day)
   navOpen: false, // sidebar open on narrow screens
@@ -48,7 +48,7 @@ export const courseName = (courseId) =>
 
 export const SOURCE_LABEL = {
   manual: 'minutes you picked', rule: 'one of your estimate rules', stated: 'instructor-stated time',
-  type: 'assignment type default', default: 'default size',
+  type: 'assignment type default', default: 'default estimate',
 };
 
 export const sumMinutes = (entries) => entries.reduce((s, e) => s + e.minutes, 0);

@@ -19,14 +19,14 @@ test('stated minutes: conservative phrase only', () => {
   assert.equal(statedMinutes('should take about 40 hours'), null); // implausible, ignored
 });
 
-const rule = (over) => ({ courseId: null, type: null, keyword: '', size: null, minutes: null, ...over });
+const rule = (over) => ({ courseId: null, type: null, keyword: '', minutes: null, ...over });
 
 test('resolution order: manual > course rule > stated x scale > general rule > type > default', () => {
   const stated = 'It should take about 2.5 hours.';
   const settings = {
     ...S,
     statedScale: 60,
-    estimateRules: [rule({ keyword: 'report', size: 'L' }), rule({ courseId: '7', keyword: 'report', minutes: 25 })],
+    estimateRules: [rule({ keyword: 'report', minutes: 120 }), rule({ courseId: '7', keyword: 'report', minutes: 25 })],
   };
   const report = (over) => item({ title: 'Week 2 Report', courseId: '7', ...over });
   assert.deepEqual(estimate(report({ minutesOverride: 5, descriptionText: stated }), settings), { minutes: 5, source: 'manual', inClass: false });
@@ -43,19 +43,19 @@ test('rules: every condition set must match; first match in list order wins', ()
   const settings = {
     ...S,
     estimateRules: [
-      rule({ courseId: '7', type: 'quiz', size: 'XS' }),
+      rule({ courseId: '7', type: 'quiz', minutes: 5 }),
       rule({ type: 'quiz', keyword: 'mastery', minutes: 33 }),
-      rule({ keyword: 'reading', size: 'S' }),
-      rule({ keyword: 'report', size: 'L' }),
+      rule({ keyword: 'reading', minutes: 20 }),
+      rule({ keyword: 'report', minutes: 120 }),
     ],
   };
   assert.equal(estimate(item({ courseId: '7', type: 'quiz', title: 'Mastery Quiz' }), settings).minutes, 5);
   assert.equal(estimate(item({ courseId: '8', type: 'quiz', title: 'Mastery Quiz' }), settings).minutes, 33);
   assert.equal(estimate(item({ courseId: '8', type: 'upload', title: 'Mastery Upload' }), settings).source, 'type');
-  // "reading" is above "report" here, so the daily reading report gets S.
+  // "reading" is above "report" here, so the daily reading report gets 20 minutes.
   assert.equal(estimate(item({ title: 'Daily Reading Report' }), settings).minutes, 20);
   // A rule with no conditions never matches.
-  assert.equal(estimate(item({ title: 'x' }), { ...S, estimateRules: [rule({ size: 'L' })] }).source, 'type');
+  assert.equal(estimate(item({ title: 'x' }), { ...S, estimateRules: [rule({ minutes: 120 })] }).source, 'type');
 });
 
 test('stated scale rounds and never goes below 1 minute', () => {

@@ -70,7 +70,7 @@ test('applying a suggestion changes the estimate and is not suggested again', ()
 });
 
 test('applySuggestion puts a class+type rule after a more specific class+keyword rule', () => {
-  const rules = [{ courseId: '7', type: null, keyword: 'report', size: null, minutes: 25, inClass: false }];
+  const rules = [{ courseId: '7', type: null, keyword: 'report', minutes: 25, inClass: false }];
   const next = applySuggestion(rules, { courseId: '7', type: 'upload', keyword: '', minutes: 40 });
   // Both have specificity 2, so the new one goes after the existing one.
   assert.deepEqual(next.map((r) => r.keyword || r.type), ['report', 'upload']);
