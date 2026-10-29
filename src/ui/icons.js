@@ -16,7 +16,7 @@ const ICONS = {
   star: ['M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5l-5.3 2.9 1.2-6-4.5-4.1 6-.7z'],
 };
 
-const LOOK_ICONS = { fall: 'leaf', thanksgiving: 'leaf', christmas: 'snowflake', halloween: 'pumpkin', july4: 'star' };
+const LOOK_ICONS = { fall: 'leaf', thanksgiving: 'leaf', christmas: 'snowflake', halloween: 'pumpkin', patriotic: 'star' };
 
 /** The little seasonal mark next to the name (Fall: a pumpkin through Halloween, then a leaf). */
 export function lookIcon(look, date) {

@@ -534,18 +534,25 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
 .color-pick { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
 .color-pick input[type=color] { width: 40px; height: 30px; padding: 2px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; }
 
-/* Theme decorations: the mark by the name, load bars, a faint pattern, falling snow/leaves. */
+/* Theme decorations: the mark by the name, load bars, a faint pattern, falling snow/leaves.
+   Themed bars stay themed when a day is over capacity; a red frame (and the red
+   load numbers) carry the warning instead. */
+:root:not([data-look="plain"]):not([data-look="custom"]) :is(.day.over .bar, .day-tab.over .dt-bar) { box-shadow: 0 0 0 1.5px var(--bad-text); }
+:root[data-look="ocean"] :is(.bar > div, .dt-bar > span, .meter > span) { background: linear-gradient(90deg, #7dd3fc, #0ea5e9 45%, #0369a1); }
+:root[data-look="sunset"] :is(.bar > div, .dt-bar > span, .meter > span) { background: linear-gradient(90deg, #fbbf24, #f97316 35%, #ec4899 70%, #8b5cf6); }
+:root[data-look="forest"] :is(.bar > div, .dt-bar > span, .meter > span) { background: linear-gradient(90deg, #86efac, #22c55e 45%, #166534); }
+:root[data-look="lavender"] :is(.bar > div, .dt-bar > span, .meter > span) { background: linear-gradient(90deg, #ddd6fe, #a78bfa 45%, #6d28d9); }
 .brand .look-icon { color: var(--accent); margin-left: -4px; }
-:root:is([data-look="fall"], [data-look="thanksgiving"]) :is(.bar > div, .dt-bar > span, .meter > span):not(.over *) {
+:root:is([data-look="fall"], [data-look="thanksgiving"]) :is(.bar > div, .dt-bar > span, .meter > span) {
   background: linear-gradient(90deg, #f59e0b, #d97706 50%, #b45309);
 }
-:root[data-look="christmas"] :is(.bar > div, .dt-bar > span, .meter > span):not(.over *) {
+:root[data-look="christmas"] :is(.bar > div, .dt-bar > span, .meter > span) {
   background: repeating-linear-gradient(-45deg, #dc2626 0 6px, #f8fafc 6px 12px);
 }
-:root[data-look="halloween"] :is(.bar > div, .dt-bar > span, .meter > span):not(.over *) {
+:root[data-look="halloween"] :is(.bar > div, .dt-bar > span, .meter > span) {
   background: repeating-linear-gradient(90deg, #facc15 0 10px, #f97316 10px 20px, #f8fafc 20px 26px);
 }
-:root[data-look="july4"] :is(.bar > div, .dt-bar > span, .meter > span):not(.over *) {
+:root[data-look="patriotic"] :is(.bar > div, .dt-bar > span, .meter > span) {
   background: linear-gradient(90deg, #1d4ed8 0 16px, transparent 16px), repeating-linear-gradient(90deg, #dc2626 0 8px, #f8fafc 8px 16px);
 }
 :root:is([data-look="fall"], [data-look="thanksgiving"]) body {
@@ -557,8 +564,12 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
 :root[data-look="halloween"] body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='%23f97316' fill-opacity='0.08'%3E%3Cellipse cx='30' cy='40' rx='9' ry='7'/%3E%3Cellipse cx='120' cy='120' rx='7' ry='5.5'/%3E%3C/g%3E%3C/svg%3E");
 }
-:root[data-look="july4"] body {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='%231d4ed8' fill-opacity='0.08'%3E%3Cpath d='M30 20l3.5 7.5 8 .9-6 5.5 1.6 8L30 38l-7.1 3.9 1.6-8-6-5.5 8-.9z'/%3E%3Cpath d='M120 100l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-2.9-5.3 2.9 1.2-6-4.5-4.1 6-.7z'/%3E%3C/g%3E%3C/svg%3E");
+:root[data-look="patriotic"] body { background-attachment: fixed; background-size: cover; }
+:root[data-look="patriotic"][data-mode="light"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1900 1000' preserveAspectRatio='xMinYMin slice'%3E%3Cdefs%3E%3Cpattern id='s' width='76' height='54' patternUnits='userSpaceOnUse'%3E%3Cg fill='%231d4ed8' fill-opacity='0.09'%3E%3Cpath d='M19 8l3 7 7 .6-5.4 4.7 1.7 7.1L19 23.6l-6.3 3.8 1.7-7.1L9 15.6l7-.6z'/%3E%3Cpath d='M57 35l3 7 7 .6-5.4 4.7 1.7 7.1L57 50.6l-6.3 3.8 1.7-7.1L47 42.6l7-.6z'/%3E%3C/g%3E%3C/pattern%3E%3C/defs%3E%3Cg fill='%23dc2626' fill-opacity='0.06'%3E%3Crect y='0.0' width='1900' height='76.9'/%3E%3Crect y='153.8' width='1900' height='76.9'/%3E%3Crect y='307.7' width='1900' height='76.9'/%3E%3Crect y='461.5' width='1900' height='76.9'/%3E%3Crect y='615.4' width='1900' height='76.9'/%3E%3Crect y='769.2' width='1900' height='76.9'/%3E%3Crect y='923.1' width='1900' height='76.9'/%3E%3C/g%3E%3Crect width='760' height='538' fill='%231d4ed8' fill-opacity='0.05'/%3E%3Crect width='760' height='538' fill='url(%23s)'/%3E%3C/svg%3E");
+}
+:root[data-look="patriotic"][data-mode="dark"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1900 1000' preserveAspectRatio='xMinYMin slice'%3E%3Cdefs%3E%3Cpattern id='s' width='76' height='54' patternUnits='userSpaceOnUse'%3E%3Cg fill='%23ffffff' fill-opacity='0.07'%3E%3Cpath d='M19 8l3 7 7 .6-5.4 4.7 1.7 7.1L19 23.6l-6.3 3.8 1.7-7.1L9 15.6l7-.6z'/%3E%3Cpath d='M57 35l3 7 7 .6-5.4 4.7 1.7 7.1L57 50.6l-6.3 3.8 1.7-7.1L47 42.6l7-.6z'/%3E%3C/g%3E%3C/pattern%3E%3C/defs%3E%3Cg fill='%23f87171' fill-opacity='0.06'%3E%3Crect y='0.0' width='1900' height='76.9'/%3E%3Crect y='153.8' width='1900' height='76.9'/%3E%3Crect y='307.7' width='1900' height='76.9'/%3E%3Crect y='461.5' width='1900' height='76.9'/%3E%3Crect y='615.4' width='1900' height='76.9'/%3E%3Crect y='769.2' width='1900' height='76.9'/%3E%3Crect y='923.1' width='1900' height='76.9'/%3E%3C/g%3E%3Crect width='760' height='538' fill='%233b82f6' fill-opacity='0.12'/%3E%3Crect width='760' height='538' fill='url(%23s)'/%3E%3C/svg%3E");
 }
 .app { position: relative; z-index: 1; } /* above the falling layer */
 .decor { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }

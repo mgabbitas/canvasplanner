@@ -6,7 +6,7 @@ import { TASK_ID } from '../planner/tasks.js';
 
 // Kept in sync with src/ui/theme.js (ACCENT_COLORS, THEMES); schema stays free of UI imports.
 const ACCENT_KEYS = ['blue', 'teal', 'purple', 'green', 'orange', 'pink', 'red', 'amber', 'indigo', 'cyan', 'brown'];
-const LOOK_KEYS = ['plain', 'ocean', 'forest', 'sunset', 'lavender', 'fall', 'christmas', 'custom'];
+const LOOK_KEYS = ['plain', 'ocean', 'forest', 'sunset', 'lavender', 'fall', 'christmas', 'patriotic', 'custom'];
 const hexOr = (v, fallback) => (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : fallback);
 const CLASS_COLOR_KEYS = ['blue', 'orange', 'green', 'purple', 'red', 'teal', 'pink', 'amber', 'indigo', 'slate'];
 

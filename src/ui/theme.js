@@ -22,10 +22,10 @@ export const THEMES = {
   lavender: { label: 'Lavender', pick: true, tint: '#8b5cf6', accent: '#6d28d9' },
   fall: { label: 'Fall', pick: true, seasonal: true, tint: '#d97706', accent: '#b45309', accentDark: '#f59e0b' },
   christmas: { label: 'Christmas', pick: true, seasonal: true, tint: '#15803d', accent: '#b91c1c', accentDark: '#f04848' },
+  patriotic: { label: 'Patriotic', pick: true, tint: '#1d4ed8', accent: '#b91c1c', accentDark: '#f87171' },
   custom: { label: 'Custom', pick: true },
   halloween: { label: 'Halloween', holiday: true, tint: '#7c3aed', accent: '#c2410c', accentDark: '#fb923c' },
   thanksgiving: { label: 'Thanksgiving', holiday: true, tint: '#a16207', accent: '#9a3412' },
-  july4: { label: '4th of July', holiday: true, tint: '#1d4ed8', accent: '#b91c1c' },
 };
 
 /** Tint and accent for a look ({ tint, accent }), or null for Plain. */

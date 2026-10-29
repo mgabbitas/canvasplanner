@@ -72,7 +72,7 @@ Everything is in **Settings** (left sidebar). Changes save automatically.
 | **Week** | A card per day: drag the slider for how much homework time you have, mark days off, and pick the day to finish by (Wednesday by default). |
 | **Rules** | How long things take. Pick a class to see its rules, e.g. "*report* → 25 min" for Physics, or use All classes for rules like "any *quiz* → 15 min" and the default time per assignment type. |
 | **Classes** | Hide classes you don't want planned, give them shorter names, and pick a color for each. |
-| **Appearance** | Light, dark or system mode; a theme (Plain, Ocean, Forest, Sunset, Lavender, Fall, Christmas, or your own colors); a few holiday surprises, and falling snow and leaves. |
+| **Appearance** | Light, dark or system mode; a theme (Plain, Ocean, Forest, Sunset, Lavender, Fall, Christmas, Patriotic, or your own colors); a few holiday surprises, and falling snow and leaves. |
 | **General** | Whether visiting Canvas opens the planner. |
 | **Data** | Export a backup, import one (for example on a new computer), or reset. |
 

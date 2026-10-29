@@ -141,7 +141,7 @@ if (process.argv.includes('--screenshot')) {
     ['halloween', '', '1400,1000', '?date=2026-10-31&holiday'], ['july4-dark', '', '1400,1000', '?preview=july4&mode=dark'],
     ['christmasday', '', '1400,1000', '?preview=christmasday&mode=light'],
     ['ocean', '', '1400,1000', '?look=ocean'], ['ocean-dark', '', '1400,1000', '?look=ocean&mode=dark'],
-    ['sunset', '', '1400,1000', '?look=sunset'], ['forest', '', '1400,1000', '?look=forest'], ['lavender-dark', '', '1400,1000', '?look=lavender&mode=dark']]) {
+    ['sunset', '', '1400,1000', '?look=sunset'], ['forest', '', '1400,1000', '?look=forest'], ['lavender-dark', '', '1400,1000', '?look=lavender&mode=dark'], ['patriotic', '', '1400,1000', '?look=patriotic']]) {
     const file = join(REPO, 'web-ext-artifacts', `ui-${name}.png`);
     await new Promise((r) => firefox(['--screenshot', file, '--window-size', size, `${base}${query ?? ''}#${hash}`]).on('exit', r));
     console.log(`Screenshot: ${file}`);

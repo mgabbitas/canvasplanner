@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   showForecast: true,
   theme: 'system', // 'system', 'light' or 'dark'
   accent: 'blue',
-  look: 'plain', // theme: plain, ocean, forest, sunset, lavender, fall, christmas or custom
+  look: 'plain', // theme: plain, ocean, forest, sunset, lavender, fall, christmas, patriotic or custom
   customAccent: '#2563c9', // the Custom theme's colors
   customTint: '#2563c9',
   holidayLooks: null, // dress up on holidays (just that day): null until you answer

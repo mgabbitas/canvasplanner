@@ -29,7 +29,7 @@ export function holidayOf(date) {
 }
 
 // The look each holiday wears (Christmas Day uses the Christmas theme).
-export const HOLIDAY_LOOK = { halloween: 'halloween', thanksgiving: 'thanksgiving', christmasday: 'christmas', july4: 'july4' };
+export const HOLIDAY_LOOK = { halloween: 'halloween', thanksgiving: 'thanksgiving', christmasday: 'christmas', july4: 'patriotic' };
 
 /** Today's holiday if you said yes to holiday looks, else null. */
 export const activeHoliday = (settings, date) => (settings.holidayLooks === true ? holidayOf(date) : null);
