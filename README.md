@@ -103,7 +103,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
   **Allow access** button if Firefox hasn't given the add-on access to Canvas. Settings
   redesigned: day cards with hour sliders, rules by class, Advanced sections, a danger
   zone for reset and clear. XS/S/M/L sizes are gone; everything is in minutes and
-  hours (your old sizes convert automatically).
+  hours (your old sizes convert automatically). Stats page cleaned up: class colors, time-share bars,
+  "faster/slower than estimate" in words, and a weekday column chart.
 - **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
   (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
   early, a page per class for setting many estimates at once, exams on the right, and

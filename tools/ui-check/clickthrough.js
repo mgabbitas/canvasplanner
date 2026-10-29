@@ -154,7 +154,10 @@ async function run() {
   await go('#stats');
   check('stats: cards', !!document.querySelector('.stat-cards'));
   check('stats: tables', $$('.stat-table').length === 2);
-  check('stats: streaks first', $$('.panel.stats h2')[0]?.textContent === 'Streaks');
+  check('stats: overview first with streaks', $$('.panel.stats h2')[0]?.textContent === 'Overview' && !!document.querySelector('.streak-cards'));
+  check('stats: class rows colored', $$('.stat-table')[0]?.querySelector('tbody tr[style*="--course"] .dot') != null);
+  check('stats: vs estimate in words', $$('.stat-table .vs').every((v) => /faster|slower|about right/.test(v.textContent)));
+  check('stats: 7 weekday columns', $$('ol.wk-cols li').length === 7);
   const order = $$('.panel.stats h2').map((h) => h.textContent);
   check('stats: suggestions after weekday', order.indexOf('Suggested estimate rules') > order.indexOf('By day you finished'), order.join(' | '));
 
