@@ -108,7 +108,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
   hours (your old sizes convert automatically). Stats page cleaned up: class colors, time-share bars,
   "faster/slower than estimate" in words, and a weekday column chart. Suggested rules
   moved to Settings → Rules. New toolbar button: today's list with checkboxes, and a
-  badge with how many are left.
+  badge with how many are left. Work due Monday morning is now planned the week before
+  (it has to be done by Sunday), so it no longer shows up as a surprise.
 - **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
   (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
   early, a page per class for setting many estimates at once, exams on the right, and

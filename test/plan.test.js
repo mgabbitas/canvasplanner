@@ -494,3 +494,19 @@ test('exams: matched by title, still ahead this week, "not an exam" removes one'
   assert.deepEqual(run([{ ...exam, notExam: true }, finalQuiz]).exams.map((e) => e.id), [finalQuiz.id]);
   assert.deepEqual(planNextWeek({ items, settings: S, now: iso(MON) }).exams.map((e) => e.id), [nextWeek.id]);
 });
+
+test("Monday-morning work belongs to the week before; Monday-night work doesn't", () => {
+  const morning = mk({ due: '2026-10-05 09:00' }); // next Monday, before 5 PM: Sunday's work
+  const night = mk({ due: '2026-10-05 23:59' });
+  const morningExam = mk({ due: '2026-10-05 08:00', title: 'Midterm Exam', type: 'quiz' });
+  const p = run([morning, night, morningExam]);
+  // Planned this week like any other work, so by the Wednesday target day.
+  assert.ok(dateOf(p, morning.id) <= p.week.cutoff, dateOf(p, morning.id));
+  assert.equal(dateOf(p, night.id), null);
+  assert.deepEqual(p.pull.nextDay.entries.map((e) => e.id), [night.id]);
+  assert.deepEqual(p.exams.map((e) => e.id), [morningExam.id]);
+  // Next week's projection leaves the morning items to this week.
+  const next = planNextWeek({ items: [morning, night, morningExam], settings: S, now: iso('2026-09-28 12:00') });
+  const nextIds = next.days.flatMap((d) => d.items.map((e) => e.id));
+  assert.deepEqual(nextIds, [night.id]);
+});

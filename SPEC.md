@@ -350,6 +350,12 @@ is the planned direction after v1.
 Decided 2026-10-04: course-specific estimate rules beat instructor-stated times;
 general rules don't (section 5).
 
+Decided 2026-10-29: an item belongs to the week of its **work deadline** (the due day,
+or the day before if due before 17:00), always on. So Monday-morning work is planned
+the week before, by its target day; Monday-night work stays next week's. Streaks keep
+using the due date (so past weeks aren't recounted). A separate "Due next" panel was
+dropped as redundant with this rule and the forecast strip.
+
 **Open questions:** none.
 
 Decided 2026-09-30: pull-by-size orders by due date,
@@ -404,6 +410,9 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
   item menu, Finish by −/+, pulling next week, the forecast, sidebar classes and
   sync, Settings. Replay from General. After an update, a dismissible "What's new"
   card at the top, shown once per version. "You're N days ahead": N = how many days
-  after today have all their planned work done (today must be done too).
+  after today have all their planned work done (today must be done too). Late-night
+  message: between midnight and 4 AM, the page and the toolbar popup gently say that
+  anything due today is already as late as it's going to be, so go to bed (no
+  notifications, no new permissions).
 - **M12. Calendar export.** Download an `.ics` file: one all-day event per item on its
   target day, with the due date in the description. One-time download (no live feed).

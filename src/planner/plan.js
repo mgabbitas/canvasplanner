@@ -39,7 +39,10 @@ function toEntry(item, settings, today) {
   const dueDay = item.dueAt ? toLocalDate(item.dueAt) : null; // calendar day it's due
   // Last day to work on it. Due before 5 PM means the day before, except that
   // something due later today can still be done today.
-  let lastDay = item.dueAt ? workDueDate(item.dueAt) : null;
+  // Which week the work belongs to: the work deadline, so something due Monday morning
+  // is the week before's work (it has to be done by Sunday).
+  const workDay = item.dueAt ? workDueDate(item.dueAt) : null;
+  let lastDay = workDay;
   if (dueDay && dueDay >= today) lastDay = maxDate(lastDay, today);
   const firstDay = maxDate(today, unlockDate ?? today);
   // A day you moved it to, while that day is still in its window.
@@ -52,6 +55,7 @@ function toEntry(item, settings, today) {
     source,
     inClass,
     dueDay,
+    workDay,
     lastDay,
     unlockDate,
     firstDay,
@@ -92,8 +96,9 @@ export function plan({ items, settings, weekState = {}, now }) {
   const entries = all.filter((i) => isActive(i, settings)).map((i) => toEntry(i, settings, today));
 
   const inWeek = (d) => d >= week.start && d <= week.end;
-  // This week's items, carried-over overdue items from earlier weeks, and pulled items.
-  const scoped = entries.filter((e) => e.dueDay && (e.dueDay <= week.end || e.pulledIn));
+  // This week's items (work deadline in this week, e.g. Monday-morning items count as
+  // the week before's), carried-over overdue items from earlier weeks, and pulled items.
+  const scoped = entries.filter((e) => e.dueDay && (e.workDay <= week.end || e.pulledIn));
   const noDueDate = entries.filter((e) => !e.dueDay);
   const behind = today > week.cutoff;
 
@@ -184,7 +189,7 @@ export function plan({ items, settings, weekState = {}, now }) {
   const fitsOne = (minutes) => minutes <= remaining || pulledMinutes === 0;
 
   const candidates = entries
-    .filter((e) => e.dueDay && e.dueDay > week.end && !e.pulledIn && !e.inClass)
+    .filter((e) => e.dueDay && e.workDay > week.end && !e.pulledIn && !e.inClass)
     .sort(byDueThenSizeAsc);
   const nextDue = candidates[0]?.dueDay ?? null;
   const nextDayEntries = candidates.filter((e) => e.dueDay === nextDue);
@@ -225,7 +230,7 @@ export function plan({ items, settings, weekState = {}, now }) {
 
   // --- exams still ahead this week (for the side panel) ---
   const exams = entries
-    .filter((e) => e.dueDay && e.dueDay >= today && e.dueDay <= week.end && isExam(e.item))
+    .filter((e) => e.dueDay && e.dueDay >= today && e.workDay <= week.end && isExam(e.item))
     .sort((a, b) => Date.parse(a.item.dueAt) - Date.parse(b.item.dueAt));
 
   // --- dismissed (so a dismissal can be undone) ---
@@ -236,7 +241,7 @@ export function plan({ items, settings, weekState = {}, now }) {
   // --- done this week (for the collapsible Done section) ---
   const done = all
     .filter((i) => isDone(i) && !i.hidden && courseIncluded(i, settings) && i.dueAt
-      && (inWeek(toLocalDate(i.dueAt)) || i.pulledIn))
+      && (inWeek(toLocalDate(i.dueAt)) || inWeek(workDueDate(i.dueAt)) || i.pulledIn))
     .map((i) => ({ ...toEntry(i, settings, today), canUncheck: !i.canvasDone }));
 
   return {
@@ -268,8 +273,8 @@ export function plan({ items, settings, weekState = {}, now }) {
 }
 
 /**
- * Projected plan for next week, as if this week's work were done: items due this
- * week or earlier and items already pulled into this week are left out, and the
+ * Projected plan for next week, as if this week's work were done: items whose work
+ * deadline is this week or earlier and items already pulled into this week are left out, and the
  * rest is planned as of next week's first day (its own target day, added days and
  * per-date capacity apply).
  */
@@ -277,7 +282,7 @@ export function planNextWeek({ items, settings, weekState = {}, now }) {
   const thisWeek = planningWeek(toLocalDate(now), settings);
   const start = addDays(thisWeek.start, 7);
   const list = (Array.isArray(items) ? items : Object.values(items ?? {}))
-    .filter((i) => !i.pulledIn && !(i.dueAt && toLocalDate(i.dueAt) <= thisWeek.end));
+    .filter((i) => !i.pulledIn && !(i.dueAt && workDueDate(i.dueAt) <= thisWeek.end));
   return plan({ items: list, settings, weekState, now: atNoon(start) });
 }
 
