@@ -354,3 +354,47 @@ general rules don't (section 5).
 
 Decided 2026-09-30: pull-by-size orders by due date,
 then smallest first; the forecast includes not-yet-unlocked items.
+
+## 12. Next versions (decided 2026-10-29)
+Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrome support.
+
+- **M7. Settings redesign.** Keep tabs, restyle and rename:
+  - **Week** (was Schedule): week start; one card per weekday with an hours slider
+    (0–8 h, 15-minute steps, shown as "1h 30m"; longer days by typing), a labeled
+    "Day off" checkbox that greys the card, and a "Finish by" choice on the card that
+    highlights the target day.
+  - **Rules** (was Estimates): a class picker at the top ("All classes" first). A class
+    shows a card edged in its color with that class's rules; All classes also shows
+    the type defaults. **Precedence changes:** a class's own rules always beat
+    All-classes rules; order matters only within a group (migrate existing lists).
+  - **Sizes removed.** Rules and type defaults pick a time from presets (5m, 10m, 15m,
+    20m, 30m, 45m, 1h, 1.5h, 2h, 3h, or custom); existing sizes convert to minutes.
+    Pull-by-amount uses fixed amounts instead of sizes.
+  - **Classes:** name on the left, color on the right.
+  - **Appearance:** unchanged until M10.
+  - **General** (was Sync & behavior). **Data:** Reset and Clear in a red danger zone
+    with confirmations.
+  - Each tab ends with a collapsed **Advanced** section: Rules: stated-time scale.
+    General: auto-sync interval, pull gate, pull limit.
+- **M8. Toolbar button.** Minimal popup: today's items with checkboxes and a link to
+  open the planner. Badge shows the count of today's remaining items. No new
+  permissions.
+- **M9. Your own tasks.** Details to be decided.
+- **M10. Themes.** Preset themes and color combinations plus a full color picker
+  (accent and background tint, with a contrast warning); 4–5 more accents. Seasonal
+  themes Fall and Christmas, each with light and dark versions, offered by a banner
+  when the season starts (Yes / Not now / Don't ask again), never switched
+  automatically. Holiday days (Halloween, Thanksgiving, Christmas Day, 4th of July):
+  one opt-in setting, asked once; the look applies that day only. Decorations: colors,
+  a small icon by the logo, themed load bars, a light background pattern, and
+  optional falling snow (Christmas) and occasional falling leaves (Fall); CSS and
+  small inline SVGs only, off under `prefers-reduced-motion`. Class colors stay as
+  set, with an Appearance > Advanced option to recolor them to the theme.
+- **M11. Walkthrough, what's new, celebrations.** After the first successful sync,
+  pop-ups pointing at the real page: day tabs, up next, check off and log time, the
+  item menu, Finish by −/+, pulling next week, the forecast, sidebar classes and
+  sync, Settings. Replay from General. After an update, a dismissible "What's new"
+  card at the top, shown once per version. "You're N days ahead": N = how many days
+  after today have all their planned work done (today must be done too).
+- **M12. Calendar export.** Download an `.ics` file: one all-day event per item on its
+  target day, with the due date in the description. One-time download (no live feed).
