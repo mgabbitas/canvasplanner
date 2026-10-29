@@ -18,10 +18,10 @@ const ICONS = {
 
 const LOOK_ICONS = { fall: 'leaf', thanksgiving: 'leaf', christmas: 'snowflake', halloween: 'pumpkin', july4: 'star' };
 
-/** The little seasonal mark next to the name, or null for themes without one. */
-export function lookIcon(look) {
+/** The little seasonal mark next to the name (Fall: a pumpkin through Halloween, then a leaf). */
+export function lookIcon(look, date) {
   if (!LOOK_ICONS[look]) return null;
-  const svg = icon(LOOK_ICONS[look]);
+  const svg = icon(look === 'fall' && date.slice(5) <= '10-31' ? 'pumpkin' : LOOK_ICONS[look]);
   svg.classList.add('look-icon');
   return svg;
 }

@@ -1,6 +1,6 @@
 // Theme, accent and class colors. Pure helpers plus applyTheme() for the page.
 import { palette, mix, ensureContrast, contrast } from './color.js';
-import { activeLook } from '../planner/seasons.js';
+import { activeLook, HOLIDAY_LOOK } from '../planner/seasons.js';
 import { toLocalDate } from '../planner/dates.js';
 
 // Accent colors (light-mode values; dark mode lightens them until they're readable).
@@ -76,13 +76,18 @@ export function courseColor(courseId, settings, courses) {
 
 const prefersDark = () => typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
 
-/** Put the theme on the page: light/dark, the look's colors (or Plain + accent), and data-look for decorations. */
-export function applyTheme(settings, date = toLocalDate(Date.now())) {
+/**
+ * Put the theme on the page: light/dark, the look's colors (or Plain + accent), and
+ * data-look / data-mode for decorations. `preview` (a holiday key) shows that
+ * holiday's look without saving anything. Returns the look shown.
+ */
+export function applyTheme(settings, date = toLocalDate(Date.now()), preview = null) {
   const root = document.documentElement;
   if (settings.theme === 'light' || settings.theme === 'dark') root.dataset.theme = settings.theme;
   else delete root.dataset.theme;
   const dark = settings.theme === 'dark' || (settings.theme !== 'light' && prefersDark());
-  const look = activeLook(settings, date);
+  const look = preview && HOLIDAY_LOOK[preview] ? HOLIDAY_LOOK[preview] : activeLook(settings, date);
+  root.dataset.mode = dark ? 'dark' : 'light';
   const colors = lookColors(look, settings);
   root.dataset.look = look;
   root.dataset.accent = settings.accent;

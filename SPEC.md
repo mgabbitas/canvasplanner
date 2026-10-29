@@ -401,9 +401,15 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
   when the season starts (Yes / Not now / Don't ask again), never switched
   automatically. Holiday days (Halloween, Thanksgiving, Christmas Day, 4th of July):
   one opt-in setting, asked once; the look applies that day only. Decorations: colors,
-  a small icon by the logo, themed load bars, a light background pattern, and
-  optional falling snow (Christmas) and occasional falling leaves (Fall); CSS and
-  small inline SVGs only, off under `prefers-reduced-motion`. Class colors stay as
+  a small icon by the logo (Fall: a pumpkin through Oct 31, then a leaf), themed load
+  bars, a light background pattern, and falling snow (Christmas) and occasional
+  falling leaves (Fall), behind the panels, with an Effects slider (Off / Light /
+  Normal / Lots); CSS and small inline SVGs only, off under `prefers-reduced-motion`.
+  Preset scenes (decided 2026-10-29): Ocean a horizon, Sunset a gradient, Forest a
+  thick leaf pattern, Lavender sprigs. Holiday looks are a surprise: Settings only
+  says "a surprise on a few special days"; on the day a tilted splash line sits under
+  the logo. `?preview=july4` (or christmasday, halloween, thanksgiving) on the
+  planner page shows a holiday look without saving anything, for testing. Class colors stay as
   set, with an Appearance > Advanced option to recolor them to the theme.
 - **M11. Walkthrough, what's new, celebrations.** After the first successful sync,
   pop-ups pointing at the real page: day tabs, up next, check off and log time, the

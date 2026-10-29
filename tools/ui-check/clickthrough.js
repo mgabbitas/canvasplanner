@@ -212,6 +212,11 @@ async function run() {
   pick.value = '#ffff66'; fire(pick, 'change'); await wait(200);
   // The page is in dark mode here, where pale yellow is readable as is; light mode adjusts it, hence the note.
   check('custom accent saved, contrast note', window.__store.settings.customAccent === '#ffff66' && !!document.querySelector('[data-key="contrast-note"]'));
+  const effects = document.querySelector('[data-key="effects"]');
+  effects.value = '3'; fire(effects, 'input');
+  check('effects label follows slider', effects.closest('.effects').textContent.includes('Lots'));
+  fire(effects, 'change'); await wait(200);
+  check('effects saved', window.__store.settings.effects === 3);
   const holidays = document.querySelector('[data-key="holidayLooks"]');
   holidays.checked = true; fire(holidays, 'change'); await wait(200);
   check('holiday looks on', window.__store.settings.holidayLooks === true);

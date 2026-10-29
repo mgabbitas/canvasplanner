@@ -29,12 +29,15 @@ export function holidayOf(date) {
 }
 
 // The look each holiday wears (Christmas Day uses the Christmas theme).
-const HOLIDAY_LOOK = { halloween: 'halloween', thanksgiving: 'thanksgiving', christmasday: 'christmas', july4: 'july4' };
+export const HOLIDAY_LOOK = { halloween: 'halloween', thanksgiving: 'thanksgiving', christmasday: 'christmas', july4: 'july4' };
+
+/** Today's holiday if you said yes to holiday looks, else null. */
+export const activeHoliday = (settings, date) => (settings.holidayLooks === true ? holidayOf(date) : null);
 
 /** The theme to show today: a holiday's look if you said yes to holiday looks, else your theme. */
 export function activeLook(settings, date) {
-  const h = holidayOf(date);
-  return h && settings.holidayLooks === true ? HOLIDAY_LOOK[h] : settings.look;
+  const h = activeHoliday(settings, date);
+  return h ? HOLIDAY_LOOK[h] : settings.look;
 }
 
 /** A season whose theme to offer today, or null: in season, not using it, not answered this year. */

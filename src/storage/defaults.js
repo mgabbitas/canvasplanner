@@ -30,7 +30,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   holidayLooks: null, // dress up on holidays (just that day): null until you answer
   seasonOffers: true, // offer the Fall / Christmas theme when the season starts
   seasonAnswered: [], // ['fall-2026', …]: seasons already offered this year
-  decorations: true, // falling snow and leaves (never with reduced motion)
+  effects: 2, // falling snow and leaves: 0 off, 1 light, 2 normal, 3 lots (never with reduced motion)
   themeClassColors: false, // tint class colors toward the theme
   includeNonSubmittable: true,
   openOnCanvasVisit: true, // first Canvas visit each browser session opens the planner

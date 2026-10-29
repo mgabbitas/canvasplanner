@@ -99,7 +99,8 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     seasonAnswered: Array.isArray(s.seasonAnswered)
       ? [...new Set(s.seasonAnswered.filter((x) => typeof x === 'string' && /^(fall|christmas)-\d{4}$/.test(x)))].slice(-20)
       : [...(d.seasonAnswered ?? [])],
-    decorations: typeof s.decorations === 'boolean' ? s.decorations : (d.decorations ?? true),
+    // effects replaced the on/off `decorations` switch (off stays off).
+    effects: s.effects != null ? int(s.effects, 0, 3, d.effects ?? 2) : s.decorations === false ? 0 : (d.effects ?? 2),
     themeClassColors: typeof s.themeClassColors === 'boolean' ? s.themeClassColors : (d.themeClassColors ?? false),
     openOnCanvasVisit: typeof s.openOnCanvasVisit === 'boolean' ? s.openOnCanvasVisit : (d.openOnCanvasVisit ?? true),
     includeNonSubmittable: bool('includeNonSubmittable'),

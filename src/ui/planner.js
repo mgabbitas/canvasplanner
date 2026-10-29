@@ -16,6 +16,7 @@ import { setNavOpen, renderSidebar, renderHeader, renderWelcome } from './shell.
 import { renderBanners, renderPullCard, renderForecast, renderDayLayout, renderExams } from './week.js';
 import { renderThemeOffer } from './offers.js';
 import { updateDecorations } from './decor.js';
+import { activeHoliday, HOLIDAYS } from '../planner/seasons.js';
 
 // --- settings view hooks ---------------------------------------------------------
 
@@ -61,7 +62,10 @@ function render() {
   const p = v === 'next' ? planNextWeek(args) : app.thisWeekPlan;
 
   const $ = (id) => document.getElementById(id);
-  app.look = applyTheme(app.state.settings);
+  // ?preview=july4 (or christmasday, halloween, thanksgiving): see a holiday's look today.
+  app.preview = new URLSearchParams(location.search).get('preview');
+  app.look = applyTheme(app.state.settings, today, app.preview);
+  app.holiday = HOLIDAYS[app.preview] ? app.preview : activeHoliday(app.state.settings, today);
   updateDecorations(app.look, app.state.settings);
   $('sidebar').replaceChildren(...renderSidebar().filter(Boolean));
   $('header').replaceChildren(...renderHeader(p).filter(Boolean));

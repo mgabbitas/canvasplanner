@@ -407,6 +407,23 @@ function themeCard(ctx, key) {
   );
 }
 
+const EFFECT_LEVELS = ['Off', 'Light', 'Normal', 'Lots'];
+
+/** How much snow and how many leaves: a 4-step slider. */
+function effectsField(ctx) {
+  const value = ctx.state.settings.effects;
+  const label = el('output', { className: 'effects-value' }, EFFECT_LEVELS[value]);
+  return el('label', { className: 'field' }, el('span', {}, 'Snow and leaves'),
+    el('span', { className: 'effects' },
+      el('input', {
+        type: 'range', min: 0, max: 3, step: 1, value, 'data-key': 'effects', 'aria-valuetext': EFFECT_LEVELS[value],
+        oninput: (e) => { label.textContent = EFFECT_LEVELS[e.target.value]; },
+        onchange: (e) => updateSettings(ctx, { effects: Number(e.target.value) }),
+      }),
+      label),
+    el('small', {}, 'With the Christmas and Fall themes. Always off when your system asks for reduced motion.'));
+}
+
 function appearanceSection(ctx) {
   const s = ctx.state.settings;
   const radios = (key, label, options, value) => el('div', { className: 'seg', role: 'group', 'aria-label': label },
@@ -434,10 +451,10 @@ function appearanceSection(ctx) {
         el('div', { className: 'color-picks' }, colorInput('customAccent', 'Accent'), colorInput('customTint', 'Background tint')),
         adjusted ? el('small', { 'data-key': 'contrast-note' }, 'Your accent is adjusted a little in light or dark mode so text on it stays readable.') : null)
       : null,
-    toggleField(ctx, 'holidayLooks', 'Dress up on holidays', 'Halloween, Thanksgiving, Christmas Day and the 4th of July get their own look, just for that day.',
+    toggleField(ctx, 'holidayLooks', 'Dress up on holidays', 'A surprise on a few special days, just for that day.',
       { checked: s.holidayLooks === true }),
     toggleField(ctx, 'seasonOffers', 'Offer seasonal themes', 'When fall or the Christmas season starts, ask once whether to switch.'),
-    toggleField(ctx, 'decorations', 'Falling snow and leaves', 'With the Christmas and Fall themes. Always off when your system asks for reduced motion.'),
+    effectsField(ctx),
     advanced('appearance',
       toggleField(ctx, 'themeClassColors', 'Class colors match the theme', 'Tints each class color toward the theme. Classes stay distinct; their names are always shown.'),
       el('p', { className: 'hint' }, 'Class colors are set in the Classes tab.')),

@@ -3,6 +3,7 @@ import { dayLabel, minutesLabel, el } from './dom.js';
 import { icon, logo, lookIcon } from './icons.js';
 import { courseColor } from './theme.js';
 import { openTaskForm } from './taskform.js';
+import { toLocalDate } from '../planner/dates.js';
 import { CANVAS, ACCESS_MESSAGE, isLoginError } from '../sync/canvas.js';
 import { app, view, classId, timeAgo, courseName, sync, allowCanvasAccess, changeExtraDays, homework, itemCount, streaks, plural } from './app.js';
 
@@ -39,9 +40,10 @@ export function renderSidebar() {
     el('div', { className: 'brand' },
       logo(),
       el('span', {}, 'Canvas Planner'),
-      lookIcon(app.look),
+      lookIcon(app.look, toLocalDate(Date.now())),
       el('button', { className: 'icon-btn close-nav', 'aria-label': 'Close menu', onclick: () => setNavOpen(false) }, icon('close')),
     ),
+    SPLASH[app.holiday] ? el('p', { className: 'splash', 'data-key': 'splash' }, SPLASH[app.holiday]) : null,
     el('nav', { className: 'nav', 'aria-label': 'Views' }, NAV.map(([hash, key, label, ic]) => el('a', {
       href: `#${hash}`, className: `nav-link${v === key ? ' active' : ''}`, 'aria-current': v === key ? 'page' : null,
       'data-key': `nav-${key}`,
@@ -116,6 +118,14 @@ function renderStreaks() {
   );
 }
 
+// A line of fun on the holidays you've let the planner dress up for.
+const SPLASH = {
+  halloween: "Don't let the deadlines haunt you!",
+  thanksgiving: 'Grateful for early finishes!',
+  christmasday: 'Merry Christmas! Homework can wait today.',
+  july4: 'Independence from last-minute homework!',
+};
+
 export function renderHeader(p) {
   const v = view();
   const week = p.week;
@@ -165,7 +175,8 @@ export function renderHeader(p) {
   }
 
   return [
-    el('div', { className: 'title-row' }, menuBtn, el('h1', {}, title), v === 'this' ? renderStreaks() : null,
+    el('div', { className: 'title-row' }, menuBtn, el('h1', {}, title),
+      v === 'this' ? renderStreaks() : null,
       weekView || v === 'class' ? el('button', {
         className: 'add-task', 'data-key': 'add-task',
         onclick: () => openTaskForm({ courseId: v === 'class' ? classId() : null }),
