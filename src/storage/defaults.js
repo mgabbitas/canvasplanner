@@ -24,6 +24,14 @@ export const DEFAULT_SETTINGS = Object.freeze({
   showForecast: true,
   theme: 'system', // 'system', 'light' or 'dark'
   accent: 'blue',
+  look: 'plain', // theme: plain, ocean, forest, sunset, lavender, fall, christmas or custom
+  customAccent: '#2563c9', // the Custom theme's colors
+  customTint: '#2563c9',
+  holidayLooks: null, // dress up on holidays (just that day): null until you answer
+  seasonOffers: true, // offer the Fall / Christmas theme when the season starts
+  seasonAnswered: [], // ['fall-2026', …]: seasons already offered this year
+  decorations: true, // falling snow and leaves (never with reduced motion)
+  themeClassColors: false, // tint class colors toward the theme
   includeNonSubmittable: true,
   openOnCanvasVisit: true, // first Canvas visit each browser session opens the planner
 });

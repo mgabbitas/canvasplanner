@@ -146,6 +146,9 @@ window.addEventListener('hashchange', () => {
 });
 
 // Another tab changed something: reload and redraw.
+// Following the system's light/dark setting: recolor when it changes.
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => render());
+
 browser.storage.onChanged.addListener(async (_changes, area) => {
   if (area !== 'local' || app.syncing || app.editingDay) return;
   app.state = await loadState();

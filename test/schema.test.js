@@ -184,3 +184,18 @@ test('split parts validate; day log keeps part ids', () => {
   assert.deepEqual(items['3'].partsDone, ['2026-10-01', '2026-10-02']);
   assert.deepEqual(migrate({ dayLog: { '2026-10-01': { left: ['5#2', '5', 'x#2', '5#22'] } } }).dayLog['2026-10-01'].left, ['5#2', '5']);
 });
+
+test('theme settings validate', () => {
+  const s = validateSettings({
+    accent: 'brown', look: 'halloween', customAccent: '#ABCDEF', customTint: 'red', holidayLooks: 'yes',
+    seasonAnswered: ['fall-2026', 'junk', 'fall-2026', 'christmas-2026'], decorations: 0,
+  });
+  assert.equal(s.accent, 'brown');
+  assert.equal(s.look, 'plain'); // holiday looks are never a saved choice
+  assert.equal(s.customAccent, '#abcdef');
+  assert.equal(s.customTint, DEFAULT_SETTINGS.customTint);
+  assert.equal(s.holidayLooks, null);
+  assert.deepEqual(s.seasonAnswered, ['fall-2026', 'christmas-2026']);
+  assert.equal(s.decorations, true);
+  assert.equal(validateSettings({ holidayLooks: false }).holidayLooks, false);
+});

@@ -1,7 +1,7 @@
 /* Canvas Planner styles.
    1. Tokens and themes   2. Base   3. App shell (sidebar, content, rail)
    4. Header             5. Plan (banners, days, items)   6. Panels and rail
-   7. Settings   8. Stats   9. Toast and log form   10. Your own tasks */
+   7. Settings   8. Stats   9. Toast and log form   10. Your own tasks   11. Themes */
 
 /* ---------- 1. Tokens and themes ---------- */
 :root {
@@ -518,3 +518,16 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
   .task-dialog .form-row small { grid-column: 1; }
   .task-dialog .check-row { margin-left: 0; }
 }
+
+/* ---------- 11. Themes ---------- */
+.theme-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.theme-card { display: grid; gap: 6px; padding: 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); text-align: left; }
+.theme-card.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.theme-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; height: 38px; padding: 5px; border-radius: 6px; background: var(--p-bg); }
+.theme-preview span:first-child { background: var(--p-surface); border-radius: 4px; }
+.theme-preview span:last-child { background: var(--p-accent); border-radius: 4px; }
+.theme-name { font-size: 13px; font-weight: 500; }
+.theme-name small { color: var(--muted); font-weight: 400; }
+.color-picks { display: flex; flex-wrap: wrap; gap: 14px; }
+.color-pick { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+.color-pick input[type=color] { width: 40px; height: 30px; padding: 2px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; }

@@ -4,8 +4,10 @@ import { DEFAULT_SETTINGS, LEGACY_SIZES, USER_FIELD_DEFAULTS } from './defaults.
 import { addDays } from '../planner/dates.js';
 import { TASK_ID } from '../planner/tasks.js';
 
-// Kept in sync with src/ui/theme.js (schema stays free of UI imports).
-const ACCENT_KEYS = ['blue', 'teal', 'purple', 'green', 'orange', 'pink'];
+// Kept in sync with src/ui/theme.js (ACCENT_COLORS, THEMES); schema stays free of UI imports.
+const ACCENT_KEYS = ['blue', 'teal', 'purple', 'green', 'orange', 'pink', 'red', 'amber', 'indigo', 'cyan', 'brown'];
+const LOOK_KEYS = ['plain', 'ocean', 'forest', 'sunset', 'lavender', 'fall', 'christmas', 'custom'];
+const hexOr = (v, fallback) => (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : fallback);
 const CLASS_COLOR_KEYS = ['blue', 'orange', 'green', 'purple', 'red', 'teal', 'pink', 'amber', 'indigo', 'slate'];
 
 export const SCHEMA_VERSION = 4;
@@ -89,6 +91,16 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     showForecast: typeof s.showForecast === 'boolean' ? s.showForecast : (d.showForecast ?? true),
     theme: ['system', 'light', 'dark'].includes(s.theme) ? s.theme : (d.theme ?? 'system'),
     accent: ACCENT_KEYS.includes(s.accent) ? s.accent : (d.accent ?? 'blue'),
+    look: LOOK_KEYS.includes(s.look) ? s.look : (d.look ?? 'plain'),
+    customAccent: hexOr(s.customAccent, d.customAccent ?? DEFAULT_SETTINGS.customAccent),
+    customTint: hexOr(s.customTint, d.customTint ?? DEFAULT_SETTINGS.customTint),
+    holidayLooks: typeof s.holidayLooks === 'boolean' || s.holidayLooks === null ? s.holidayLooks : (d.holidayLooks ?? null),
+    seasonOffers: typeof s.seasonOffers === 'boolean' ? s.seasonOffers : (d.seasonOffers ?? true),
+    seasonAnswered: Array.isArray(s.seasonAnswered)
+      ? [...new Set(s.seasonAnswered.filter((x) => typeof x === 'string' && /^(fall|christmas)-\d{4}$/.test(x)))].slice(-20)
+      : [...(d.seasonAnswered ?? [])],
+    decorations: typeof s.decorations === 'boolean' ? s.decorations : (d.decorations ?? true),
+    themeClassColors: typeof s.themeClassColors === 'boolean' ? s.themeClassColors : (d.themeClassColors ?? false),
     openOnCanvasVisit: typeof s.openOnCanvasVisit === 'boolean' ? s.openOnCanvasVisit : (d.openOnCanvasVisit ?? true),
     includeNonSubmittable: bool('includeNonSubmittable'),
   };

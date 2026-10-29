@@ -192,6 +192,20 @@ async function run() {
   check('theme dark', document.documentElement.dataset.theme === 'dark');
   document.querySelector('[data-key="accent-teal"]').click(); await wait(200);
   check('accent teal', document.documentElement.dataset.accent === 'teal');
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const plainBg = css('--bg');
+  document.querySelector('[data-key="look-ocean"]').click(); await wait(200);
+  check('theme ocean', document.documentElement.dataset.look === 'ocean' && css('--bg') !== plainBg && !document.querySelector('[data-key="accent-teal"]'), css('--bg'));
+  document.querySelector('[data-key="look-custom"]').click(); await wait(200);
+  const pick = document.querySelector('[data-key="customAccent"]');
+  pick.value = '#ffff66'; fire(pick, 'change'); await wait(200);
+  // The page is in dark mode here, where pale yellow is readable as is; light mode adjusts it, hence the note.
+  check('custom accent saved, contrast note', window.__store.settings.customAccent === '#ffff66' && !!document.querySelector('[data-key="contrast-note"]'));
+  const holidays = document.querySelector('[data-key="holidayLooks"]');
+  holidays.checked = true; fire(holidays, 'change'); await wait(200);
+  check('holiday looks on', window.__store.settings.holidayLooks === true);
+  document.querySelector('[data-key="look-plain"]').click(); await wait(200);
+  check('back to plain', document.documentElement.dataset.look === 'plain' || document.documentElement.dataset.look !== 'custom');
   await go('#settings/rules');
   const rulesBefore = JSON.stringify(window.__store.settings.estimateRules);
   document.querySelector('[data-key="r0-del"]').click(); await wait(200);

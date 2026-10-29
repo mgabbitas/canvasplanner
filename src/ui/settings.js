@@ -5,7 +5,8 @@ import { suggestRules, applySuggestion, MIN_LOGS_FOR_SUGGESTION } from '../plann
 import { DEFAULT_SETTINGS, TIME_PRESETS } from '../storage/defaults.js';
 import { buildExport, applyImport, MAX_IMPORT_BYTES } from '../storage/transfer.js';
 import { el, select, WEEKDAYS, TYPE_LABELS, minutesLabel, readInt } from './dom.js';
-import { ACCENTS, CLASS_COLORS, courseColorKey, courseColor } from './theme.js';
+import { ACCENTS, ACCENT_COLORS, THEMES, CLASS_COLORS, courseColorKey, courseColor, lookColors } from './theme.js';
+import { palette, accentAdjusted } from './color.js';
 import { showToast } from './toast.js';
 
 // Rules being edited, including new and incomplete ones that aren't saved yet.
@@ -382,10 +383,29 @@ function swatches(key, label, keys, value, colorOf, onPick, compact = false) {
     })));
 }
 
-// Accent swatch colors (light-mode values; the page itself uses theme-aware ones).
-const ACCENT_SWATCH = {
-  blue: '#2563c9', teal: '#0f766e', purple: '#7c3aed', green: '#166c34', orange: '#b03b0b', pink: '#be185d',
-};
+/** A labeled checkbox for a boolean setting. */
+function toggleField(ctx, key, label, hint, { checked = ctx.state.settings[key], value = (on) => on } = {}) {
+  return el('label', { className: 'check' },
+    el('input', { type: 'checkbox', checked, 'data-key': key, onchange: (e) => updateSettings(ctx, { [key]: value(e.target.checked) }) }),
+    el('span', {}, label), hint ? el('small', {}, hint) : null);
+}
+
+/** A theme card: a small preview of its background, card and accent, and its name. */
+function themeCard(ctx, key) {
+  const s = ctx.state.settings;
+  const t = THEMES[key];
+  const colors = lookColors(key, s);
+  const p = colors ? palette(colors, false) : { '--bg': '#f5f6f8', '--surface': '#ffffff', '--accent': ACCENT_COLORS[s.accent] };
+  const on = s.look === key;
+  return el('button', {
+    role: 'radio', 'aria-checked': String(on), className: `theme-card${on ? ' on' : ''}`, 'data-key': `look-${key}`,
+    onclick: () => updateSettings(ctx, { look: key }),
+  },
+    el('span', { className: 'theme-preview', 'aria-hidden': 'true', style: `--p-bg:${p['--bg']};--p-surface:${p['--surface']};--p-accent:${p['--accent']}` },
+      el('span', {}), el('span', {})),
+    el('span', { className: 'theme-name' }, t.label, t.seasonal ? el('small', {}, ' · seasonal') : null),
+  );
+}
 
 function appearanceSection(ctx) {
   const s = ctx.state.settings;
@@ -394,19 +414,39 @@ function appearanceSection(ctx) {
       'aria-pressed': String(value === k), className: value === k ? 'on' : '', 'data-key': `${key}-${k}`,
       onclick: () => updateSettings(ctx, { [key]: k }),
     }, text)));
+  const picks = Object.keys(THEMES).filter((k) => THEMES[k].pick);
+  const custom = { tint: s.customTint, accent: s.customAccent };
+  const adjusted = accentAdjusted(custom, false) || accentAdjusted(custom, true);
+  const colorInput = (key, label) => el('label', { className: 'color-pick' },
+    el('input', { type: 'color', value: s[key], 'data-key': key, onchange: (e) => updateSettings(ctx, { [key]: e.target.value }) }),
+    el('span', {}, label));
+
   return section('Appearance', null,
-    field('Theme', radios('theme', 'Theme', [['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], s.theme)),
-    field('Accent color', swatches('accent', 'Accent color', Object.keys(ACCENTS), s.accent,
-      (k) => ACCENT_SWATCH[k], (accent) => updateSettings(ctx, { accent }))),
-    el('p', { className: 'hint' }, 'Class colors are set in the Classes tab.'),
+    field('Mode', radios('theme', 'Mode', [['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], s.theme)),
+    el('div', { className: 'field' }, el('span', {}, 'Theme'),
+      el('div', { className: 'theme-cards', role: 'radiogroup', 'aria-label': 'Theme' }, picks.map((k) => themeCard(ctx, k)))),
+    s.look === 'plain'
+      ? field('Accent color', swatches('accent', 'Accent color', Object.keys(ACCENTS), s.accent,
+        (k) => ACCENT_COLORS[k], (accent) => updateSettings(ctx, { accent })))
+      : null,
+    s.look === 'custom'
+      ? el('div', { className: 'field' }, el('span', {}, 'Custom colors'),
+        el('div', { className: 'color-picks' }, colorInput('customAccent', 'Accent'), colorInput('customTint', 'Background tint')),
+        adjusted ? el('small', { 'data-key': 'contrast-note' }, 'Your accent is adjusted a little in light or dark mode so text on it stays readable.') : null)
+      : null,
+    toggleField(ctx, 'holidayLooks', 'Dress up on holidays', 'Halloween, Thanksgiving, Christmas Day and the 4th of July get their own look, just for that day.',
+      { checked: s.holidayLooks === true }),
+    toggleField(ctx, 'seasonOffers', 'Offer seasonal themes', 'When fall or the Christmas season starts, ask once whether to switch.'),
+    toggleField(ctx, 'decorations', 'Falling snow and leaves', 'With the Christmas and Fall themes. Always off when your system asks for reduced motion.'),
+    advanced('appearance',
+      toggleField(ctx, 'themeClassColors', 'Class colors match the theme', 'Tints each class color toward the theme. Classes stay distinct; their names are always shown.'),
+      el('p', { className: 'hint' }, 'Class colors are set in the Classes tab.')),
   );
 }
 
 function generalSection(ctx) {
   const s = ctx.state.settings;
-  const toggle = (key, label, hint) => el('label', { className: 'check' },
-    el('input', { type: 'checkbox', checked: s[key], 'data-key': key, onchange: (e) => updateSettings(ctx, { [key]: e.target.checked }) }),
-    el('span', {}, label), hint ? el('small', {}, hint) : null);
+  const toggle = (key, label, hint) => toggleField(ctx, key, label, hint);
   return section('General', null,
     toggle('openOnCanvasVisit', 'Open the planner when I visit Canvas',
       'The first Canvas visit in each browser session opens the planner and syncs. Visiting Canvas also syncs quietly whenever your data is stale.'),

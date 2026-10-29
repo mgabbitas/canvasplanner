@@ -14,6 +14,10 @@
     : q.has('noaccess') ? "Canvas Planner isn't allowed to read Canvas yet" : null;
   const store = failed ? { meta: { lastSyncAt: null, lastError: failed } }
     : q.has('empty') ? {} : JSON.parse(xhr.responseText);
+  // ?look=fall&mode=dark: start in a theme (for screenshots).
+  if (q.get('look') && store.settings) store.settings.look = q.get('look');
+  if (q.get('mode') && store.settings) store.settings.theme = q.get('mode');
+  if (q.has('holiday') && store.settings) store.settings.holidayLooks = true;
   window.__store = store;
   const listeners = [];
   const clone = (v) => JSON.parse(JSON.stringify(v));
