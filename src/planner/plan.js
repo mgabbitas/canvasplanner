@@ -4,6 +4,7 @@ import {
   toLocalDate, addDays, weekday, dateRange, minDate, maxDate, workDueDate, planningWeek, atNoon,
 } from './dates.js';
 import { estimate } from './estimate.js';
+import { isMissedRepeat } from './tasks.js';
 
 const FORECAST_DAYS = 14;
 /** "Pull about …" choices, in minutes. */
@@ -93,14 +94,23 @@ export function plan({ items, settings, weekState = {}, now }) {
   const weekStart = planningWeek(today, settings).start;
   const week = planningWeek(today, settings, weekState?.[weekStart]?.extraDays ?? 0);
   const all = Array.isArray(items) ? items : Object.values(items ?? {});
-  const entries = all.filter((i) => isActive(i, settings)).map((i) => toEntry(i, settings, today));
+  const behind = today > week.cutoff;
+  // A missed repeat of one of your tasks just drops off (it isn't work to catch up on).
+  const entries = all.filter((i) => isActive(i, settings) && !isMissedRepeat(i, today))
+    .map((i) => toEntry(i, settings, today));
+  // Floating tasks (no due date) are due by this week's target day, or by the end of the
+  // week once that has passed. Recomputed each week, so they carry over and never go overdue.
+  for (const e of entries) {
+    if (!e.item.task?.floating) continue;
+    const deadline = behind ? week.end : week.cutoff;
+    Object.assign(e, { floating: true, dueDay: deadline, workDay: deadline, lastDay: maxDate(deadline, today), dueToday: false, dueTomorrow: false });
+  }
 
   const inWeek = (d) => d >= week.start && d <= week.end;
   // This week's items (work deadline in this week, e.g. Monday-morning items count as
   // the week before's), carried-over overdue items from earlier weeks, and pulled items.
   const scoped = entries.filter((e) => e.dueDay && (e.workDay <= week.end || e.pulledIn));
   const noDueDate = entries.filter((e) => !e.dueDay);
-  const behind = today > week.cutoff;
 
   // --- scheduling ---
   const blocked = new Set(settings.blockedWeekdays ?? []);
@@ -223,7 +233,7 @@ export function plan({ items, settings, weekState = {}, now }) {
 
   // --- forecast: what's *due* each day, independent of the plan ---
   const forecast = dateRange(today, addDays(today, FORECAST_DAYS - 1)).map((date) => {
-    const due = entries.filter((e) => e.dueDay === date && !e.inClass);
+    const due = entries.filter((e) => e.dueDay === date && !e.inClass && !e.floating);
     const minutes = due.reduce((sum, e) => sum + e.minutes, 0);
     return { date, count: due.length, minutes, over: minutes > capacity(date) };
   });
@@ -282,7 +292,7 @@ export function planNextWeek({ items, settings, weekState = {}, now }) {
   const thisWeek = planningWeek(toLocalDate(now), settings);
   const start = addDays(thisWeek.start, 7);
   const list = (Array.isArray(items) ? items : Object.values(items ?? {}))
-    .filter((i) => !i.pulledIn && !(i.dueAt && workDueDate(i.dueAt) <= thisWeek.end));
+    .filter((i) => !i.pulledIn && !i.task?.floating && !(i.dueAt && workDueDate(i.dueAt) <= thisWeek.end));
   return plan({ items: list, settings, weekState, now: atNoon(start) });
 }
 

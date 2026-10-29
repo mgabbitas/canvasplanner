@@ -8,6 +8,7 @@ import { el, select, dayLabel, dueLabel, minutesLabel } from './dom.js';
 import { showToast, logForm } from './toast.js';
 import { courseColor } from './theme.js';
 import { app, courseName, SOURCE_LABEL, updateItem } from './app.js';
+import { openTaskForm } from './taskform.js';
 
 // --- done, undo, and time logging -------------------------------------------------
 
@@ -105,6 +106,11 @@ function itemMenu(entry, kind) {
   const { item } = entry;
   const choose = (patch) => updateItem(item.id, patch);
   const entries = [];
+  if (item.task) {
+    entries.push(el('button', { role: 'menuitem', 'data-key': `edit-${item.id}`, onclick: () => editTask(item) },
+      item.task.seriesId ? 'Edit repeating task' : 'Edit task'));
+    entries.push(el('hr'));
+  }
   const days = kind === 'plan' ? moveDays(entry) : [];
   if (days.length) {
     entries.push(el('div', { className: 'menu-label' }, 'Move to'));
@@ -145,6 +151,8 @@ function itemMenu(entry, kind) {
   );
 }
 
+const editTask = (item) => openTaskForm(item.task.seriesId ? { seriesId: item.task.seriesId } : { item });
+
 // Rows whose minutes, pin and dismiss can be changed.
 const editable = (kind) => kind === 'plan' || kind === 'next' || kind === 'class';
 
@@ -161,9 +169,12 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     'data-key': `done-${item.id}`,
     onchange: (e) => (e.target.checked ? markDone(item) : updateItem(item.id, { manualDone: false, doneOn: null })),
   });
+  const canEditTask = item.task && (!item.task.seriesId || app.state.taskSeries?.[item.task.seriesId]);
   const title = item.url
     ? el('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', className: 'title' }, item.title)
-    : el('span', { className: 'title' }, item.title);
+    : canEditTask
+      ? el('button', { className: 'title task-title', title: 'Edit this task', 'data-key': `task-${item.id}`, onclick: () => editTask(item) }, item.title)
+      : el('span', { className: 'title' }, item.title);
 
   // The Next week projection plans as if it were already next week, so its flags are
   // relative to that day; urgency chips always use the real date.
@@ -173,6 +184,10 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     : entry;
   const chips = [];
   if (upNext) chips.push(el('span', { className: 'chip next' }, 'up next'));
+  if (item.task) {
+    chips.push(el('span', { className: 'chip task', title: 'Your own task' }, item.task.seriesId ? 'repeats' : 'task'));
+    if (entry.floating && kind !== 'done') chips.push(el('span', { className: 'chip', title: 'No due date: any time this week' }, 'this week'));
+  }
   if (entry.inClass) chips.push(el('span', { className: 'chip' }, 'in class'));
   if (entry.overdue) chips.push(el('span', { className: 'chip bad' }, 'overdue'));
   else if (urgency.dueToday && kind !== 'done') chips.push(el('span', { className: 'chip bad' }, 'due today'));
@@ -222,9 +237,11 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     el('div', { className: 'right' }, actions),
     el('div', { className: 'sub' },
       showCourse ? el('span', { className: 'course' }, el('span', { className: 'dot', 'aria-hidden': 'true' }), courseName(item.courseId)) : null,
-      item.dueAt ? el('span', {}, `due ${dueLabel(item.dueAt)}`) : null,
+      item.dueAt && !item.task ? el('span', {}, `due ${dueLabel(item.dueAt)}`) : null,
+      item.dueAt && item.task && !item.task.seriesId ? el('span', {}, `due ${dayLabel(toLocalDate(item.dueAt), { weekday: 'short', month: 'short', day: 'numeric' })}`) : null,
       ...chips,
     ),
+    item.task?.notes ? el('div', { className: 'notes' }, item.task.notes) : null,
   );
 }
 

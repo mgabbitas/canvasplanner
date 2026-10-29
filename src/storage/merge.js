@@ -6,7 +6,8 @@ const USER_FIELDS = Object.keys(USER_FIELD_DEFAULTS);
 /**
  * Call only for a course whose fetch succeeded. Canvas-owned fields are replaced,
  * user-owned fields are kept, a changed due date is remembered in prevDueAt, and
- * stored items of this course missing from the fetch are hidden (not deleted).
+ * stored items of this course missing from the fetch are hidden (not deleted). Your
+ * own tasks aren't from Canvas, so they're left alone.
  * Items of other courses are returned unchanged.
  */
 export function mergeCourse(storedItems, courseId, freshItems) {
@@ -22,7 +23,7 @@ export function mergeCourse(storedItems, courseId, freshItems) {
     out[fresh.id] = { ...fresh, ...user, prevDueAt, hidden: false };
   }
   for (const [id, item] of Object.entries(storedItems)) {
-    if (item.courseId === String(courseId) && !seen.has(id) && !item.hidden) {
+    if (item.courseId === String(courseId) && !seen.has(id) && !item.hidden && !item.task) {
       out[id] = { ...item, hidden: true };
     }
   }

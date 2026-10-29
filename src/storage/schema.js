@@ -2,6 +2,7 @@
 // Anything malformed falls back to the default rather than throwing.
 import { DEFAULT_SETTINGS, LEGACY_SIZES, USER_FIELD_DEFAULTS } from './defaults.js';
 import { addDays } from '../planner/dates.js';
+import { TASK_ID } from '../planner/tasks.js';
 
 // Kept in sync with src/ui/theme.js (schema stays free of UI imports).
 const ACCENT_KEYS = ['blue', 'teal', 'purple', 'green', 'orange', 'pink'];
@@ -24,6 +25,7 @@ function int(v, min, max, fallback) {
 
 const weekdayIndex = (v, fallback) => int(v, 0, 6, fallback);
 const ID = /^\d{1,20}$/;
+const itemId = (id) => ID.test(id) || TASK_ID.test(id); // Canvas ids, or your tasks
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_RULES = 200;
 const dateOrNull = (v) => (typeof v === 'string' && DATE.test(v) ? v : null);
@@ -92,7 +94,7 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
 }
 
 function validateItem(id, raw) {
-  if (!isObj(raw) || !ID.test(id)) return null;
+  if (!isObj(raw) || !itemId(id)) return null;
   const courseId = String(raw.courseId ?? '');
   if (!ID.test(courseId)) return null;
   const url = str(raw.url, 1000);
@@ -111,6 +113,7 @@ function validateItem(id, raw) {
     submittedAt: isoOrNull(raw.submittedAt),
     descriptionText: str(raw.descriptionText, 2000) ?? '',
     url: url && url.startsWith('https://byui.instructure.com/') ? url : null,
+    task: TASK_ID.test(id) ? validateTaskFields(raw.task, raw.dueAt) : null,
     prevDueAt: isoOrNull(raw.prevDueAt),
     hidden: raw.hidden === true,
     manualDone: raw.manualDone === true,
@@ -124,6 +127,38 @@ function validateItem(id, raw) {
     plannedOn: dateOrNull(raw.plannedOn),
     notExam: raw.notExam === true,
   };
+}
+
+/** A task's own fields. A task with no due date floats; a repeat copy never does. */
+function validateTaskFields(raw, dueAt) {
+  const t = isObj(raw) ? raw : {};
+  const seriesId = typeof t.seriesId === 'string' && TASK_ID.test(t.seriesId) ? t.seriesId : null;
+  return { notes: str(t.notes, 2000) ?? '', floating: !isoOrNull(dueAt) && !seriesId, seriesId };
+}
+
+const MAX_SERIES = 100;
+
+/** Repeating tasks: id -> { id, courseId, title, minutes, notes, weekdays, start, until }. */
+export function validateTaskSeries(raw) {
+  const out = {};
+  if (!isObj(raw)) return out;
+  for (const [id, s] of Object.entries(raw).slice(0, MAX_SERIES)) {
+    if (!/^s[a-z0-9]{1,24}$/.test(id) || !isObj(s)) continue;
+    const courseId = String(s.courseId ?? '');
+    const title = (str(s.title, 500) ?? '').trim();
+    const weekdays = Array.isArray(s.weekdays)
+      ? [...new Set(s.weekdays.filter((w) => Number.isInteger(w) && w >= 0 && w <= 6))].sort() : [];
+    const start = dateOrNull(s.start);
+    if (!ID.test(courseId) || !title || !weekdays.length || !start) continue;
+    const until = dateOrNull(s.until);
+    out[id] = {
+      id, courseId, title, weekdays, start,
+      until: until && until >= start ? until : null,
+      minutes: int(s.minutes, 1, MAX_MINUTES, 30),
+      notes: str(s.notes, 2000) ?? '',
+    };
+  }
+  return out;
 }
 
 /** A logged time: minutes and difficulty are each optional; the finish day is required. */
@@ -179,7 +214,7 @@ export function validateDayLog(raw) {
   if (!isObj(raw)) return out;
   for (const [date, d] of Object.entries(raw)) {
     if (!DATE.test(date) || !isObj(d)) continue;
-    const left = Array.isArray(d.left) ? [...new Set(d.left.map(String).filter((id) => ID.test(id)))].slice(0, MAX_LEFT) : [];
+    const left = Array.isArray(d.left) ? [...new Set(d.left.map(String).filter(itemId))].slice(0, MAX_LEFT) : [];
     out[date] = { left };
   }
   return out;
@@ -269,5 +304,6 @@ export function migrate(raw) {
     weekState: validateWeekState(r.weekState),
     courses: validateCourses(r.courses),
     dayLog: validateDayLog(r.dayLog),
+    taskSeries: validateTaskSeries(r.taskSeries),
   };
 }

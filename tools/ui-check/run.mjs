@@ -67,6 +67,17 @@ const page = readFileSync(join(site, 'src/ui/planner.html'), 'utf8').replace(
   '<script src="stub.js"></script><script type="module" src="planner.js"></script><script type="module" src="clickthrough.js"></script>',
 );
 writeFileSync(join(site, 'src/ui/check.html'), page);
+// For screenshots of the task form: open it as soon as the page has rendered.
+writeFileSync(join(site, 'src/ui/shot-taskform.js'), `const t = setInterval(() => {
+  const b = document.querySelector('[data-key="add-task"]');
+  if (!b) return;
+  clearInterval(t);
+  b.click();
+  const f = document.querySelector('dialog.task-dialog');
+  f.querySelector('[data-key="task-title"]').value = 'Study for the midterm';
+  f.querySelector('textarea').value = 'Chapters 4-6, practice problems';
+}, 20);`);
+writeFileSync(join(site, 'src/ui/taskform-shot.html'), page.replace('<script type="module" src="clickthrough.js"></script>', '<script type="module" src="shot-taskform.js"></script>'));
 cpSync(new URL('popupcheck.js', import.meta.url), join(site, 'src/popup/popupcheck.js'));
 writeFileSync(join(site, 'src/popup/popup-shot.html'), readFileSync(join(site, 'src/popup/popup.html'), 'utf8').replace(
   '<script type="module" src="popup.js"></script>',
@@ -129,6 +140,10 @@ if (process.argv.includes('--screenshot')) {
     await new Promise((r) => firefox(['--screenshot', file, '--window-size', size, `${base}${query ?? ''}#${hash}`]).on('exit', r));
     console.log(`Screenshot: ${file}`);
   }
+  const formShot = join(REPO, 'web-ext-artifacts', 'ui-taskform.png');
+  await new Promise((r) => firefox(['--screenshot', formShot, '--window-size', '1400,1000',
+    `http://127.0.0.1:${server.address().port}/src/ui/taskform-shot.html`]).on('exit', r));
+  console.log(`Screenshot: ${formShot}`);
   const popupShot = join(REPO, 'web-ext-artifacts', 'ui-popup.png');
   await new Promise((r) => firefox(['--screenshot', popupShot, '--window-size', '368,560',
     `http://127.0.0.1:${server.address().port}/src/popup/popup-shot.html`]).on('exit', r));

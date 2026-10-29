@@ -11,11 +11,16 @@ const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const userFields = (item) => Object.fromEntries(USER_FIELDS.map((f) => [f, item[f]]));
 const isDefault = (item) => USER_FIELDS.every((f) => item[f] === USER_FIELD_DEFAULTS[f]);
 
-/** Settings, week state, day-on-plan history, and user fields of items you've changed. No Canvas content. */
+/**
+ * Settings, week state, day-on-plan history, user fields of items you've changed, and
+ * your own tasks in full (they exist nowhere else). No Canvas content.
+ */
 export function buildExport(state, nowIso) {
   const userItems = {};
+  const tasks = {};
   for (const [id, item] of Object.entries(state.items)) {
-    if (!isDefault(item)) userItems[id] = { courseId: item.courseId, ...userFields(item) };
+    if (item.task) tasks[id] = item;
+    else if (!isDefault(item)) userItems[id] = { courseId: item.courseId, ...userFields(item) };
   }
   return {
     app: EXPORT_APP,
@@ -25,6 +30,8 @@ export function buildExport(state, nowIso) {
     weekState: state.weekState,
     dayLog: state.dayLog ?? {},
     userItems,
+    tasks,
+    taskSeries: state.taskSeries ?? {},
   };
 }
 
@@ -38,20 +45,24 @@ export function applyImport(state, raw) {
   if (!Number.isInteger(raw.schemaVersion) || raw.schemaVersion > SCHEMA_VERSION) {
     throw new Error('This export is from a newer version of Canvas Planner.');
   }
-  const { settings, weekState, dayLog } = migrate({
+  const { settings, weekState, dayLog, taskSeries } = migrate({
     schemaVersion: raw.schemaVersion, settings: raw.settings, weekState: raw.weekState, dayLog: raw.dayLog,
+    taskSeries: raw.taskSeries,
   });
 
+  // Canvas items keep their Canvas fields; your tasks are replaced by the file's.
   const items = {};
-  for (const [id, item] of Object.entries(state.items)) items[id] = { ...item, ...USER_FIELD_DEFAULTS };
+  for (const [id, item] of Object.entries(state.items)) if (!item.task) items[id] = { ...item, ...USER_FIELD_DEFAULTS };
+  const tasks = isObj(raw.tasks) ? Object.fromEntries(Object.entries(raw.tasks).slice(0, MAX_IMPORT_ITEMS)) : {};
+  for (const [id, t] of Object.entries(validateItems(tasks))) if (t.task) items[id] = t;
   const oldSizes = legacySizeMinutes(raw.settings);
   const incoming = isObj(raw.userItems) ? Object.entries(raw.userItems).slice(0, MAX_IMPORT_ITEMS) : [];
   for (const [id, rawUser] of incoming) {
-    if (!isObj(rawUser)) continue;
+    if (!isObj(rawUser) || items[id]?.task) continue;
     const u = raw.schemaVersion < 3 ? sizeToMinutes(rawUser, oldSizes) : rawUser;
     const base = items[id] ?? { courseId: u.courseId, title: '(waiting for sync)', hidden: true };
     const valid = validateItems({ [id]: { ...base, ...userFields(u) } })[id];
     if (valid) items[id] = state.items[id] ? { ...items[id], ...userFields(valid) } : valid;
   }
-  return { settings, weekState, dayLog, items };
+  return { settings, weekState, dayLog, items, taskSeries };
 }

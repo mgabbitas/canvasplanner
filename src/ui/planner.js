@@ -2,7 +2,9 @@
 // All Canvas text goes in via textContent (see dom.js), never innerHTML. The pieces
 // live in app.js (state), shell.js, week.js, items.js, settings.js and statsview.js.
 import { plan, planNextWeek } from '../planner/plan.js';
-import { loadState } from '../storage/store.js';
+import { loadState, save } from '../storage/store.js';
+import { syncSeries } from '../planner/tasks.js';
+import { toLocalDate } from '../planner/dates.js';
 import { el } from './dom.js';
 import { renderSettings, resetSettingsDraft } from './settings.js';
 import { renderStats } from './statsview.js';
@@ -38,6 +40,17 @@ function render() {
   if (!app.state) return;
   // Re-rendering replaces the DOM; put keyboard focus back where it was.
   const focusKey = document.activeElement?.getAttribute?.('data-key');
+
+  // Once a day, create the coming days' copies of your repeating tasks.
+  const today = toLocalDate(Date.now());
+  if (app.seriesDay !== today) {
+    app.seriesDay = today;
+    const items = syncSeries(app.state.items, app.state.taskSeries, today, app.state.settings);
+    if (items !== app.state.items) {
+      app.state.items = items;
+      save({ items }).catch(() => {});
+    }
+  }
 
   const args = { items: app.state.items, settings: app.state.settings, weekState: app.state.weekState, now: Date.now() };
   app.thisWeekPlan = plan(args);

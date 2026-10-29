@@ -78,7 +78,8 @@ export function weekStreak({ items, settings, weekState = {}, now }) {
   const thisWeek = planningWeek(today, settings).start;
   const weeks = new Map(); // week start -> items due that week
   for (const i of list(items)) {
-    if (!i.dueAt || !counts(i, settings)) continue;
+    // Repeats of your tasks are daily habits, not the week's deliverables.
+    if (!i.dueAt || !counts(i, settings) || i.task?.seriesId) continue;
     const start = planningWeek(toLocalDate(i.dueAt), settings).start;
     if (start > thisWeek) continue;
     if (!weeks.has(start)) weeks.set(start, []);

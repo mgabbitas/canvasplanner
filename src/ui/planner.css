@@ -1,7 +1,7 @@
 /* Canvas Planner styles.
    1. Tokens and themes   2. Base   3. App shell (sidebar, content, rail)
    4. Header             5. Plan (banners, days, items)   6. Panels and rail
-   7. Settings   8. Stats   9. Toast and log form */
+   7. Settings   8. Stats   9. Toast and log form   10. Your own tasks */
 
 /* ---------- 1. Tokens and themes ---------- */
 :root {
@@ -483,3 +483,38 @@ ul.suggestions li:first-child { border-top: none; }
 .exam-title { font-weight: 600; overflow-wrap: anywhere; }
 .exam-list .muted { font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
 .exams .hint { font-size: 12px; margin: 10px 0 0; }
+
+/* ---------- 10. Your own tasks ---------- */
+.title-row .add-task { margin-left: auto; }
+.title-row .streaks + .add-task { margin-left: 0; }
+.chip.task { color: var(--accent); border-color: var(--accent); }
+button.task-title { border: none; background: none; padding: 0; text-align: left; font: inherit; color: var(--text); cursor: pointer; }
+button.task-title:hover { color: var(--accent); text-decoration: underline; }
+.item .notes { grid-column: 2 / -1; color: var(--muted); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+dialog.task-dialog {
+  width: min(520px, calc(100vw - 32px)); padding: 20px 22px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); color: var(--text); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
+.task-dialog h2 { font-size: 18px; margin: 0 0 12px; }
+.task-dialog .form-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 4px 12px; align-items: center; margin: 10px 0; font-size: 14px; }
+.task-dialog .form-row > span:first-child { font-weight: 500; }
+.task-dialog .form-row small { grid-column: 2; color: var(--muted); font-size: 12px; }
+.task-dialog .check-row { grid-template-columns: auto 1fr; justify-content: start; margin-left: 102px; }
+.task-dialog .form-row:has(textarea) { align-items: start; }
+.task-dialog .form-row:has(textarea) > span:first-child { padding-top: 6px; }
+.task-dialog .check-row input { accent-color: var(--accent); }
+.task-dialog input[type=text], .task-dialog input[type=date], .task-dialog select, .task-dialog textarea { width: 100%; }
+.task-dialog input[type=date] { padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+.task-dialog textarea { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); resize: vertical; }
+.day-picks { display: flex; flex-wrap: wrap; gap: 6px; }
+.day-pick { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: pointer; }
+.day-pick input { margin: 0; accent-color: var(--accent); }
+.day-pick:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.form-buttons { display: flex; gap: 8px; margin-top: 16px; }
+.form-buttons .spacer { flex: 1; }
+@media (max-width: 560px) {
+  .task-dialog .form-row { grid-template-columns: 1fr; }
+  .task-dialog .form-row small { grid-column: 1; }
+  .task-dialog .check-row { margin-left: 0; }
+}

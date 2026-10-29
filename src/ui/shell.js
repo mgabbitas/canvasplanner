@@ -2,6 +2,7 @@
 import { dayLabel, minutesLabel, el } from './dom.js';
 import { icon, logo } from './icons.js';
 import { courseColor } from './theme.js';
+import { openTaskForm } from './taskform.js';
 import { CANVAS, ACCESS_MESSAGE, isLoginError } from '../sync/canvas.js';
 import { app, view, classId, timeAgo, courseName, sync, allowCanvasAccess, changeExtraDays, homework, itemCount, streaks, plural } from './app.js';
 
@@ -163,7 +164,11 @@ export function renderHeader(p) {
   }
 
   return [
-    el('div', { className: 'title-row' }, menuBtn, el('h1', {}, title), v === 'this' ? renderStreaks() : null),
+    el('div', { className: 'title-row' }, menuBtn, el('h1', {}, title), v === 'this' ? renderStreaks() : null,
+      weekView || v === 'class' ? el('button', {
+        className: 'add-task', 'data-key': 'add-task',
+        onclick: () => openTaskForm({ courseId: v === 'class' ? classId() : null }),
+      }, '+ Add task') : null),
     subtitle,
   ];
 }

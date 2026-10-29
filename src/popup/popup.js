@@ -2,6 +2,7 @@
 // Checked items stay listed (and can be unchecked) until the popup closes.
 import { loadState, save } from '../storage/store.js';
 import { todaySummary } from '../planner/today.js';
+import { syncSeries } from '../planner/tasks.js';
 import { toLocalDate } from '../planner/dates.js';
 import { applyTheme, courseColor } from '../ui/theme.js';
 import { el, dayLabel, minutesLabel } from '../ui/dom.js';
@@ -80,6 +81,12 @@ function render() {
 }
 
 state = await loadState();
+// Today's copies of repeating tasks, in case the planner hasn't been opened yet today.
+const withRepeats = syncSeries(state.items, state.taskSeries, toLocalDate(Date.now()), state.settings);
+if (withRepeats !== state.items) {
+  state.items = withRepeats;
+  await save({ items: withRepeats });
+}
 applyTheme(state.settings);
 shown = summary().remaining;
 render();

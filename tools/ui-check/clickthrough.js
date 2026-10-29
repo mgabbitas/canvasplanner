@@ -313,7 +313,54 @@ async function run() {
 
   await go('');
   check('back to this week', $$('.day-tab').length >= 2);
+  await checkTasks();
   report.errors = window.__errors;
+}
+
+// Your own tasks: add a floating one, edit it, add a repeating one, delete with undo.
+async function checkTasks() {
+  const tasks = () => Object.values(window.__store.items).filter((i) => i.task);
+  const form = () => document.querySelector('dialog.task-dialog');
+  const set = (key, value) => { const n = form().querySelector(`[data-key="${key}"]`); n.value = value; fire(n, 'change'); };
+  document.querySelector('[data-key="add-task"]').click(); await wait(100);
+  check('task form opens', !!form()?.open);
+  form().querySelector('[data-key="task-save"]').click(); await wait(100);
+  check('task needs a name', !!form()?.open && /name/.test(form().querySelector('[role="alert"]').textContent));
+  set('task-title', 'Study for the midterm');
+  set('task-minutes', '60');
+  form().querySelector('textarea').value = 'Chapters 4-6';
+  form().querySelector('[data-key="task-save"]').click(); await wait(250);
+  const added = tasks().find((t) => t.title === 'Study for the midterm');
+  check('task added', !!added && added.minutesOverride === 60 && added.task.floating && added.task.notes === 'Chapters 4-6' && !form());
+  document.querySelector('[data-key="daytab-week"]').click(); await wait(150);
+  const row = document.querySelector(`[data-key="task-${added?.id}"]`)?.closest('.item');
+  check('task planned this week with tags and notes', !!row && /task/.test(row.textContent) && /this week/.test(row.textContent) && /Chapters 4-6/.test(row.textContent));
+  row?.querySelector('.task-title').click(); await wait(100);
+  check('task edit form', form()?.querySelector('h2')?.textContent === 'Edit task' && form().querySelector('[data-key="task-title"]').value === 'Study for the midterm');
+  set('task-title', 'Study for midterm 2');
+  form().querySelector('[data-key="task-save"]').click(); await wait(250);
+  check('task edited', window.__store.items[added.id]?.title === 'Study for midterm 2');
+
+  // Repeating, Mon/Wed/Fri: copies appear, each its own item.
+  document.querySelector('[data-key="add-task"]').click(); await wait(100);
+  set('task-title', 'Physics review');
+  const repeat = form().querySelector('[data-key="task-repeat"]');
+  repeat.checked = true; fire(repeat, 'change'); await wait(50);
+  check('repeat shows days, hides due date', !form().querySelector('.repeat-rows').hidden && form().querySelector('[data-key="task-due"]').closest('.form-row').hidden);
+  form().querySelector('[data-key="task-save"]').click(); await wait(100);
+  check('repeat needs a day', /day/.test(form().querySelector('[role="alert"]').textContent));
+  for (const d of [1, 3, 5]) form().querySelector(`[data-key="task-day-${d}"]`).checked = true;
+  form().querySelector('[data-key="task-save"]').click(); await wait(300);
+  const seriesId = Object.keys(window.__store.taskSeries ?? {})[0];
+  const copies = tasks().filter((t) => t.task.seriesId === seriesId);
+  check('repeating task makes copies', !!seriesId && copies.length >= 2 && copies.every((c) => [1, 3, 5].includes(new Date(c.dueAt).getDay())), `${copies.length} copies`);
+
+  // Delete the one-off from its form, then undo.
+  document.querySelector(`[data-key="task-${added.id}"]`)?.click(); await wait(100);
+  form().querySelector('[data-key="task-delete"]').click(); await wait(250);
+  check('task deleted', !window.__store.items[added.id]);
+  document.querySelector('[data-key="toast-Undo"]')?.click(); await wait(250);
+  check('task delete undo', !!window.__store.items[added.id]);
 }
 
 run().catch((e) => report.errors.push(`harness: ${e.stack}`)).finally(() => {

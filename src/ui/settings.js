@@ -452,7 +452,7 @@ function dataSection(ctx) {
       } catch (err) {
         return say(err instanceof SyntaxError ? 'That file is not valid JSON.' : err.message, true);
       }
-      if (!confirm('Replace your settings, item minutes, done checks, dismissed items and streak history with the ones in this file?')) return;
+      if (!confirm('Replace your settings, your tasks, item minutes, done checks, dismissed items and streak history with the ones in this file?')) return;
       draftRules = null;
       await ctx.saveState(next);
       say('Imported.');
@@ -465,7 +465,7 @@ function dataSection(ctx) {
       el('button', { onclick: () => importInput.click(), 'data-key': 'import' }, 'Import…'),
       importInput,
     ),
-    el('p', { className: 'hint' }, 'Export saves settings and your per-item changes (minutes, checks, dismissals) and streak history to a file. It contains no Canvas content.'),
+    el('p', { className: 'hint' }, 'Export saves settings, your tasks, your per-item changes (minutes, checks, dismissals) and streak history to a file. It contains no Canvas content.'),
     message ? el('p', { className: message.bad ? 'warn-text' : 'hint', role: 'status' }, message.text) : null,
     el('div', { className: 'danger-zone' },
       el('h3', {}, 'Danger zone'),

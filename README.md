@@ -15,6 +15,8 @@ Wednesday instead of piling up on Saturday.
   at the top.
 - **Fits your schedule.** You choose how many minutes you have each day; work that
   doesn't fit is reported, never quietly pushed past its due date.
+- **Takes your own tasks.** Add things Canvas doesn't track (study for a midterm, a
+  group meeting) to a class, with or without a due date, or repeating on set weekdays.
 - **Bends to your day.** Move any item to another day, start tomorrow's work early
   when you're done, and watch the "done today" count go up as you work.
 - **Keeps a streak.** Two counters in the header: weeks in a row you finished
@@ -95,7 +97,6 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Planned
 
-- Your own items for things Canvas doesn't track (studying, project milestones).
 - Later: Chrome support, and a grading view for TAs.
 
 ## Changelog
@@ -109,7 +110,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
   "faster/slower than estimate" in words, and a weekday column chart. Suggested rules
   moved to Settings → Rules. New toolbar button: today's list with checkboxes, and a
   badge with how many are left. Work due Monday morning is now planned the week before
-  (it has to be done by Sunday), so it no longer shows up as a surprise.
+  (it has to be done by Sunday), so it no longer shows up as a surprise. **+ Add task**
+  for your own tasks: one-off (with a due date, or any time this week) or repeating.
 - **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
   (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
   early, a page per class for setting many estimates at once, exams on the right, and
