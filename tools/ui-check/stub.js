@@ -29,6 +29,7 @@
     },
     runtime: { getURL: (p) => `/${p}`, id: 'test' },
     permissions: { contains: async () => !q.has('noaccess'), request: async () => true },
+    tabs: { create: async (o) => { (window.__opened ??= []).push(o.url); } },
   };
   // Never call the real Canvas from the harness.
   window.__realFetch = window.fetch.bind(window);

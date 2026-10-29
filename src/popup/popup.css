@@ -1,0 +1,18 @@
+/* Toolbar popup. Colors and base styles come from ../ui/planner.css. */
+body.popup { width: 340px; margin: 0; padding: 14px; background: var(--bg); }
+.popup-head { display: flex; align-items: baseline; justify-content: space-between; }
+.popup-head h1 { font-size: 18px; margin: 0; }
+.popup-count { margin: 2px 0 10px; color: var(--muted); font-size: 13px; min-height: 1em; }
+.popup-items { list-style: none; margin: 0 0 12px; padding: 0; max-height: 380px; overflow-y: auto; display: grid; gap: 6px; }
+.popup-item {
+  display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 8px 10px;
+  background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--course); border-radius: 8px;
+}
+.popup-item input { margin: 2px 0 0; accent-color: var(--accent); width: 16px; height: 16px; }
+.popup-text { display: grid; gap: 2px; min-width: 0; }
+.popup-title { color: var(--text); text-decoration: none; font-size: 14px; overflow-wrap: anywhere; }
+a.popup-title:hover { color: var(--accent); text-decoration: underline; }
+.popup-sub { color: var(--muted); font-size: 12px; }
+.popup-item.done .popup-title { text-decoration: line-through; color: var(--muted); }
+.popup-empty { margin: 10px 0 14px; color: var(--muted); }
+.popup-open { width: 100%; justify-content: center; }

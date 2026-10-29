@@ -33,7 +33,9 @@ Wednesday instead of piling up on Saturday.
    File…**, and pick the file.)
 3. **Open Canvas** while logged in. The planner opens and pulls in your assignments.
 
-The planner also becomes your **new tab page**, so it's one Ctrl+T away.
+The planner also becomes your **new tab page**, so it's one Ctrl+T away. The toolbar
+button shows how many items are left today; click it to check things off without
+opening the planner.
 
 **Updating:** download the newest file from the same link and install it the same
 way. Your settings and history are kept.
@@ -105,7 +107,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
   zone for reset and clear. XS/S/M/L sizes are gone; everything is in minutes and
   hours (your old sizes convert automatically). Stats page cleaned up: class colors, time-share bars,
   "faster/slower than estimate" in words, and a weekday column chart. Suggested rules
-  moved to Settings → Rules.
+  moved to Settings → Rules. New toolbar button: today's list with checkboxes, and a
+  badge with how many are left.
 - **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
   (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
   early, a page per class for setting many estimates at once, exams on the right, and

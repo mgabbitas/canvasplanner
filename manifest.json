@@ -27,6 +27,14 @@
     "page": "src/ui/options.html",
     "open_in_tab": true
   },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Canvas Planner: today",
+    "default_icon": {
+      "48": "icons/logo.svg",
+      "96": "icons/logo.svg"
+    }
+  },
   "background": {
     "scripts": [
       "src/background.js"

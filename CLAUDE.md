@@ -55,7 +55,8 @@ file and SPEC.md disagree, stop and ask me.
     src/storage/   schema, defaults, migrations, merge
     src/ui/        page: app.js (shared state), shell.js, week.js, items.js,
                    settings.js, statsview.js, planner.js (render + startup)
-    src/background.js        opens the planner / syncs when you visit Canvas
+    src/popup/     toolbar popup: today's list with checkboxes
+    src/background.js        opens the planner / syncs when you visit Canvas; badge count
     src/content/   content script on Canvas pages (signals a visit only)
     test/          tests
     tools/ui-check/  browser click-through check (not packaged)

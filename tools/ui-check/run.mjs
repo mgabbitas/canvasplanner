@@ -67,6 +67,15 @@ const page = readFileSync(join(site, 'src/ui/planner.html'), 'utf8').replace(
   '<script src="stub.js"></script><script type="module" src="planner.js"></script><script type="module" src="clickthrough.js"></script>',
 );
 writeFileSync(join(site, 'src/ui/check.html'), page);
+cpSync(new URL('popupcheck.js', import.meta.url), join(site, 'src/popup/popupcheck.js'));
+writeFileSync(join(site, 'src/popup/popup-shot.html'), readFileSync(join(site, 'src/popup/popup.html'), 'utf8').replace(
+  '<script type="module" src="popup.js"></script>',
+  '<script src="../ui/stub.js"></script><script type="module" src="popup.js"></script>',
+));
+writeFileSync(join(site, 'src/popup/check.html'), readFileSync(join(site, 'src/popup/popup.html'), 'utf8').replace(
+  '<script type="module" src="popup.js"></script>',
+  '<script src="../ui/stub.js"></script><script type="module" src="popup.js"></script><script type="module" src="popupcheck.js"></script>',
+));
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json' };
 let onReport;
@@ -87,15 +96,16 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${server.address().port}/src/ui/check.html`;
+const popupBase = `http://127.0.0.1:${server.address().port}/src/popup/check.html`;
 
 function firefox(args) {
   const profile = mkdtempSync(join(work, 'profile-'));
   return spawn('firefox', ['--headless', '--no-remote', '--profile', profile, ...args], { stdio: 'ignore' });
 }
 
-async function clickThrough(query) {
+async function clickThrough(url) {
   const report = new Promise((resolve) => { onReport = resolve; });
-  const ff = firefox([`${base}?test${query ? `&${query}` : ''}`]);
+  const ff = firefox([url]);
   const timeout = new Promise((r) => setTimeout(() => r({ steps: ['FAIL no report within 90 s'], errors: [] }), 90_000));
   const result = await Promise.race([report, timeout]);
   ff.kill();
@@ -103,8 +113,8 @@ async function clickThrough(query) {
 }
 
 let failed = 0;
-for (const [label, query] of [['Real data', ''], ['First run (empty)', 'empty']]) {
-  const { steps, errors } = await clickThrough(query);
+for (const [label, url] of [['Real data', `${base}?test`], ['First run (empty)', `${base}?test&empty`], ['Toolbar popup', popupBase]]) {
+  const { steps, errors } = await clickThrough(url);
   const fails = steps.filter((s) => s.startsWith('FAIL'));
   failed += fails.length + errors.length;
   console.log(`${label}: ${steps.length - fails.length}/${steps.length} passed${errors.length ? `, ${errors.length} errors` : ''}`);
@@ -119,6 +129,10 @@ if (process.argv.includes('--screenshot')) {
     await new Promise((r) => firefox(['--screenshot', file, '--window-size', size, `${base}${query ?? ''}#${hash}`]).on('exit', r));
     console.log(`Screenshot: ${file}`);
   }
+  const popupShot = join(REPO, 'web-ext-artifacts', 'ui-popup.png');
+  await new Promise((r) => firefox(['--screenshot', popupShot, '--window-size', '368,560',
+    `http://127.0.0.1:${server.address().port}/src/popup/popup-shot.html`]).on('exit', r));
+  console.log(`Screenshot: ${popupShot}`);
 }
 
 server.close();
