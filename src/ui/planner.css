@@ -639,6 +639,7 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
 .whats-new { margin-bottom: 10px; border-left: 4px solid var(--accent); }
 .whats-new-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .whats-new h2 { font-size: 16px; }
+.whats-new-older { font-size: 14px; margin: 10px 0 0; }
 .whats-new ul { margin: 8px 0 4px; padding-left: 20px; display: grid; gap: 3px; font-size: 14px; }
 .toast-celebrate { font-weight: 700; margin-bottom: 6px; }
 .tour { position: fixed; inset: 0; z-index: 60; }

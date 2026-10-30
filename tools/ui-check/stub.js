@@ -25,7 +25,7 @@
   if (q.get('mode') && store.settings) store.settings.theme = q.get('mode');
   if (q.has('holiday') && store.settings) store.settings.holidayLooks = true;
   // ?newuser: a fresh install that just synced (gets the tour, not What's new).
-  if (q.has('newuser')) store.onboarding = { seenVersion: '1.2.1', toured: false };
+  if (q.has('newuser')) store.onboarding = { seenVersion: '1.3.0', toured: false };
   // ?roomy: 8 hours every day, so today isn't over capacity.
   if (q.has('roomy') && store.settings) store.settings.capacity = Array(7).fill(480);
   // ?somedone: check off three items due in the next week today (to see the done part of the bars).
@@ -48,7 +48,7 @@
       session: { get: async () => ({}), set: async () => {} },
       onChanged: { addListener: (fn) => listeners.push(fn) },
     },
-    runtime: { getURL: (p) => `/${p}`, id: 'test', getManifest: () => ({ version: '1.2.1' }) },
+    runtime: { getURL: (p) => `/${p}`, id: 'test', getManifest: () => ({ version: '1.3.0' }) },
     permissions: { contains: async () => !q.has('noaccess'), request: async () => true },
     tabs: { create: async (o) => { (window.__opened ??= []).push(o.url); } },
   };

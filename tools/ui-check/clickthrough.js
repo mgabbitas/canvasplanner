@@ -54,11 +54,12 @@ async function run() {
   await wait(300);
   check('day tabs render', $$('.day-tab').length >= 2, `${$$('.day-tab').length} tabs`);
   check('week tab first', $$('.day-tab')[0]?.textContent.startsWith('Week'));
-  check('page shows no "null" or "undefined"', !/\b(null|undefined)\b/.test(document.body.innerText), document.body.innerText.match(/.{0,40}\b(null|undefined)\b.{0,20}/)?.[0]);
+  check('page shows no "null", "undefined" or "[object …]"', !/\b(null|undefined)\b|\[object /.test(document.body.innerText),
+    document.body.innerText.match(/.{0,40}(\b(null|undefined)\b|\[object ).{0,20}/)?.[0]);
   // An existing user on a new version: What's new, no tour.
   check('What\'s new for an update', !!document.querySelector('[data-key="whats-new"]') && !document.querySelector('[data-key="tour"]'));
   document.querySelector('[data-key="whats-new-ok"]')?.click(); await wait(200);
-  check('What\'s new dismissed and remembered', !document.querySelector('[data-key="whats-new"]') && window.__store.onboarding?.seenVersion === '1.2.1');
+  check('What\'s new dismissed and remembered', !document.querySelector('[data-key="whats-new"]') && window.__store.onboarding?.seenVersion === '1.3.0');
   // Date-dependent questions: answer whichever shows today.
   if (document.querySelector('[data-key="holiday-offer"]')) {
     document.querySelector('[data-key="holiday-no"]').click(); await wait(200);
@@ -206,8 +207,15 @@ async function run() {
   check('stats: no suggestions section', !order.includes('Suggested estimate rules'), order.join(' | '));
 
   // Settings tabs.
+  for (const hash of ['#next', '#stats', `#class/${Object.keys(window.__store.courses)[0]}`]) {
+    await go(hash);
+    check(`${hash.split('/')[0]}: no stray text`, !/\b(null|undefined)\b|\[object /.test(document.body.innerText),
+      document.body.innerText.match(/.{0,40}(\b(null|undefined)\b|\[object ).{0,20}/)?.[0]);
+  }
   for (const tab of ['week', 'rules', 'classes', 'appearance', 'general', 'data']) {
     await go(`#settings/${tab}`);
+    check(`settings/${tab}: no stray text`, !/\b(null|undefined)\b|\[object /.test(document.body.innerText),
+      document.body.innerText.match(/.{0,40}(\b(null|undefined)\b|\[object ).{0,20}/)?.[0]);
     check(`settings/${tab}`, $$('.panel.settings').length > 0 && document.querySelector('nav.subtabs .tab.active')?.getAttribute('href') === `#settings/${tab}`);
   }
   await go('#settings/estimates');
@@ -337,7 +345,7 @@ async function run() {
   check('fun messages toggle', !!document.querySelector('[data-key="funMessages"]'));
   const report = document.querySelector('[data-key="report"]');
   check('report a problem link', report?.href.startsWith('https://github.com/makowood/canvasplanner/issues/new?')
-    && new URL(report.href).searchParams.get('body').includes('Canvas Planner 1.2.1') && !report.href.includes('+') && report.target === '_blank', report?.href.slice(0, 80));
+    && new URL(report.href).searchParams.get('body').includes('Canvas Planner 1.3.0') && !report.href.includes('+') && report.target === '_blank', report?.href.slice(0, 80));
   document.querySelector('[data-key="replay-tour"]').click();
   check('replay tour from settings', !!(await waitFor('[data-key="tour"]')) && location.hash === ''); // the tour loads on demand
   document.querySelector('[data-key="tour-skip"]')?.click(); await wait(150);

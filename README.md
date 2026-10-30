@@ -104,6 +104,9 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Changelog
 
+- **1.3.0**: Works with any school's Canvas at an instructure.com address: enter yours on
+  first run, or change it in Settings → General. Firefox asks to approve access to
+  instructure.com sites when you update.
 - **1.2.1**: Fixed "null" showing under Today in the toolbar popup. "Report a problem" link
   in Settings → General. Fixes: moving and unchecking tasks with no due date, tasks staying
   hidden after a sync hiccup, semicolons in the calendar file, and a few smaller ones.

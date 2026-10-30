@@ -9,6 +9,10 @@ import { app, plural } from './app.js';
 // What's new, by feature version ("1.2" covers 1.2.0, 1.2.1, …). Shown once after
 // updating into that version, so bug-fix releases don't hide it.
 export const WHATS_NEW = {
+  '1.3': [
+    'Works with any school\'s Canvas at an instructure.com address. Yours is in Settings → General → School.',
+    'A "Report a problem" link in Settings → General.',
+  ],
   '1.2': [
     'Settings redesigned: an hours slider for each day, and rules grouped by class.',
     'A toolbar button with today\'s list and a count on the icon.',
@@ -22,6 +26,11 @@ export const WHATS_NEW = {
 
 const version = () => browser.runtime.getManifest().version;
 const feature = (v) => (v ?? '').split('.').slice(0, 2).join('.');
+/** Compare "1.2" and "1.10" as versions, not text. */
+const newer = (a, b) => {
+  const [x, y] = [a, b].map((v) => v.split('.').map(Number));
+  return x[0] - y[0] || (x[1] ?? 0) - (y[1] ?? 0);
+};
 
 /** Late at night (midnight to 4 AM): nothing's getting less late, so go to bed. */
 export function renderLateNight() {
@@ -31,11 +40,19 @@ export function renderLateNight() {
     el('button', { 'data-key': 'late-night-ok', onclick: () => { app.lateNightDismissed = true; app.render(); } }, 'Good night'));
 }
 
-/** "What's new" once after an update: a card at the top until you dismiss it. */
+/**
+ * "What's new" once after an update: a card at the top until you dismiss it, listing
+ * every version since the last one you saw (newest first).
+ */
 export function renderWhatsNew() {
   const v = feature(version());
   const { seenVersion, toured } = app.state.onboarding;
-  if (!WHATS_NEW[v] || feature(seenVersion) === v || toured !== true) return null;
+  if (toured !== true) return null;
+  const seen = feature(seenVersion);
+  const unseen = Object.keys(WHATS_NEW)
+    .filter((k) => newer(k, v) <= 0 && (!seen || newer(k, seen) > 0))
+    .sort((a, b) => newer(b, a));
+  if (!unseen.length) return null;
   const dismiss = () => {
     app.state.onboarding = { ...app.state.onboarding, seenVersion: version() };
     save({ onboarding: app.state.onboarding }).catch(() => {});
@@ -43,9 +60,12 @@ export function renderWhatsNew() {
   };
   return el('section', { className: 'panel whats-new', 'data-key': 'whats-new' },
     el('div', { className: 'whats-new-head' },
-      el('h2', {}, `What's new in ${v}`),
+      el('h2', {}, `What's new in ${unseen[0]}`),
       el('button', { className: 'primary', onclick: dismiss, 'data-key': 'whats-new-ok' }, 'Got it')),
-    el('ul', {}, WHATS_NEW[v].map((line) => el('li', {}, line))),
+    unseen.flatMap((k, i) => [
+      i ? el('h3', { className: 'whats-new-older' }, `And in ${k}`) : null,
+      el('ul', {}, WHATS_NEW[k].map((line) => el('li', {}, line))),
+    ]),
     el('p', { className: 'hint' }, 'Want the tour? Settings → General → Take the tour.'));
 }
 

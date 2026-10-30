@@ -7,7 +7,7 @@ const fire = (node, type) => node.dispatchEvent(new Event(type, { bubbles: true 
 
 async function run() {
   for (let i = 0; i < 100 && !document.querySelector('.popup-head'); i++) await wait(30);
-  check('popup shows no "null" or "undefined"', !/\b(null|undefined)\b/.test(document.body.textContent), document.body.textContent.slice(0, 80));
+  check('popup shows no "null", "undefined" or "[object …]"', !/\b(null|undefined)\b|\[object /.test(document.body.textContent), document.body.textContent.slice(0, 80));
   const rows = $$('.popup-item');
   check('popup lists today', rows.length > 0, `${rows.length} items`);
   check('popup count', /\d+ left/.test(document.querySelector('[data-key="popup-count"]')?.textContent ?? ''),

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Canvas Planner",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Plans self-assigned target dates for your Canvas assignments, so work gets done early.",
   "browser_specific_settings": {
     "gecko": {
