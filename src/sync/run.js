@@ -5,10 +5,10 @@ import { loadState, save } from '../storage/store.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Firefox access to your school's Canvas (part of the *.instructure.com permission). */
+/** Browser access to your school's Canvas (part of the *.instructure.com permission). */
 export const schoolOrigins = (host) => ({ origins: [`${canvasBase(host)}/*`] });
 
-/** Firefox can install the add-on without host access; then requests go out without the login cookie. */
+/** Firefox can install the add-on without host access (and Chrome lets you turn site access off); then requests go out without the login cookie. */
 export const hasCanvasAccess = (host) => browser.permissions.contains(schoolOrigins(host)).catch(() => true);
 
 /** Returns { ok, error }. On any failure nothing but meta.lastError changes. */

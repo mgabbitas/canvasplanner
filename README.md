@@ -1,6 +1,6 @@
 # Canvas Planner
 
-A Firefox add-on that turns your Canvas assignments into a weekly plan. Instead of
+A Firefox add-on (Chrome version coming) that turns your Canvas assignments into a weekly plan. Instead of
 working to the official due dates, every assignment gets an earlier target day, and
 the week's work is spread across the time you actually have each day, so it's done by
 Wednesday instead of piling up on Saturday.
@@ -93,6 +93,7 @@ npm install        # dev tools (web-ext)
 npm test           # unit tests
 npm run check:ui   # click through the page in headless Firefox (needs local test data)
 npm start          # open a dev Firefox profile, then Load Temporary Add-on → manifest.json
+                   # Chrome: chrome://extensions → Developer mode → Load unpacked → this folder
 npm run build      # package for signing (web-ext-artifacts/)
 ```
 
@@ -100,7 +101,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Planned
 
-- Later: Chrome support, and a grading view for TAs.
+- Chrome Web Store listing (the code already runs in Chrome).
+- Later: a grading view for TAs.
 
 ## Changelog
 

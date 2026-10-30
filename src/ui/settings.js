@@ -476,7 +476,7 @@ const ISSUES = 'https://github.com/mgabbitas/canvasplanner/issues/new';
 /** A new GitHub issue with the version filled in. Only a link: nothing is sent unless they submit it. */
 function reportUrl() {
   const version = browser.runtime.getManifest().version;
-  const body = `**What happened?**\n\n\n**What did you expect?**\n\n\n---\nCanvas Planner ${version}, ${navigator.userAgent.match(/Firefox\/[\d.]+/)?.[0] ?? 'Firefox'}`;
+  const body = `**What happened?**\n\n\n**What did you expect?**\n\n\n---\nCanvas Planner ${version}, ${navigator.userAgent.match(/(Firefox|Chrome)\/[\d.]+/)?.[0] ?? 'unknown browser'}`;
   return `${ISSUES}?title=${encodeURIComponent('Problem: ')}&body=${encodeURIComponent(body)}`;
 }
 

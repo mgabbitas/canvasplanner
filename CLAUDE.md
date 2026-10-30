@@ -1,6 +1,6 @@
 # Canvas Planner
 
-A personal Firefox extension that reads my Canvas assignments and builds a schedule of
+A Firefox and Chrome extension that reads my Canvas assignments and builds a schedule of
 self-assigned target dates, so homework gets finished early instead of on the official
 due date. Full requirements are in `SPEC.md`. Read it before starting any task. If this
 file and SPEC.md disagree, stop and ask me.
@@ -15,8 +15,10 @@ file and SPEC.md disagree, stop and ask me.
   `byui.instructure.com`).
 
 ## Stack and constraints
-- Firefox WebExtension. Plain JavaScript with ES modules. No framework, no bundler,
-  no build step unless I approve one.
+- WebExtension for Firefox and Chrome: one codebase, one manifest (SPEC section 9).
+  Always call `browser.*` (`src/browser.js` maps it to `chrome` in Chrome). Plain
+  JavaScript with ES modules. No framework, no bundler, no build step unless I approve
+  one.
 - No runtime dependencies. Dev-only tooling allowed: `web-ext`. Ask before adding
   anything else.
 - Tests use Node's built-in runner (`node --test`). Set `process.env.TZ =
@@ -45,6 +47,8 @@ file and SPEC.md disagree, stop and ask me.
 - `npm start`: open Firefox on the persistent dev profile (`~/.cache/canvasplanner-firefox`)
   at `about:debugging`, then Load Temporary Add-on > `manifest.json`. `web-ext run`
   does not work here: CachyOS locks `devtools.debugger.remote-enabled` to false.
+- Chrome: in Chromium, `chrome://extensions` > Developer mode > Load unpacked > the
+  project folder (reload it there after changes).
 - `npx web-ext lint`: lint the manifest (from milestone M2 on).
 - `npm run check:ui`: headless-Firefox click-through of the real page with a fake
   `browser` API and the fixture data. Run it after any change in `src/ui/`
@@ -74,9 +78,11 @@ file and SPEC.md disagree, stop and ask me.
 
 ## Releasing a new version
 1. Bump `version` in `manifest.json` and `package.json`; add a changelog line to README.
-2. `npm test`, `npm run check:ui`, `npx web-ext lint`, then `npm run build`.
+2. `npm test`, `npm run check:ui`, `npx web-ext lint`, a quick Chromium check (sync,
+   popup, badge), then `npm run build`.
 3. I upload `web-ext-artifacts/canvas_planner-<version>.zip` at addons.mozilla.org
-   ("On your own"), then put the signed `.xpi` in the project folder.
+   ("On your own"), then put the signed `.xpi` in the project folder. I upload the same
+   zip to the Chrome Web Store developer dashboard.
 4. Publish a GitHub Release `v<version>` with the signed file attached as
    `canvas-planner.xpi` (that exact name: the README links to
    `releases/latest/download/canvas-planner.xpi`). `.xpi` files are never committed.

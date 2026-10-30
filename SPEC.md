@@ -262,8 +262,14 @@ schema, confirm before replacing), Reset to defaults, Clear all data. Validate a
 clamp every value, and fall back to the last valid setting on bad input.
 
 ## 9. Extension architecture
-- Firefox only, Manifest V3 (M0: Firefox 156 supports everything needed; background
-  runs as an event page, host permissions are granted at install).
+- Firefox and Chrome, Manifest V3, one codebase and one manifest (Chrome decided
+  2026-10-30, see M13). M0: Firefox 156 supports everything needed; background runs as
+  an event page, host permissions are granted at install. Chrome runs the same
+  background file as a service worker (`background.service_worker`; Firefox ignores
+  that key, which is `web-ext lint`'s one expected warning). `src/browser.js` sets
+  `browser` to `chrome` where it's missing and loads first in every page and script.
+  Icons are PNG (Chrome can't use SVG). Help text that names browser menus checks
+  the browser (`IS_FIREFOX` in `src/ui/app.js`).
 - New tab override (`chrome_url_overrides.newtab`) hosts the planner page.
 - Permissions per CLAUDE.md. The Canvas host is hardcoded in the manifest.
 - Canvas visit (decided 2026-10-04): a content script on Canvas pages (not login
@@ -374,7 +380,7 @@ Decided 2026-09-30: pull-by-size orders by due date,
 then smallest first; the forecast includes not-yet-unlocked items.
 
 ## 12. Next versions (decided 2026-10-29)
-Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrome support.
+Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrome support (M13).
 
 - **M7. Settings redesign.** Keep tabs, restyle and rename:
   - **Week** (was Schedule): week start; one card per weekday with an hours slider
@@ -444,3 +450,13 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
   notifications, no new permissions).
 - **M12. Calendar export.** Download an `.ics` file: one all-day event per item on its
   target day, with the due date in the description. One-time download (no live feed).
+- **M13. Chrome support** (decided 2026-10-30). Spike done 2026-10-30: Chromium 156
+  loads the extension, and the service worker syncs with the browser's Canvas login.
+  No new permissions. Shim, both background entries and PNG icons as in section 9;
+  help text and the bug-report line name the right browser. A service worker stops
+  when idle, so in-memory background state (the `syncing` flag) can reset: acceptable,
+  worst case one extra sync. Chrome caps `storage.local` at 10 MB; a semester of real
+  data is about 310 KB, so no `unlimitedStorage`. Testing: `check:ui` stays on Firefox;
+  before each release also Load unpacked in Chromium and check sync, popup, badge and
+  the Canvas-visit open. Distribution: Chrome Web Store, unlisted first (public later
+  needs a listing, screenshots and a privacy policy), uploading the same zip as AMO.

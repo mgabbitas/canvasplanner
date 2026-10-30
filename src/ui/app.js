@@ -8,6 +8,10 @@ import { runSync, schoolOrigins } from '../sync/run.js';
 import { changeSchool } from '../storage/merge.js';
 import { dueLabel } from './dom.js';
 
+/** Help text names the browser's own menus. Anything Chromium-based gets Chrome's. */
+export const IS_FIREFOX = navigator.userAgent.includes('Firefox');
+export const BROWSER = IS_FIREFOX ? 'Firefox' : 'Chrome';
+
 export const app = {
   state: null, // validated stored state (settings, items, meta, weekState, courses)
   syncing: false,
@@ -132,7 +136,7 @@ export async function setSchool(host) {
   await sync();
 }
 
-/** Ask Firefox for access to Canvas (must run straight from a click), then sync. */
+/** Ask the browser for access to Canvas (must run straight from a click), then sync. */
 export async function allowCanvasAccess() {
   if (await browser.permissions.request(schoolOrigins(app.state.canvas.host)).catch(() => false)) await sync();
 }

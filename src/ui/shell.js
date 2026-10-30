@@ -7,7 +7,7 @@ import { aheadText } from './notes.js';
 import { toLocalDate } from '../planner/dates.js';
 import { ACCESS_MESSAGE, isLoginError } from '../sync/canvas.js';
 import { canvasBase, normalizeHost } from '../sync/school.js';
-import { app, view, classId, timeAgo, courseName, sync, allowCanvasAccess, setSchool, changeExtraDays, homework, itemCount, streaks, plural } from './app.js';
+import { app, IS_FIREFOX, BROWSER, view, classId, timeAgo, courseName, sync, allowCanvasAccess, setSchool, changeExtraDays, homework, itemCount, streaks, plural } from './app.js';
 
 const NAV = [
   ['', 'this', 'This week', 'week'],
@@ -110,8 +110,12 @@ const loginHelp = () => el('div', {},
   el('p', {}, 'Things to check:'),
   el('ol', { className: 'help-list' },
     el('li', {}, 'Open Canvas in a normal (not private) window and make sure you see your Dashboard. Then come back and sync.'),
-    el('li', {}, 'In the address bar, go to about:addons, click Canvas Planner, open the Permissions tab, and make sure access to instructure.com sites is turned on.'),
-    el('li', {}, `If you changed Firefox privacy settings to block cookies, add ${host()} as an exception: Settings → Privacy & Security → Cookies and Site Data → Manage Exceptions → Allow.`),
+    IS_FIREFOX
+      ? el('li', {}, 'In the address bar, go to about:addons, click Canvas Planner, open the Permissions tab, and make sure access to instructure.com sites is turned on.')
+      : el('li', {}, 'In the address bar, go to chrome://extensions, click Details under Canvas Planner, and make sure Site access allows instructure.com sites.'),
+    IS_FIREFOX
+      ? el('li', {}, `If you changed Firefox privacy settings to block cookies, add ${host()} as an exception: Settings → Privacy & Security → Cookies and Site Data → Manage Exceptions → Allow.`)
+      : el('li', {}, `If you changed Chrome's cookie settings, allow ${host()}: Settings → Privacy and security → Third-party cookies → Sites allowed to use third-party cookies → Add.`),
     el('li', {}, `Check that ${host()} is the address you use for Canvas (Settings → General → School).`),
     el('li', {}, 'Still stuck? Send a screenshot of the message above to whoever gave you the add-on.'),
   ),
@@ -136,7 +140,7 @@ export function renderWelcome() {
       : el('div', {},
         error ? el('p', { className: 'warn-text' }, error) : null,
         error === ACCESS_MESSAGE
-          ? el('p', {}, `Firefox needs your OK before the add-on can read your assignments from ${host()}.`)
+          ? el('p', {}, `${BROWSER} needs your OK before the add-on can read your assignments from ${host()}.`)
           : isLoginError(error)
             ? loginHelp()
             : el('p', {}, 'Sync to bring in your assignments. It uses your existing Canvas login in this browser.'),
