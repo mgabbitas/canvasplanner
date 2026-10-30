@@ -106,6 +106,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Changelog
 
+- **1.4.0**: Also runs in Chrome (Chrome Web Store listing coming). Sync troubleshooting
+  steps name your browser's own menus.
 - **1.3.0**: Works with any school's Canvas at an instructure.com address: enter yours on
   first run, or change it in Settings → General. Firefox asks to approve access to
   instructure.com sites when you update.
