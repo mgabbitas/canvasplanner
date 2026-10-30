@@ -31,11 +31,14 @@
     "default_popup": "src/popup/popup.html",
     "default_title": "Canvas Planner: today",
     "default_icon": {
-      "48": "icons/logo.svg",
-      "96": "icons/logo.svg"
+      "16": "icons/logo-16.png",
+      "32": "icons/logo-32.png",
+      "48": "icons/logo-48.png",
+      "96": "icons/logo-96.png"
     }
   },
   "background": {
+    "service_worker": "src/background.js",
     "scripts": [
       "src/background.js"
     ],
@@ -47,13 +50,15 @@
         "https://*.instructure.com/*"
       ],
       "js": [
+        "src/browser.js",
         "src/content/canvas-visit.js"
       ],
       "run_at": "document_idle"
     }
   ],
   "icons": {
-    "48": "icons/logo.svg",
-    "96": "icons/logo.svg"
+    "48": "icons/logo-48.png",
+    "96": "icons/logo-96.png",
+    "128": "icons/logo-128.png"
   }
 }

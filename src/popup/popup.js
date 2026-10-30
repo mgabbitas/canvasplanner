@@ -1,5 +1,6 @@
 // Toolbar popup: today's remaining homework with checkboxes, and a link to the planner.
 // Checked items stay listed (and can be unchecked) until the popup closes.
+import '../browser.js';
 import { loadState, save } from '../storage/store.js';
 import { todaySummary } from '../planner/today.js';
 import { checkOffPatch } from '../planner/plan.js';

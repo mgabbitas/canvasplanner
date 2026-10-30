@@ -1,6 +1,7 @@
 // New-tab planner page. Views by URL hash: '' this week, #next, #stats, #settings[/tab].
 // All Canvas text goes in via textContent (see dom.js), never innerHTML. The pieces
 // live in app.js (state), shell.js, week.js, items.js, settings.js and statsview.js.
+import '../browser.js';
 import { plan, planNextWeek } from '../planner/plan.js';
 import { loadState, save } from '../storage/store.js';
 import { syncSeries } from '../planner/tasks.js';

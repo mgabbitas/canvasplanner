@@ -1,6 +1,7 @@
 // Background: when you visit Canvas, open the planner (first visit per browser
 // session) or sync quietly if the data is stale. Also keeps the toolbar badge (today's
 // remaining homework) up to date.
+import './browser.js';
 import { loadState } from './storage/store.js';
 import { runSync } from './sync/run.js';
 import { onSchool, normalizeHost } from './sync/school.js';
