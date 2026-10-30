@@ -24,9 +24,11 @@ export const DEFAULT_SETTINGS = Object.freeze({
   showForecast: true,
   theme: 'system', // 'system', 'light' or 'dark'
   accent: 'blue',
-  look: 'plain', // theme: plain, ocean, forest, sunset, lavender, fall, christmas, patriotic or custom
+  look: 'plain', // theme: plain, ocean, forest, sunset, lavender, fall, christmas, patriotic, neon or custom
   customAccent: '#2563c9', // the Custom theme's colors
   customTint: '#2563c9',
+  neonGlow: '#22d3ee', // Neon's main glow (accent, finished time)
+  neonGlow2: '#d946ef', // Neon's second glow (planned time)
   holidayLooks: null, // dress up on holidays (just that day): null until you answer
   seasonOffers: true, // offer the Fall / Christmas theme when the season starts
   seasonAnswered: [], // ['fall-2026', …]: seasons already offered this year

@@ -72,7 +72,7 @@ Everything is in **Settings** (left sidebar). Changes save automatically.
 | **Week** | A card per day: drag the slider for how much homework time you have, mark days off, and pick the day to finish by (Wednesday by default). |
 | **Rules** | How long things take. Pick a class to see its rules, e.g. "*report* → 25 min" for Physics, or use All classes for rules like "any *quiz* → 15 min" and the default time per assignment type. |
 | **Classes** | Hide classes you don't want planned, give them shorter names, and pick a color for each. |
-| **Appearance** | Light, dark or system mode; a theme (Plain, Ocean, Forest, Sunset, Lavender, Fall, Christmas, Patriotic, or your own colors); a few holiday surprises, and falling snow and leaves. |
+| **Appearance** | Light, dark or system mode; a theme (Plain, Ocean, Forest, Sunset, Lavender, Fall, Christmas, Patriotic, Neon, or your own colors); a few holiday surprises, and falling snow and leaves. |
 | **General** | Whether visiting Canvas opens the planner, celebrations and late-night notes, and **Take the tour**. |
 | **Data** | Export a backup, import one (for example on a new computer), download your plan as a calendar file (.ics), or reset. |
 
@@ -120,7 +120,7 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
   solid color, what you've finished; red only when a day is overbooked. A short tour after
   your first sync, a "What's new" card after updates, a cheer when you get days ahead,
   and a nudge to go to bed after midnight. Download your plan as a calendar (.ics) from
-  Settings → Data.
+  Settings → Data. A Neon theme (always dark, glowing bars, your own glow colors).
 - **1.1.0**: Today no longer refills as you check things off. New ⋮ menu on each item
   (move to a day, pin, dismiss), a "done today" count, a button to start tomorrow's work
   early, a page per class for setting many estimates at once, exams on the right, and

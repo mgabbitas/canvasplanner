@@ -7,7 +7,7 @@ import { buildIcs } from '../planner/ics.js';
 import { DEFAULT_SETTINGS, TIME_PRESETS } from '../storage/defaults.js';
 import { buildExport, applyImport, MAX_IMPORT_BYTES } from '../storage/transfer.js';
 import { el, select, WEEKDAYS, TYPE_LABELS, minutesLabel, readInt } from './dom.js';
-import { ACCENTS, ACCENT_COLORS, THEMES, CLASS_COLORS, courseColorKey, courseColor, lookColors } from './theme.js';
+import { ACCENTS, ACCENT_COLORS, THEMES, CLASS_COLORS, courseColorKey, courseColor, lookColors, neonVars } from './theme.js';
 import { palette, accentAdjusted } from './color.js';
 import { showToast } from './toast.js';
 import { app } from './app.js';
@@ -398,7 +398,7 @@ function themeCard(ctx, key) {
   const s = ctx.state.settings;
   const t = THEMES[key];
   const colors = lookColors(key, s);
-  const p = colors ? palette(colors, false) : { '--bg': '#f5f6f8', '--surface': '#ffffff', '--accent': ACCENT_COLORS[s.accent] };
+  const p = key === 'neon' ? neonVars(s) : t.vars ?? (colors ? palette(colors, false) : { '--bg': '#f5f6f8', '--surface': '#ffffff', '--accent': ACCENT_COLORS[s.accent] });
   const on = s.look === key;
   return el('button', {
     role: 'radio', 'aria-checked': String(on), className: `theme-card${on ? ' on' : ''}`, 'data-key': `look-${key}`,
@@ -406,7 +406,7 @@ function themeCard(ctx, key) {
   },
     el('span', { className: 'theme-preview', 'aria-hidden': 'true', style: `--p-bg:${p['--bg']};--p-surface:${p['--surface']};--p-accent:${p['--accent']}` },
       el('span', {}), el('span', {})),
-    el('span', { className: 'theme-name' }, t.label, t.seasonal ? el('small', {}, ' · seasonal') : null),
+    el('span', { className: 'theme-name' }, t.label, t.seasonal ? el('small', {}, ' · seasonal') : t.alwaysDark ? el('small', {}, ' · always dark') : null),
   );
 }
 
@@ -448,6 +448,11 @@ function appearanceSection(ctx) {
     s.look === 'plain'
       ? field('Accent color', swatches('accent', 'Accent color', Object.keys(ACCENTS), s.accent,
         (k) => ACCENT_COLORS[k], (accent) => updateSettings(ctx, { accent })))
+      : null,
+    s.look === 'neon'
+      ? el('div', { className: 'field' }, el('span', {}, 'Neon colors'),
+        el('div', { className: 'color-picks' }, colorInput('neonGlow', 'Glow'), colorInput('neonGlow2', 'Second glow (planned time)')),
+        el('small', {}, 'Dark picks are brightened a little so they show up on black.'))
       : null,
     s.look === 'custom'
       ? el('div', { className: 'field' }, el('span', {}, 'Custom colors'),

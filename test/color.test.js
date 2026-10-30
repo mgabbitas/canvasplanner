@@ -2,7 +2,7 @@ process.env.TZ = 'America/Denver';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { contrast, mix, palette, accentAdjusted, isHex } from '../src/ui/color.js';
-import { THEMES, ACCENT_COLORS } from '../src/ui/theme.js';
+import { THEMES, ACCENT_COLORS, neonVars } from '../src/ui/theme.js';
 
 test('contrast and mix', () => {
   assert.equal(Math.round(contrast('#000000', '#ffffff')), 21);
@@ -28,6 +28,19 @@ test('every theme and accent stays readable in light and dark', () => {
       assert.ok(contrast(p['--on-accent'], p['--accent']) >= 4.5, `${where}: on-accent`);
     }
   }
+});
+
+test('Neon is readable, with your glow colors too (even a dark pick)', () => {
+  for (const glow of [undefined, '#220044', '#ff00aa']) {
+    const p = neonVars({ neonGlow: glow, neonGlow2: '#110022' });
+    assert.ok(contrast(p['--accent'], p['--surface']) >= 4.5, `${glow}: accent`);
+    assert.ok(contrast(p['--on-accent'], p['--accent']) >= 4.5, `${glow}: on-accent`);
+  }
+  const p = THEMES.neon.vars;
+  assert.ok(contrast(p['--text'], p['--bg']) >= 7);
+  assert.ok(contrast(p['--muted'], p['--surface-2']) >= 4.5);
+  assert.ok(contrast(p['--accent'], p['--surface']) >= 4.5);
+  assert.ok(contrast(p['--on-accent'], p['--accent']) >= 4.5);
 });
 
 test('custom picker: says when an accent had to be adjusted', () => {

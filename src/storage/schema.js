@@ -6,7 +6,7 @@ import { TASK_ID } from '../planner/tasks.js';
 
 // Kept in sync with src/ui/theme.js (ACCENT_COLORS, THEMES); schema stays free of UI imports.
 const ACCENT_KEYS = ['blue', 'teal', 'purple', 'green', 'orange', 'pink', 'red', 'amber', 'indigo', 'cyan', 'brown'];
-const LOOK_KEYS = ['plain', 'ocean', 'forest', 'sunset', 'lavender', 'fall', 'christmas', 'patriotic', 'custom'];
+const LOOK_KEYS = ['plain', 'ocean', 'forest', 'sunset', 'lavender', 'fall', 'christmas', 'patriotic', 'neon', 'custom'];
 const hexOr = (v, fallback) => (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : fallback);
 const CLASS_COLOR_KEYS = ['blue', 'orange', 'green', 'purple', 'red', 'teal', 'pink', 'amber', 'indigo', 'slate'];
 
@@ -94,6 +94,8 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     look: LOOK_KEYS.includes(s.look) ? s.look : (d.look ?? 'plain'),
     customAccent: hexOr(s.customAccent, d.customAccent ?? DEFAULT_SETTINGS.customAccent),
     customTint: hexOr(s.customTint, d.customTint ?? DEFAULT_SETTINGS.customTint),
+    neonGlow: hexOr(s.neonGlow, d.neonGlow ?? DEFAULT_SETTINGS.neonGlow),
+    neonGlow2: hexOr(s.neonGlow2, d.neonGlow2 ?? DEFAULT_SETTINGS.neonGlow2),
     holidayLooks: typeof s.holidayLooks === 'boolean' || s.holidayLooks === null ? s.holidayLooks : (d.holidayLooks ?? null),
     seasonOffers: typeof s.seasonOffers === 'boolean' ? s.seasonOffers : (d.seasonOffers ?? true),
     seasonAnswered: Array.isArray(s.seasonAnswered)

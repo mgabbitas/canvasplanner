@@ -233,6 +233,13 @@ async function run() {
   pick.value = '#ffff66'; fire(pick, 'change'); await wait(200);
   // The page is in dark mode here, where pale yellow is readable as is; light mode adjusts it, hence the note.
   check('custom accent saved, contrast note', window.__store.settings.customAccent === '#ffff66' && !!document.querySelector('[data-key="contrast-note"]'));
+  document.querySelector('[data-key="look-neon"]').click(); await wait(200);
+  check('neon is always dark', document.documentElement.dataset.theme === 'dark' && document.documentElement.dataset.look === 'neon');
+  const glow = document.querySelector('[data-key="neonGlow"]');
+  glow.value = '#ff00aa'; fire(glow, 'change'); await wait(200);
+  check('neon glow color saved and used', window.__store.settings.neonGlow === '#ff00aa'
+    && getComputedStyle(document.documentElement).getPropertyValue('--glow').includes('255, 0, 170'), getComputedStyle(document.documentElement).getPropertyValue('--glow'));
+  document.querySelector('[data-key="look-custom"]').click(); await wait(200);
   const effects = document.querySelector('[data-key="effects"]');
   effects.value = '3'; fire(effects, 'input');
   check('effects label follows slider', effects.closest('.effects').textContent.includes('Lots'));

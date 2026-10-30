@@ -143,7 +143,8 @@ if (process.argv.includes('--screenshot')) {
     ['ocean', '', '1400,1000', '?look=ocean'], ['ocean-dark', '', '1400,1000', '?look=ocean&mode=dark'],
     ['sunset', '', '1400,1000', '?look=sunset'], ['forest', '', '1400,1000', '?look=forest'], ['lavender-dark', '', '1400,1000', '?look=lavender&mode=dark'], ['patriotic', '', '1400,1000', '?look=patriotic&somedone&roomy'], ['christmas-done', '', '1400,1000', '?look=christmas&somedone&roomy'],
     ['sunset-done', '', '1400,1000', '?look=sunset&somedone&roomy'],
-    ['whatsnew', '', '1400,1000', ''], ['tour', '', '1400,1000', '?newuser']]) {
+    ['whatsnew', '', '1400,1000', ''], ['tour', '', '1400,1000', '?newuser'], ['neon', '', '1400,1000', '?look=neon&mode=light&somedone&roomy'],
+    ['neon-appearance', 'settings/appearance', '1400,1000', '?look=neon']]) {
     const file = join(REPO, 'web-ext-artifacts', `ui-${name}.png`);
     await new Promise((r) => firefox(['--screenshot', file, '--window-size', size, `${base}${query ?? ''}#${hash}`]).on('exit', r));
     console.log(`Screenshot: ${file}`);

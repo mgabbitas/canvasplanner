@@ -13,7 +13,7 @@ export const WHATS_NEW = {
     'A toolbar button with today\'s list and a count on the icon.',
     '+ Add task for your own work, one-off or repeating, and "Split across days" in the ⋮ menu.',
     'Work due Monday morning is now planned the week before.',
-    'Themes: preset colors, seasonal Fall and Christmas, your own colors, and falling snow and leaves.',
+    'Themes: preset colors, seasonal Fall and Christmas, a glowing Neon theme, your own colors, and falling snow and leaves.',
     'Load bars show planned time and, in solid color, what you\'ve finished.',
     'Stats cleaned up; suggested rules moved to Settings → Rules.',
   ],

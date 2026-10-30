@@ -23,6 +23,14 @@ export const THEMES = {
   fall: { label: 'Fall', pick: true, seasonal: true, tint: '#d97706', accent: '#b45309', accentDark: '#f59e0b' },
   christmas: { label: 'Christmas', pick: true, seasonal: true, tint: '#15803d', accent: '#b91c1c', accentDark: '#f04848' },
   patriotic: { label: 'Patriotic', pick: true, tint: '#1d4ed8', accent: '#b91c1c', accentDark: '#f87171' },
+  // Always dark, with its own deeper palette (a glow needs a dark background).
+  neon: {
+    label: 'Neon', pick: true, alwaysDark: true, tint: '#7c3aed', accent: '#22d3ee',
+    vars: {
+      '--bg': '#06060c', '--surface': '#0e0e1a', '--surface-2': '#151527', '--border': '#2a2a4d', '--bar': '#22223a',
+      '--text': '#eef0ff', '--muted': '#a6abcc', '--accent': '#22d3ee', '--accent-soft': '#0c2a33', '--on-accent': '#06060c',
+    },
+  },
   custom: { label: 'Custom', pick: true },
   halloween: { label: 'Halloween', holiday: true, tint: '#7c3aed', accent: '#c2410c', accentDark: '#fb923c' },
   thanksgiving: { label: 'Thanksgiving', holiday: true, tint: '#a16207', accent: '#9a3412' },
@@ -83,18 +91,38 @@ const prefersDark = () => typeof matchMedia === 'function' && matchMedia('(prefe
  */
 export function applyTheme(settings, date = toLocalDate(Date.now()), preview = null) {
   const root = document.documentElement;
-  if (settings.theme === 'light' || settings.theme === 'dark') root.dataset.theme = settings.theme;
-  else delete root.dataset.theme;
-  const dark = settings.theme === 'dark' || (settings.theme !== 'light' && prefersDark());
   const look = preview && HOLIDAY_LOOK[preview] ? HOLIDAY_LOOK[preview] : activeLook(settings, date);
+  const forceDark = THEMES[look]?.alwaysDark;
+  const mode = forceDark ? 'dark' : settings.theme;
+  if (mode === 'light' || mode === 'dark') root.dataset.theme = mode;
+  else delete root.dataset.theme;
+  const dark = mode === 'dark' || (mode !== 'light' && prefersDark());
   root.dataset.mode = dark ? 'dark' : 'light';
   const colors = lookColors(look, settings);
   root.dataset.look = look;
   root.dataset.accent = settings.accent;
   for (const name of PALETTE_VARS) root.style.removeProperty(name);
-  const vars = colors ? palette(colors, dark) : accentVars(ACCENT_COLORS[settings.accent] ?? ACCENT_COLORS.blue, dark);
+  const vars = look === 'neon' ? neonVars(settings)
+    : THEMES[look]?.vars ?? (colors ? palette(colors, dark) : accentVars(ACCENT_COLORS[settings.accent] ?? ACCENT_COLORS.blue, dark));
   for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value);
   shownTint = colors?.tint ?? null;
   return look;
 }
-const PALETTE_VARS = ['--bg', '--surface', '--surface-2', '--border', '--bar', '--text', '--muted', '--accent', '--accent-soft', '--on-accent'];
+/** Neon with your two glow colors, each brightened if needed to read on the near-black cards. */
+export function neonVars(settings) {
+  const base = THEMES.neon.vars;
+  const glow = ensureContrast(settings.neonGlow ?? THEMES.neon.accent, base['--surface'], 4.5, '#ffffff');
+  const glow2 = ensureContrast(settings.neonGlow2 ?? '#d946ef', base['--surface'], 3, '#ffffff');
+  const rgba = (hex, a) => `rgba(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')}, ${a})`;
+  return {
+    ...base,
+    '--accent': glow,
+    '--accent-soft': mix(glow, base['--surface'], 0.82),
+    '--on-accent': contrast('#06060c', glow) >= 4.5 ? '#06060c' : '#ffffff',
+    '--glow': rgba(glow, 0.55),
+    '--glow-2': rgba(glow2, 0.45),
+    '--glow-2-soft': rgba(glow2, 0.35),
+  };
+}
+
+const PALETTE_VARS = ['--bg', '--surface', '--surface-2', '--border', '--bar', '--text', '--muted', '--accent', '--accent-soft', '--on-accent', '--glow', '--glow-2', '--glow-2-soft'];
