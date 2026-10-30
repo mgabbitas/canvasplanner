@@ -50,8 +50,13 @@ export function applyImport(state, raw) {
     schemaVersion: raw.schemaVersion, settings: raw.settings, weekState: raw.weekState, dayLog: raw.dayLog,
     taskSeries: raw.taskSeries,
   });
-  // The file's school if it has one (exports from before 1.3 don't); else keep yours.
-  const canvas = isObj(raw.canvas) && validateCanvas(raw.canvas).host ? validateCanvas(raw.canvas) : state.canvas;
+  // An export from another school's Canvas doesn't fit this one (its classes and item ids
+  // belong there). With no school chosen yet, the file's school is adopted.
+  const fileHost = validateCanvas(isObj(raw.canvas) ? raw.canvas : {}).host;
+  if (fileHost && state.canvas?.host && fileHost !== state.canvas.host) {
+    throw new Error(`This export is from ${fileHost}, not ${state.canvas.host}. Switch schools in Settings → General first.`);
+  }
+  const canvas = fileHost && !state.canvas?.host ? { host: fileHost } : state.canvas;
 
   // Canvas items keep their Canvas fields; your tasks are replaced by the file's.
   const items = {};

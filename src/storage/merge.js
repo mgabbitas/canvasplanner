@@ -30,3 +30,25 @@ export function mergeCourse(storedItems, courseId, freshItems) {
   return out;
 }
 
+
+/**
+ * The storage changes for switching to another school's Canvas. Everything tied to the
+ * old school's classes goes: its assignments, classes, per-class names and colors,
+ * class rules, and your tasks and repeating tasks (they belong to those classes).
+ * General settings, themes, week state and history stay.
+ */
+export function changeSchool(state, host) {
+  const settings = {
+    ...state.settings,
+    courses: {},
+    estimateRules: (state.settings.estimateRules ?? []).filter((r) => !r.courseId),
+  };
+  return {
+    canvas: { host },
+    items: {},
+    courses: {},
+    taskSeries: {},
+    settings,
+    meta: { lastSyncAt: null, lastError: null },
+  };
+}

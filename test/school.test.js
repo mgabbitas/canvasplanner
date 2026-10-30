@@ -8,7 +8,8 @@ test('school address: what people type becomes a Canvas host', () => {
     assert.equal(normalizeHost(input), 'byui.instructure.com', input);
   }
   assert.equal(normalizeHost('uofu.beta.instructure.com'), 'uofu.beta.instructure.com');
-  for (const bad of ['', 'canvas.byui.edu', 'evil.com', 'instructure.com', 'www.instructure.com', 'byui.instructure.com.evil.com',
+  assert.equal(normalizeHost('canvas.instructure.com'), 'canvas.instructure.com'); // free-for-teacher Canvas is real Canvas
+  for (const bad of ['community.instructure.com', 'https://status.instructure.com/', '', 'canvas.byui.edu', 'evil.com', 'instructure.com', 'www.instructure.com', 'byui.instructure.com.evil.com',
     'by ui', '-bad.instructure.com', 'a..instructure.com', 'javascript:alert(1)']) {
     assert.equal(normalizeHost(bad), null, bad);
   }

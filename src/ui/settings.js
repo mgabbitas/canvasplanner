@@ -490,7 +490,7 @@ function generalSection(ctx) {
     toggle('funMessages', 'Celebrations and late-night notes', 'A cheer when you get days ahead, and a nudge to sleep after midnight.'),
     el('div', { className: 'field' }, el('span', {}, 'School'),
       schoolForm({ value: ctx.state.canvas.host ?? '', button: 'Change', confirmChange: true }),
-      el('small', {}, "Your school's Canvas address. Changing it clears the current school's assignments; settings and your own tasks stay.")),
+      el('small', {}, "Your school's Canvas address. Changing it clears everything tied to the current school's classes (including tasks you added to them); other settings and themes stay.")),
     el('div', { className: 'field' }, el('span', {}, 'Problems'),
       el('a', { href: reportUrl(), target: '_blank', rel: 'noopener noreferrer', 'data-key': 'report' }, 'Found a problem? Report it'),
       el('small', {}, `Opens a new issue on GitHub (you'll need a GitHub account). A screenshot helps. You're on version ${browser.runtime.getManifest().version}.`)),

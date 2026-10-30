@@ -95,9 +95,9 @@ export function schoolForm({ value = '', button = 'Save', onSaved = setSchool, c
     const h = normalizeHost(input.value);
     if (!h) return fail("That doesn't look like a Canvas address. It should end in instructure.com, like byui.instructure.com.");
     if (h === host()) return fail('');
-    if (confirmChange && host() && !confirm(`Switch to ${h}? Your ${host()} assignments are cleared; settings and your own tasks stay.`)) return;
+    if (confirmChange && host() && !confirm(`Switch to ${h}? Everything from ${host()} is cleared: assignments, classes, class names, colors and rules, and the tasks you added to those classes. Your other settings, themes and history stay.`)) return;
     app.schoolDraft = null;
-    onSaved(h);
+    Promise.resolve(onSaved(h)).catch((err) => fail(`Couldn't save that: ${err.message}`));
   };
   return el('form', { className: 'school-form', onsubmit: save },
     el('div', { className: 'row' }, input, el('button', { type: 'submit', className: 'primary', 'data-key': 'school-save' }, button)),

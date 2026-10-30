@@ -6,7 +6,11 @@ export const CANVAS_PATTERN = 'https://*.instructure.com/*';
 const LABEL = '[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?';
 const HOST = new RegExp(`^(?:${LABEL}\\.)+instructure\\.com$`);
 
-export const isCanvasHost = (host) => typeof host === 'string' && HOST.test(host) && host !== 'www.instructure.com';
+// Instructure's own sites, not a school's Canvas.
+const NOT_CANVAS = new Set(['www', 'community', 'status', 'support', 'help', 'info', 'docs', 'developerdocs', 'learn']);
+
+export const isCanvasHost = (host) => typeof host === 'string' && HOST.test(host)
+  && !(host.split('.').length === 3 && NOT_CANVAS.has(host.split('.')[0]));
 
 /**
  * What someone typed -> a Canvas host, or null. Accepts "byui", "byui.instructure.com",

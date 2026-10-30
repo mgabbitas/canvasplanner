@@ -4,7 +4,8 @@ import { planningWeek, toLocalDate } from '../planner/dates.js';
 import { loadState, save } from '../storage/store.js';
 import { pruneWeekState, pruneDayLog } from '../storage/schema.js';
 import { plannedToday, dayStreak, weekStreak } from '../planner/streaks.js';
-import { runSync, CANVAS_ORIGINS } from '../sync/run.js';
+import { runSync, schoolOrigins } from '../sync/run.js';
+import { changeSchool } from '../storage/merge.js';
 import { dueLabel } from './dom.js';
 
 export const app = {
@@ -106,7 +107,10 @@ export const streaks = (now = Date.now()) => {
 };
 
 export async function sync() {
-  if (app.syncing) return;
+  if (app.syncing) {
+    app.syncAgain = true; // e.g. the school changed mid-sync: run once more when this one ends
+    return;
+  }
   app.syncing = true;
   app.syncMessage = null;
   app.render();
@@ -115,27 +119,22 @@ export async function sync() {
   app.syncMessage = result.ok ? null : result.error;
   app.state = await loadState();
   app.render();
+  if (app.syncAgain || result.stale) {
+    app.syncAgain = false;
+    await sync();
+  }
 }
 
-/**
- * Save your school's Canvas host, then sync. Changing schools clears the old school's
- * assignments and classes (settings and your own tasks stay).
- */
+/** Save your school's Canvas host, then sync. Changing schools clears what belonged to the old one (see changeSchool). */
 export async function setSchool(host) {
   const changed = app.state.canvas.host && app.state.canvas.host !== host;
-  const patch = { canvas: { host } };
-  if (changed) {
-    patch.items = Object.fromEntries(Object.entries(app.state.items).filter(([, i]) => i.task));
-    patch.courses = {};
-    patch.meta = { lastSyncAt: null, lastError: null };
-  }
-  await saveState(patch);
+  await saveState(changed ? changeSchool(app.state, host) : { canvas: { host } });
   await sync();
 }
 
 /** Ask Firefox for access to Canvas (must run straight from a click), then sync. */
 export async function allowCanvasAccess() {
-  if (await browser.permissions.request(CANVAS_ORIGINS).catch(() => false)) await sync();
+  if (await browser.permissions.request(schoolOrigins(app.state.canvas.host)).catch(() => false)) await sync();
 }
 
 export const homework = (entries) => entries.filter((e) => !e.inClass);

@@ -360,9 +360,13 @@ Decided 2026-10-29 (1.3.0): any school's Canvas at a `*.instructure.com` address
 user enters it on the welcome card (or a Canvas visit offers it); stored as `canvas.host`,
 separate from settings. Stores from before 1.3 that already hold data are BYU-Idaho.
 Host permission and content script cover `https://*.instructure.com/*`, but requests
-and the Canvas-visit signal only use the saved school. Changing schools clears that
-school's Canvas items and classes; settings and your tasks stay. Schools on their own
-domains are not supported (they would need optional permissions and `scripting`).
+and the Canvas-visit signal only use the saved school (access is checked and requested
+for that school only). Changing schools clears everything tied to the old school's
+classes: items, classes, per-class names/colors/rules, and your tasks and repeating
+tasks; general settings, themes and history stay. A sync that finishes after a switch is
+discarded, and an export from another school is refused on import. Instructure's own
+sites (community, status, …) are never taken for a school. Schools on their own domains
+are not supported (they would need optional permissions and `scripting`).
 
 **Open questions:** none.
 

@@ -413,12 +413,11 @@ async function run() {
   report.errors = window.__errors;
 }
 
-// Switching schools (last: it clears the Canvas items): asks first, keeps settings and tasks.
+// Switching schools (last: it clears the old school's data): asks first, keeps general settings.
 async function checkSchoolChange() {
   await go('#settings/general');
   const input = document.querySelector('[data-key="school-input"]');
   check('school shown in General', input?.value === 'byui.instructure.com', input?.value);
-  const tasksBefore = Object.values(window.__store.items).filter((i) => i.task).length;
   const realConfirm = window.confirm;
   window.confirm = () => false;
   input.value = 'uofu';
@@ -428,9 +427,11 @@ async function checkSchoolChange() {
   document.querySelector('[data-key="school-input"]').value = 'uofu';
   document.querySelector('[data-key="school-save"]').click(); await wait(500);
   window.confirm = realConfirm;
-  const items = Object.values(window.__store.items);
-  check('school changed: Canvas items cleared, tasks kept', window.__store.canvas.host === 'uofu.instructure.com'
-    && items.every((i) => i.task) && items.length === tasksBefore && Object.keys(window.__store.courses).length === 0, `${items.length} items`);
+  const s = window.__store;
+  check('school changed: old school cleared, other settings kept', s.canvas.host === 'uofu.instructure.com'
+    && Object.keys(s.items).length === 0 && Object.keys(s.courses).length === 0 && Object.keys(s.taskSeries ?? {}).length === 0
+    && Object.keys(s.settings.courses).length === 0 && s.settings.estimateRules.every((r) => !r.courseId) && s.settings.effects === 3,
+    `${Object.keys(s.items).length} items`);
 }
 
 // Your own tasks: add a floating one, edit it, add a repeating one, delete with undo.

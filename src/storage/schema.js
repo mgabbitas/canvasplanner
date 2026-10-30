@@ -131,7 +131,7 @@ function validateItem(id, raw) {
     canvasDone: raw.canvasDone === true,
     submittedAt: isoOrNull(raw.submittedAt),
     descriptionText: str(raw.descriptionText, 2000) ?? '',
-    url: isCanvasUrl(url) ? url : null,
+    url: !TASK_ID.test(id) && isCanvasUrl(url) ? url : null, // your tasks have no Canvas page
     task: TASK_ID.test(id) ? validateTaskFields(raw.task, raw.dueAt) : null,
     prevDueAt: isoOrNull(raw.prevDueAt),
     hidden: raw.hidden === true,

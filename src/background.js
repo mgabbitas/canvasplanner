@@ -3,12 +3,21 @@
 // remaining homework) up to date.
 import { loadState } from './storage/store.js';
 import { runSync } from './sync/run.js';
-import { onSchool, isCanvasHost } from './sync/school.js';
+import { onSchool, normalizeHost } from './sync/school.js';
 import { todaySummary, badgeText } from './planner/today.js';
 import { syncSeries } from './planner/tasks.js';
 import { toLocalDate } from './planner/dates.js';
 
 let syncing = false;
+
+/** Open the planner, at most once per browser session. Returns whether it opened. */
+async function openPlannerOnce(query) {
+  const { openedThisSession } = await browser.storage.session.get('openedThisSession');
+  if (openedThisSession) return false;
+  await browser.storage.session.set({ openedThisSession: true });
+  await browser.tabs.create({ url: browser.runtime.getURL(`src/ui/planner.html${query}`) });
+  return true;
+}
 
 browser.runtime.onMessage.addListener(async (msg, sender) => {
   // Only our own content script, only from your school's Canvas.
@@ -16,25 +25,13 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
   const { settings, meta, canvas } = await loadState();
   if (!canvas.host) {
     // No school chosen yet: open the planner once with this Canvas filled in to confirm.
-    const host = URL.canParse(sender.url) ? new URL(sender.url).hostname : '';
-    const { openedThisSession } = await browser.storage.session.get('openedThisSession');
-    if (isCanvasHost(host) && settings.openOnCanvasVisit && !openedThisSession) {
-      await browser.storage.session.set({ openedThisSession: true });
-      await browser.tabs.create({ url: browser.runtime.getURL(`src/ui/planner.html?school=${encodeURIComponent(host)}`) });
-    }
+    const host = normalizeHost(sender.url);
+    if (host && settings.openOnCanvasVisit) await openPlannerOnce(`?school=${encodeURIComponent(host)}`);
     return;
   }
   if (!onSchool(sender.url, canvas.host)) return;
-
-  if (settings.openOnCanvasVisit) {
-    const { openedThisSession } = await browser.storage.session.get('openedThisSession');
-    if (!openedThisSession) {
-      await browser.storage.session.set({ openedThisSession: true });
-      // The page syncs on open when it sees ?sync=1.
-      await browser.tabs.create({ url: browser.runtime.getURL('src/ui/planner.html?sync=1') });
-      return;
-    }
-  }
+  // The page syncs on open when it sees ?sync=1.
+  if (settings.openOnCanvasVisit && await openPlannerOnce('?sync=1')) return;
   const last = meta.lastSyncAt ? Date.parse(meta.lastSyncAt) : 0;
   if (syncing || Date.now() - last <= settings.autoSyncMinutes * 60_000) return;
   syncing = true;

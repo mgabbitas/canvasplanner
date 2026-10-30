@@ -128,3 +128,23 @@ test('sync: tasks follow their class (hidden while it is inactive, back when it 
   const back = applySync({ ...state, items: gone.items }, { courses: [{ id: '7', name: 'Physics' }], results: [] }, '2026-10-06T12:00:00Z');
   assert.equal(back.items.t1.hidden, false);
 });
+
+test('school change clears everything tied to the old school; import refuses another school', async () => {
+  const { changeSchool } = await import('../src/storage/merge.js');
+  const state = migrate({
+    items: { t1: task(), 9: { courseId: '7', title: 'Canvas' } }, courses: { 7: { name: 'Physics' } }, taskSeries: { sab: series() },
+    settings: { courses: { 7: { displayName: 'Phys', include: true, color: 'red' } }, statedScale: 70,
+      estimateRules: [{ courseId: '7', keyword: 'lab', minutes: 30 }, { keyword: 'essay', minutes: 90 }] },
+    canvas: { host: 'byui.instructure.com' },
+  });
+  const p = changeSchool(state, 'uofu.instructure.com');
+  assert.deepEqual([p.items, p.courses, p.taskSeries, p.settings.courses], [{}, {}, {}, {}]);
+  assert.deepEqual(p.settings.estimateRules.map((r) => r.keyword), ['essay']);
+  assert.equal(p.settings.statedScale, 70);
+  assert.deepEqual(p.canvas, { host: 'uofu.instructure.com' });
+  const file = buildExport(migrate({ canvas: { host: 'uofu.instructure.com' } }), '2026-10-05T12:00:00Z');
+  assert.throws(() => applyImport(state, JSON.parse(JSON.stringify(file))), /from uofu\.instructure\.com/);
+  assert.equal(applyImport(migrate({}), JSON.parse(JSON.stringify(file))).canvas.host, 'uofu.instructure.com');
+  // A task never keeps a link (a doctored file can't point it elsewhere).
+  assert.equal(migrate({ items: { t1: { ...task(), url: 'https://evil.instructure.com/x' } } }).items.t1.url, null);
+});
