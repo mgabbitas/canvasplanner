@@ -3,6 +3,7 @@ import { dayLabel, minutesLabel, el } from './dom.js';
 import { icon, logo, lookIcon } from './icons.js';
 import { courseColor } from './theme.js';
 import { openTaskForm } from './taskform.js';
+import { aheadText } from './notes.js';
 import { toLocalDate } from '../planner/dates.js';
 import { CANVAS, ACCESS_MESSAGE, isLoginError } from '../sync/canvas.js';
 import { app, view, classId, timeAgo, courseName, sync, allowCanvasAccess, changeExtraDays, homework, itemCount, streaks, plural } from './app.js';
@@ -156,6 +157,8 @@ export function renderHeader(p) {
     const overdue = work.filter((e) => e.overdue).length;
     if (dueToday) parts.push(el('span', { className: 'urgent-text' }, `${dueToday} due today`));
     if (overdue) parts.push(el('span', { className: 'urgent-text' }, `${overdue} overdue`));
+    const ahead = v === 'this' ? aheadText() : null;
+    if (ahead) parts.push(el('span', { className: 'good-text', 'data-key': 'ahead-text' }, `↑ ${ahead}`));
     if (v === 'next') parts.push(el('span', {}, 'Projected plan'));
     subtitle = el('div', { className: 'subtitle-row' },
       el('p', { className: 'subtitle' }, ...parts.flatMap((x, i) => (i ? [' · ', x] : [x]))),

@@ -421,7 +421,12 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
   item menu, Finish by −/+, pulling next week, the forecast, sidebar classes and
   sync, Settings. Replay from General. After an update, a dismissible "What's new"
   card at the top, shown once per version. "You're N days ahead": N = how many days
-  after today have all their planned work done (today must be done too). Late-night
+  after today have all their planned work done (today must be done too). Built
+  2026-10-29: an `onboarding` record ({ seenVersion, toured }) decides tour vs What's
+  new on the first load of a version (already synced = existing user: What's new, no
+  tour). The "days ahead" cheer joins the open toast (keeping its Undo) or gets its own,
+  and a line shows in the header; one General toggle turns cheers and the late-night
+  note off. Late-night
   message: between midnight and 4 AM, the page and the toolbar popup gently say that
   anything due today is already as late as it's going to be, so go to bed (no
   notifications, no new permissions).

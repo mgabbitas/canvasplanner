@@ -8,6 +8,7 @@ import { el, select, WEEKDAYS, TYPE_LABELS, minutesLabel, readInt } from './dom.
 import { ACCENTS, ACCENT_COLORS, THEMES, CLASS_COLORS, courseColorKey, courseColor, lookColors } from './theme.js';
 import { palette, accentAdjusted } from './color.js';
 import { showToast } from './toast.js';
+import { app } from './app.js';
 
 // Rules being edited, including new and incomplete ones that aren't saved yet.
 let draftRules = null;
@@ -468,6 +469,10 @@ function generalSection(ctx) {
     toggle('openOnCanvasVisit', 'Open the planner when I visit Canvas',
       'The first Canvas visit in each browser session opens the planner and syncs. Visiting Canvas also syncs quietly whenever your data is stale.'),
     toggle('includeNonSubmittable', 'Plan items that can\'t be submitted online', 'e.g. "no submission" or "on paper" assignments.'),
+    toggle('funMessages', 'Celebrations and late-night notes', 'A cheer when you get days ahead, and a nudge to sleep after midnight.'),
+    el('div', { className: 'field' }, el('span', {}, 'Tour'),
+      el('button', { 'data-key': 'replay-tour', onclick: () => { app.replayTour = true; location.hash = ''; } }, 'Take the tour'),
+      el('small', {}, 'A quick look at the main parts of the planner.')),
     advanced('general',
       field('Auto-sync when data is older than (minutes)',
         numberInput('auto-sync', s.autoSyncMinutes, { min: 15, max: 10080, label: 'Auto-sync minutes' },

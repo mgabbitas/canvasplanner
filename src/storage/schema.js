@@ -102,6 +102,7 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     // effects replaced the on/off `decorations` switch (off stays off).
     effects: s.effects != null ? int(s.effects, 0, 3, d.effects ?? 2) : s.decorations === false ? 0 : (d.effects ?? 2),
     themeClassColors: typeof s.themeClassColors === 'boolean' ? s.themeClassColors : (d.themeClassColors ?? false),
+    funMessages: typeof s.funMessages === 'boolean' ? s.funMessages : (d.funMessages ?? true),
     openOnCanvasVisit: typeof s.openOnCanvasVisit === 'boolean' ? s.openOnCanvasVisit : (d.openOnCanvasVisit ?? true),
     includeNonSubmittable: bool('includeNonSubmittable'),
   };
@@ -248,6 +249,18 @@ export function pruneDayLog(dayLog, today) {
   return Object.fromEntries(Object.entries(dayLog).filter(([date]) => date >= oldest));
 }
 
+/**
+ * First run and updates: the version whose "What's new" you've seen, and whether you've
+ * had the tour. null means not known yet (decided on the first load of this version).
+ */
+export function validateOnboarding(raw) {
+  const o = isObj(raw) ? raw : {};
+  return {
+    seenVersion: typeof o.seenVersion === 'string' && /^\d{1,4}(\.\d{1,4}){0,3}$/.test(o.seenVersion) ? o.seenVersion : null,
+    toured: typeof o.toured === 'boolean' ? o.toured : null,
+  };
+}
+
 export function validateMeta(raw) {
   const m = isObj(raw) ? raw : {};
   return { lastSyncAt: isoOrNull(m.lastSyncAt), lastError: str(m.lastError, 1000) };
@@ -327,5 +340,6 @@ export function migrate(raw) {
     courses: validateCourses(r.courses),
     dayLog: validateDayLog(r.dayLog),
     taskSeries: validateTaskSeries(r.taskSeries),
+    onboarding: validateOnboarding(r.onboarding),
   };
 }

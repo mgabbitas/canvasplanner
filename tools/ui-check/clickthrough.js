@@ -20,12 +20,33 @@ async function runEmpty() {
   report.errors = window.__errors;
 }
 
+// A fresh install right after its first sync: the tour runs once, What's new doesn't show.
+async function runTour() {
+  const layer = await waitFor('[data-key="tour"]');
+  check('tour starts', !!layer);
+  check('no What\'s new for a new install', !document.querySelector('[data-key="whats-new"]'));
+  const total = Number(document.querySelector('[data-key="tour-count"]')?.textContent.match(/of (\d+)/)?.[1] ?? 0);
+  check('tour has steps', total >= 6, `${total} steps`);
+  for (let i = 1; i < total; i++) { document.querySelector('[data-key="tour-next"]').click(); await wait(60); }
+  check('tour last step', document.querySelector('[data-key="tour-next"]')?.textContent === 'Done', document.querySelector('[data-key="tour-count"]')?.textContent);
+  const spot = document.querySelector('.tour-spot').getBoundingClientRect();
+  check('tour points at something', spot.width > 0 && spot.height > 0);
+  document.querySelector('[data-key="tour-next"]').click(); await wait(200);
+  check('tour done and remembered', !document.querySelector('[data-key="tour"]') && window.__store.onboarding?.toured === true);
+  report.errors = window.__errors;
+}
+
 async function run() {
   if (new URLSearchParams(location.search).has('empty')) return runEmpty();
+  if (new URLSearchParams(location.search).has('newuser')) return runTour();
   await waitFor('.day-tab');
   await wait(300);
   check('day tabs render', $$('.day-tab').length >= 2, `${$$('.day-tab').length} tabs`);
   check('week tab first', $$('.day-tab')[0]?.textContent.startsWith('Week'));
+  // An existing user on a new version: What's new, no tour.
+  check('What\'s new for an update', !!document.querySelector('[data-key="whats-new"]') && !document.querySelector('[data-key="tour"]'));
+  document.querySelector('[data-key="whats-new-ok"]')?.click(); await wait(200);
+  check('What\'s new dismissed and remembered', !document.querySelector('[data-key="whats-new"]') && window.__store.onboarding?.seenVersion === '1.2.0');
   // Date-dependent questions: answer whichever shows today.
   if (document.querySelector('[data-key="holiday-offer"]')) {
     document.querySelector('[data-key="holiday-no"]').click(); await wait(200);
@@ -277,6 +298,12 @@ async function run() {
   check('class color pick', Object.values(window.__store.settings.courses).some((c) => c.color));
 
   // Turn the pull gate off, then pull an item and send it back.
+  await go('#settings/general');
+  check('fun messages toggle', !!document.querySelector('[data-key="funMessages"]'));
+  document.querySelector('[data-key="replay-tour"]').click(); await wait(400);
+  check('replay tour from settings', !!document.querySelector('[data-key="tour"]') && location.hash === '');
+  document.querySelector('[data-key="tour-skip"]')?.click(); await wait(150);
+  check('skip tour', !document.querySelector('[data-key="tour"]'));
   await go('#settings/general');
   const gate = document.querySelector('[data-key="gatePullOnCompletion"]');
   gate.checked = false; fire(gate, 'change'); await wait(200);

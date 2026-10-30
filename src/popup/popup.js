@@ -3,6 +3,7 @@
 import { loadState, save } from '../storage/store.js';
 import { todaySummary } from '../planner/today.js';
 import { checkOffPatch } from '../planner/plan.js';
+import { isLateNight } from '../planner/ahead.js';
 import { syncSeries } from '../planner/tasks.js';
 import { toLocalDate } from '../planner/dates.js';
 import { applyTheme, courseColor } from '../ui/theme.js';
@@ -81,6 +82,9 @@ function render() {
     el('header', { className: 'popup-head' },
       el('h1', {}, 'Today'),
       el('span', { className: 'muted' }, dayLabel(date, { weekday: 'short', month: 'short', day: 'numeric' }))),
+    state.settings.funMessages && isLateNight(new Date().getHours())
+      ? el('p', { className: 'popup-late', 'data-key': 'popup-late' }, "It's past midnight. Today's due work is as late as it'll get. Go to bed.")
+      : null,
     el('p', { className: 'popup-count', 'data-key': 'popup-count' },
       shown.length ? `${left} left` : null,
       shown.length && doneCount ? ' · ' : null,

@@ -185,6 +185,12 @@ test('split parts validate; day log keeps part ids', () => {
   assert.deepEqual(migrate({ dayLog: { '2026-10-01': { left: ['5#2', '5', 'x#2', '5#22'] } } }).dayLog['2026-10-01'].left, ['5#2', '5']);
 });
 
+test('onboarding validates', () => {
+  assert.deepEqual(migrate({}).onboarding, { seenVersion: null, toured: null });
+  assert.deepEqual(migrate({ onboarding: { seenVersion: '1.2.0', toured: true } }).onboarding, { seenVersion: '1.2.0', toured: true });
+  assert.deepEqual(migrate({ onboarding: { seenVersion: '<b>', toured: 'yes' } }).onboarding, { seenVersion: null, toured: null });
+});
+
 test('theme settings validate', () => {
   const s = validateSettings({
     accent: 'brown', look: 'halloween', customAccent: '#ABCDEF', customTint: 'red', holidayLooks: 'yes',

@@ -46,6 +46,16 @@ export function showToast({ message, actions = [], duration = 10_000 }) {
   };
 }
 
+/** A cheerful line: added on top of the open toast (keeping its Undo), else a toast of its own. */
+export function celebrate(text) {
+  if (current) {
+    current.node.querySelector('.toast-celebrate')?.remove();
+    current.node.prepend(el('div', { className: 'toast-celebrate', 'data-key': 'celebrate' }, text));
+    return;
+  }
+  showToast({ message: text, duration: 6000 });
+}
+
 const DIFFICULTY_WORDS = ['', 'very easy', 'easy', 'medium', 'hard', 'very hard'];
 
 /**

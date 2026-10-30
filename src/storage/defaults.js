@@ -32,6 +32,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   seasonAnswered: [], // ['fall-2026', …]: seasons already offered this year
   effects: 2, // falling snow and leaves: 0 off, 1 light, 2 normal, 3 lots (never with reduced motion)
   themeClassColors: false, // tint class colors toward the theme
+  funMessages: true, // "days ahead" celebrations and the late-night note
   includeNonSubmittable: true,
   openOnCanvasVisit: true, // first Canvas visit each browser session opens the planner
 });

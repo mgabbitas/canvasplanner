@@ -16,3 +16,4 @@ a.popup-title:hover { color: var(--accent); text-decoration: underline; }
 .popup-item.done .popup-title { text-decoration: line-through; color: var(--muted); }
 .popup-empty { margin: 10px 0 14px; color: var(--muted); }
 .popup-open { width: 100%; justify-content: center; }
+.popup-late { margin: 0 0 10px; padding: 8px 10px; border-radius: 8px; background: var(--accent-soft); font-size: 13px; }

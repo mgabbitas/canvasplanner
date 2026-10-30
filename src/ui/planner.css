@@ -1,7 +1,7 @@
 /* Canvas Planner styles.
    1. Tokens and themes   2. Base   3. App shell (sidebar, content, rail)
    4. Header             5. Plan (banners, days, items)   6. Panels and rail
-   7. Settings   8. Stats   9. Toast and log form   10. Your own tasks   11. Themes */
+   7. Settings   8. Stats   9. Toast and log form   10. Your own tasks   11. Themes   12. Notes and tour */
 
 /* ---------- 1. Tokens and themes ---------- */
 :root {
@@ -630,3 +630,24 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
 :root[data-look="lavender"] body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cg fill='none' stroke='%2384cc16' stroke-opacity='0.18' stroke-width='1.4'%3E%3Cpath d='M30 120V60'/%3E%3Cpath d='M100 70V20'/%3E%3C/g%3E%3Cg fill='%238b5cf6' fill-opacity='0.16'%3E%3Cellipse cx='30' cy='58' rx='3' ry='4.5'/%3E%3Cellipse cx='27' cy='66' rx='3' ry='4.5'/%3E%3Cellipse cx='33' cy='72' rx='3' ry='4.5'/%3E%3Cellipse cx='28' cy='80' rx='3' ry='4.5'/%3E%3Cellipse cx='100' cy='18' rx='3' ry='4.5'/%3E%3Cellipse cx='97' cy='26' rx='3' ry='4.5'/%3E%3Cellipse cx='103' cy='32' rx='3' ry='4.5'/%3E%3C/g%3E%3C/svg%3E");
 }
+
+/* ---------- 12. Notes, What's new, tour ---------- */
+.whats-new { margin-bottom: 10px; border-left: 4px solid var(--accent); }
+.whats-new-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.whats-new h2 { font-size: 16px; }
+.whats-new ul { margin: 8px 0 4px; padding-left: 20px; display: grid; gap: 3px; font-size: 14px; }
+.toast-celebrate { font-weight: 700; margin-bottom: 6px; }
+.tour { position: fixed; inset: 0; z-index: 60; }
+.tour-spot {
+  position: fixed; border-radius: 10px; pointer-events: none;
+  box-shadow: 0 0 0 3px var(--accent), 0 0 0 9999px rgba(10, 14, 20, 0.5); transition: all 0.2s ease;
+}
+.tour-card {
+  position: fixed; width: min(340px, calc(100vw - 24px)); padding: 14px 16px; border-radius: var(--radius);
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+.tour-card h2 { font-size: 16px; margin-bottom: 4px; }
+.tour-card p { margin: 0 0 12px; font-size: 14px; }
+.tour-buttons { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.tour-buttons .spacer { flex: 1; }
+@media (prefers-reduced-motion: reduce) { .tour-spot { transition: none; } }

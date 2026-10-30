@@ -15,6 +15,7 @@ import { finishDay, openLog, panel } from './items.js';
 import { setNavOpen, renderSidebar, renderHeader, renderWelcome } from './shell.js';
 import { renderBanners, renderPullCard, renderForecast, renderDayLayout, renderExams } from './week.js';
 import { renderThemeOffer } from './offers.js';
+import { renderLateNight, renderWhatsNew, settleOnboarding, celebrateAhead, maybeStartTour } from './notes.js';
 import { updateDecorations } from './decor.js';
 import { activeHoliday, HOLIDAYS } from '../planner/seasons.js';
 
@@ -60,6 +61,7 @@ function render() {
   if (app.state.meta.lastSyncAt) recordDay(app.thisWeekPlan);
   const v = view();
   const p = v === 'next' ? planNextWeek(args) : app.thisWeekPlan;
+  if (v === 'this' && app.state.meta.lastSyncAt) celebrateAhead(app.thisWeekPlan);
 
   const $ = (id) => document.getElementById(id);
   // ?preview=july4 (or christmasday, halloween, thanksgiving): see a holiday's look today.
@@ -94,7 +96,7 @@ function render() {
     fill('extras', [panel("Won't fit by next week's target day", p.overflow, 'next', true)]);
     rail = [renderPullCard(), renderForecast(app.thisWeekPlan), renderExams(p, 'next week')];
   } else {
-    fill('banners', [renderThemeOffer(), ...renderBanners(p)]);
+    fill('banners', [renderLateNight(), renderWhatsNew(), renderThemeOffer(), ...renderBanners(p)]);
     fill('days', days('plan'));
     fill('extras', [
       panel("Won't fit by the target day", p.overflow, 'plan', true),
@@ -113,6 +115,7 @@ function render() {
   }
   fill('rail', rail);
   $('content').classList.toggle('no-rail', !rail.filter(Boolean).length);
+  if (v === 'this' && app.state.meta.lastSyncAt) maybeStartTour();
   const focused = focusKey ? document.querySelector(`[data-key="${CSS.escape(focusKey)}"]`) : null;
   focused?.focus();
   // Typing in a filter re-renders; keep the caret at the end.
@@ -123,6 +126,7 @@ function render() {
 
 async function init() {
   app.state = await loadState();
+  await settleOnboarding();
   render();
   // Opened by the background script after a Canvas visit (?sync=1): always sync.
   const forced = new URLSearchParams(location.search).has('sync');
