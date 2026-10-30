@@ -102,7 +102,7 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Changelog
 
-- **Unreleased**: Streak counters (weeks on target, days on plan) in the header and on
+- **1.2.0**: Streak counters (weeks on target, days on plan) in the header and on
   Stats. Sync login errors now say what Canvas answered and list what to check, with an
   **Allow access** button if Firefox hasn't given the add-on access to Canvas. Settings
   redesigned: day cards with hour sliders, rules by class, Advanced sections, a danger
