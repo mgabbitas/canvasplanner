@@ -47,7 +47,7 @@ async function run() {
   // An existing user on a new version: What's new, no tour.
   check('What\'s new for an update', !!document.querySelector('[data-key="whats-new"]') && !document.querySelector('[data-key="tour"]'));
   document.querySelector('[data-key="whats-new-ok"]')?.click(); await wait(200);
-  check('What\'s new dismissed and remembered', !document.querySelector('[data-key="whats-new"]') && window.__store.onboarding?.seenVersion === '1.2.0');
+  check('What\'s new dismissed and remembered', !document.querySelector('[data-key="whats-new"]') && window.__store.onboarding?.seenVersion === '1.2.1');
   // Date-dependent questions: answer whichever shows today.
   if (document.querySelector('[data-key="holiday-offer"]')) {
     document.querySelector('[data-key="holiday-no"]').click(); await wait(200);

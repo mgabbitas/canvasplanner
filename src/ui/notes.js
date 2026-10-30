@@ -6,9 +6,10 @@ import { el } from './dom.js';
 import { celebrate } from './toast.js';
 import { app, plural } from './app.js';
 
-// What's new, by version (newest first). Shown once after updating to that version.
+// What's new, by feature version ("1.2" covers 1.2.0, 1.2.1, …). Shown once after
+// updating into that version, so bug-fix releases don't hide it.
 export const WHATS_NEW = {
-  '1.2.0': [
+  '1.2': [
     'Settings redesigned: an hours slider for each day, and rules grouped by class.',
     'A toolbar button with today\'s list and a count on the icon.',
     '+ Add task for your own work, one-off or repeating, and "Split across days" in the ⋮ menu.',
@@ -20,6 +21,7 @@ export const WHATS_NEW = {
 };
 
 const version = () => browser.runtime.getManifest().version;
+const feature = (v) => (v ?? '').split('.').slice(0, 2).join('.');
 
 /** Late at night (midnight to 4 AM): nothing's getting less late, so go to bed. */
 export function renderLateNight() {
@@ -31,11 +33,11 @@ export function renderLateNight() {
 
 /** "What's new" once after an update: a card at the top until you dismiss it. */
 export function renderWhatsNew() {
-  const v = version();
+  const v = feature(version());
   const { seenVersion, toured } = app.state.onboarding;
-  if (!WHATS_NEW[v] || seenVersion === v || toured !== true) return null;
+  if (!WHATS_NEW[v] || feature(seenVersion) === v || toured !== true) return null;
   const dismiss = () => {
-    app.state.onboarding = { ...app.state.onboarding, seenVersion: v };
+    app.state.onboarding = { ...app.state.onboarding, seenVersion: version() };
     save({ onboarding: app.state.onboarding }).catch(() => {});
     app.render();
   };
