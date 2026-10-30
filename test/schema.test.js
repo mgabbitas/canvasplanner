@@ -188,7 +188,7 @@ test('split parts validate; day log keeps part ids', () => {
 test('theme settings validate', () => {
   const s = validateSettings({
     accent: 'brown', look: 'halloween', customAccent: '#ABCDEF', customTint: 'red', holidayLooks: 'yes',
-    seasonAnswered: ['fall-2026', 'junk', 'fall-2026', 'christmas-2026'], decorations: 0,
+    seasonAnswered: ['fall-2026', 'junk', 'fall-2026', 'christmas-2026'], effects: 9,
   });
   assert.equal(s.accent, 'brown');
   assert.equal(s.look, 'plain'); // holiday looks are never a saved choice
@@ -196,6 +196,8 @@ test('theme settings validate', () => {
   assert.equal(s.customTint, DEFAULT_SETTINGS.customTint);
   assert.equal(s.holidayLooks, null);
   assert.deepEqual(s.seasonAnswered, ['fall-2026', 'christmas-2026']);
-  assert.equal(s.decorations, true);
+  assert.equal(s.effects, 3);
+  assert.equal(validateSettings({ decorations: false }).effects, 0); // the old switch, turned off
+  assert.equal(validateSettings({}).effects, 2);
   assert.equal(validateSettings({ holidayLooks: false }).holidayLooks, false);
 });
