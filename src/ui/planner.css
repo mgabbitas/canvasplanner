@@ -94,6 +94,10 @@ input[type=number], input[type=text], input[type=search], select {
 #days:focus { outline: none; }
 .welcome h2 { font-size: 18px; margin-bottom: 8px; }
 .welcome .row { display: flex; gap: 12px; align-items: center; margin-top: 12px; }
+.school-form .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 0; }
+.school-form input[type=text] { flex: 1 1 240px; max-width: 360px; }
+.school-form .warn-text:empty { display: none; }
+.settings .field > button { justify-self: start; }
 .help-list { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; }
 
 /* ---------- 3. App shell ---------- */

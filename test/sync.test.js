@@ -1,7 +1,11 @@
 process.env.TZ = 'America/Denver';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchCanvas, applySync, parseNextLink, AuthError, CANVAS, isLoginError } from '../src/sync/canvas.js';
+import { fetchCanvas as fetchFrom, applySync, parseNextLink as parseNext, AuthError, isLoginError } from '../src/sync/canvas.js';
+
+const CANVAS = 'https://byui.instructure.com';
+const fetchCanvas = (deps) => fetchFrom({ ...deps, base: CANVAS });
+const parseNextLink = (h) => parseNext(h, CANVAS);
 import { migrate } from '../src/storage/schema.js';
 
 const json = (data, { status = 200, headers = {}, prefix = '' } = {}) =>

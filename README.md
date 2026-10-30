@@ -5,7 +5,8 @@ working to the official due dates, every assignment gets an earlier target day, 
 the week's work is spread across the time you actually have each day, so it's done by
 Wednesday instead of piling up on Saturday.
 
-> Works with BYU-Idaho Canvas (`byui.instructure.com`) in Firefox.
+> Works in Firefox with any school's Canvas at an `instructure.com` address (like
+> `byui.instructure.com`).
 
 ## What it does
 
@@ -34,7 +35,8 @@ Wednesday instead of piling up on Saturday.
 2. **Drag the downloaded file onto any Firefox window** and click **Add** when Firefox
    asks. (Or open `about:addons`, click the ⚙ gear, choose **Install Add-on From
    File…**, and pick the file.)
-3. **Open Canvas** while logged in. The planner opens and pulls in your assignments.
+3. **Open a new tab** and enter your school's Canvas address (or just open Canvas while
+   logged in, and the planner offers it). It then pulls in your assignments.
 
 The planner also becomes your **new tab page**, so it's one Ctrl+T away. The toolbar
 button shows how many items are left today; click it to check things off without

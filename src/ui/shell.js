@@ -5,8 +5,9 @@ import { courseColor } from './theme.js';
 import { openTaskForm } from './taskform.js';
 import { aheadText } from './notes.js';
 import { toLocalDate } from '../planner/dates.js';
-import { CANVAS, ACCESS_MESSAGE, isLoginError } from '../sync/canvas.js';
-import { app, view, classId, timeAgo, courseName, sync, allowCanvasAccess, changeExtraDays, homework, itemCount, streaks, plural } from './app.js';
+import { ACCESS_MESSAGE, isLoginError } from '../sync/canvas.js';
+import { canvasBase, normalizeHost } from '../sync/school.js';
+import { app, view, classId, timeAgo, courseName, sync, allowCanvasAccess, setSchool, changeExtraDays, homework, itemCount, streaks, plural } from './app.js';
 
 const NAV = [
   ['', 'this', 'This week', 'week'],
@@ -67,7 +68,41 @@ export function renderSidebar() {
   ];
 }
 
-export const loginLink = () => el('a', { href: `${CANVAS}/`, target: '_blank', rel: 'noopener noreferrer' }, 'Open Canvas');
+const host = () => app.state.canvas.host;
+export const loginLink = () => (host()
+  ? el('a', { href: `${canvasBase(host())}/`, target: '_blank', rel: 'noopener noreferrer' }, 'Open Canvas')
+  : null);
+
+/**
+ * "Your school's Canvas address": a text box that takes "byui", "byui.instructure.com"
+ * or a pasted link. Used on the welcome card and in Settings → General.
+ */
+export function schoolForm({ value = '', button = 'Save', onSaved = setSchool, confirmChange = false } = {}) {
+  // What you've typed and any error survive a redraw (e.g. a save in the background).
+  const draft = app.schoolDraft ?? { value, error: '' };
+  const input = el('input', {
+    type: 'text', value: draft.value, placeholder: 'yourschool.instructure.com', 'aria-label': "Your school's Canvas address",
+    'data-key': 'school-input', autocomplete: 'url', spellcheck: false,
+    oninput: (e) => { app.schoolDraft = { value: e.target.value, error: '' }; },
+  });
+  const error = el('p', { className: 'warn-text', role: 'alert', 'data-key': 'school-error' }, draft.error);
+  const fail = (text) => {
+    error.textContent = text;
+    app.schoolDraft = { value: input.value, error: text };
+  };
+  const save = (e) => {
+    e.preventDefault();
+    const h = normalizeHost(input.value);
+    if (!h) return fail("That doesn't look like a Canvas address. It should end in instructure.com, like byui.instructure.com.");
+    if (h === host()) return fail('');
+    if (confirmChange && host() && !confirm(`Switch to ${h}? Your ${host()} assignments are cleared; settings and your own tasks stay.`)) return;
+    app.schoolDraft = null;
+    onSaved(h);
+  };
+  return el('form', { className: 'school-form', onsubmit: save },
+    el('div', { className: 'row' }, input, el('button', { type: 'submit', className: 'primary', 'data-key': 'school-save' }, button)),
+    error);
+}
 const allowButton = () => el('button', { className: 'link', onclick: allowCanvasAccess, 'data-key': 'allow-access' }, 'Allow access');
 
 /** What to try when Canvas doesn't see the login. Shown on the welcome card. */
@@ -75,8 +110,9 @@ const loginHelp = () => el('div', {},
   el('p', {}, 'Things to check:'),
   el('ol', { className: 'help-list' },
     el('li', {}, 'Open Canvas in a normal (not private) window and make sure you see your Dashboard. Then come back and sync.'),
-    el('li', {}, 'In the address bar, go to about:addons, click Canvas Planner, open the Permissions tab, and make sure access to byui.instructure.com is turned on.'),
-    el('li', {}, 'If you changed Firefox privacy settings to block cookies, add byui.instructure.com as an exception: Settings → Privacy & Security → Cookies and Site Data → Manage Exceptions → Allow.'),
+    el('li', {}, 'In the address bar, go to about:addons, click Canvas Planner, open the Permissions tab, and make sure access to instructure.com sites is turned on.'),
+    el('li', {}, `If you changed Firefox privacy settings to block cookies, add ${host()} as an exception: Settings → Privacy & Security → Cookies and Site Data → Manage Exceptions → Allow.`),
+    el('li', {}, `Check that ${host()} is the address you use for Canvas (Settings → General → School).`),
     el('li', {}, 'Still stuck? Send a screenshot of the message above to whoever gave you the add-on.'),
   ),
 );
@@ -84,6 +120,15 @@ const loginHelp = () => el('div', {},
 /** Shown instead of the plan until the first successful sync. */
 export function renderWelcome() {
   const error = app.syncMessage || app.state.meta.lastError;
+  if (!host()) {
+    const suggested = normalizeHost(new URLSearchParams(location.search).get('school')) ?? '';
+    return el('section', { className: 'panel welcome' },
+      el('h2', {}, 'Welcome to Canvas Planner'),
+      el('p', {}, "What's your school's Canvas address? It's what you see in the address bar on Canvas, like ",
+        el('strong', {}, 'byui.instructure.com'), '.'),
+      schoolForm({ value: suggested, button: 'Save and sync' }),
+      el('p', { className: 'hint' }, 'The planner uses your existing Canvas login in this browser and only reads your assignments.'));
+  }
   return el('section', { className: 'panel welcome' },
     el('h2', {}, app.syncing ? 'Getting your assignments from Canvas…' : 'Welcome to Canvas Planner'),
     app.syncing
@@ -91,7 +136,7 @@ export function renderWelcome() {
       : el('div', {},
         error ? el('p', { className: 'warn-text' }, error) : null,
         error === ACCESS_MESSAGE
-          ? el('p', {}, 'Firefox needs your OK before the add-on can read your assignments from byui.instructure.com.')
+          ? el('p', {}, `Firefox needs your OK before the add-on can read your assignments from ${host()}.`)
           : isLoginError(error)
             ? loginHelp()
             : el('p', {}, 'Sync to bring in your assignments. It uses your existing Canvas login in this browser.'),

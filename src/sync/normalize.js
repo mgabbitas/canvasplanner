@@ -1,6 +1,7 @@
 // Canvas assignment JSON -> item (Canvas-owned fields only). Pure.
 
-const CANVAS_ORIGIN = 'https://byui.instructure.com';
+import { isCanvasUrl } from './school.js';
+
 const DESCRIPTION_MAX = 2000;
 const DONE_STATES = ['submitted', 'graded', 'pending_review'];
 const NON_SUBMITTABLE = ['none', 'on_paper'];
@@ -49,7 +50,7 @@ function isoOrNull(v) {
 }
 
 function canvasUrl(v) {
-  return typeof v === 'string' && v.startsWith(CANVAS_ORIGIN + '/') ? v : null;
+  return isCanvasUrl(v) ? v : null;
 }
 
 export function normalizeAssignment(raw, courseId) {

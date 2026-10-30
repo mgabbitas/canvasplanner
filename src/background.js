@@ -3,7 +3,7 @@
 // remaining homework) up to date.
 import { loadState } from './storage/store.js';
 import { runSync } from './sync/run.js';
-import { CANVAS } from './sync/canvas.js';
+import { onSchool, isCanvasHost } from './sync/school.js';
 import { todaySummary, badgeText } from './planner/today.js';
 import { syncSeries } from './planner/tasks.js';
 import { toLocalDate } from './planner/dates.js';
@@ -11,11 +11,21 @@ import { toLocalDate } from './planner/dates.js';
 let syncing = false;
 
 browser.runtime.onMessage.addListener(async (msg, sender) => {
-  // Only our own content script, only from a Canvas page.
+  // Only our own content script, only from your school's Canvas.
   if (msg?.type !== 'canvas-visit' || sender.id !== browser.runtime.id) return;
-  if (!String(sender.url ?? '').startsWith(CANVAS + '/')) return;
+  const { settings, meta, canvas } = await loadState();
+  if (!canvas.host) {
+    // No school chosen yet: open the planner once with this Canvas filled in to confirm.
+    const host = URL.canParse(sender.url) ? new URL(sender.url).hostname : '';
+    const { openedThisSession } = await browser.storage.session.get('openedThisSession');
+    if (isCanvasHost(host) && settings.openOnCanvasVisit && !openedThisSession) {
+      await browser.storage.session.set({ openedThisSession: true });
+      await browser.tabs.create({ url: browser.runtime.getURL(`src/ui/planner.html?school=${encodeURIComponent(host)}`) });
+    }
+    return;
+  }
+  if (!onSchool(sender.url, canvas.host)) return;
 
-  const { settings, meta } = await loadState();
   if (settings.openOnCanvasVisit) {
     const { openedThisSession } = await browser.storage.session.get('openedThisSession');
     if (!openedThisSession) {

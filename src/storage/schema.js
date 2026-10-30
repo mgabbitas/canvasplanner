@@ -3,6 +3,7 @@
 import { DEFAULT_SETTINGS, LEGACY_SIZES, USER_FIELD_DEFAULTS } from './defaults.js';
 import { addDays } from '../planner/dates.js';
 import { TASK_ID } from '../planner/tasks.js';
+import { isCanvasHost, isCanvasUrl } from '../sync/school.js';
 
 // Kept in sync with src/ui/theme.js (ACCENT_COLORS, THEMES); schema stays free of UI imports.
 const ACCENT_KEYS = ['blue', 'teal', 'purple', 'green', 'orange', 'pink', 'red', 'amber', 'indigo', 'cyan', 'brown'];
@@ -130,7 +131,7 @@ function validateItem(id, raw) {
     canvasDone: raw.canvasDone === true,
     submittedAt: isoOrNull(raw.submittedAt),
     descriptionText: str(raw.descriptionText, 2000) ?? '',
-    url: url && url.startsWith('https://byui.instructure.com/') ? url : null,
+    url: isCanvasUrl(url) ? url : null,
     task: TASK_ID.test(id) ? validateTaskFields(raw.task, raw.dueAt) : null,
     prevDueAt: isoOrNull(raw.prevDueAt),
     hidden: raw.hidden === true,
@@ -253,6 +254,17 @@ export function pruneDayLog(dayLog, today) {
 }
 
 /**
+ * Your school's Canvas: { host } ("x.instructure.com"), or null until chosen. Stores
+ * from before 1.3 (when the planner was BYU-Idaho only) that already hold data are
+ * BYU-Idaho.
+ */
+export function validateCanvas(raw, store = {}) {
+  if (isObj(raw)) return { host: isCanvasHost(raw.host) ? raw.host : null };
+  const used = Boolean(store.meta?.lastSyncAt) || (isObj(store.items) && Object.keys(store.items).length > 0);
+  return { host: used ? 'byui.instructure.com' : null };
+}
+
+/**
  * First run and updates: the version whose "What's new" you've seen, and whether you've
  * had the tour. null means not known yet (decided on the first load of this version).
  */
@@ -344,5 +356,6 @@ export function migrate(raw) {
     dayLog: validateDayLog(r.dayLog),
     taskSeries: validateTaskSeries(r.taskSeries),
     onboarding: validateOnboarding(r.onboarding),
+    canvas: validateCanvas(r.canvas, r),
   };
 }

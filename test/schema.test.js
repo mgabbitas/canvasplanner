@@ -207,3 +207,15 @@ test('theme settings validate', () => {
   assert.equal(validateSettings({}).effects, 2);
   assert.equal(validateSettings({ holidayLooks: false }).holidayLooks, false);
 });
+
+test('school: chosen host kept; stores from before 1.3 with data are BYU-Idaho; new installs ask', () => {
+  assert.deepEqual(migrate({ canvas: { host: 'uofu.instructure.com' } }).canvas, { host: 'uofu.instructure.com' });
+  assert.deepEqual(migrate({ canvas: { host: 'evil.com' } }).canvas, { host: null });
+  assert.deepEqual(migrate({ meta: { lastSyncAt: '2026-10-01T00:00:00Z' } }).canvas, { host: 'byui.instructure.com' });
+  assert.deepEqual(migrate({ items: { 1: { courseId: '9', title: 'A' } } }).canvas, { host: 'byui.instructure.com' });
+  assert.deepEqual(migrate({}).canvas, { host: null });
+  // Item links from any Canvas school are kept; others dropped.
+  const items = validateItems({ 1: { courseId: '9', url: 'https://uofu.instructure.com/courses/9/assignments/1' }, 2: { courseId: '9', url: 'https://evil.com/x' } });
+  assert.equal(items['1'].url, 'https://uofu.instructure.com/courses/9/assignments/1');
+  assert.equal(items['2'].url, null);
+});

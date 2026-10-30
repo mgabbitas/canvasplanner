@@ -1,11 +1,12 @@
 // Canvas API access (GET only) and applying a sync result to stored state.
-// fetch and sleep are passed in so this runs under Node tests with a fake Canvas.
+// fetch, sleep and the school's base URL ("https://x.instructure.com") are passed in,
+// so this runs under Node tests with a fake Canvas.
 import { normalizeAssignment, normalizeCourse } from './normalize.js';
 import { mergeCourse } from '../storage/merge.js';
 
-export const CANVAS = 'https://byui.instructure.com';
 export const LOGIN_MESSAGE = "Canvas didn't recognize your login";
 export const ACCESS_MESSAGE = "Canvas Planner isn't allowed to read Canvas yet";
+export const SCHOOL_MESSAGE = "Choose your school's Canvas address first";
 export const isLoginError = (msg) => String(msg ?? '').startsWith(LOGIN_MESSAGE);
 
 const MAX_PAGES = 50;
@@ -24,10 +25,10 @@ export class AuthError extends Error {
 }
 
 /** The rel="next" URL from a Link header, only if it stays on our Canvas host. */
-export function parseNextLink(header) {
+export function parseNextLink(header, base) {
   for (const part of String(header ?? '').split(',')) {
     const m = part.match(/<([^>]+)>\s*;\s*rel="?next"?/);
-    if (m && m[1].startsWith(CANVAS + '/')) return m[1];
+    if (m && m[1].startsWith(base + '/')) return m[1];
   }
   return null;
 }
@@ -50,7 +51,7 @@ async function fetchWithBackoff(url, { fetchImpl, sleep }) {
 /** GET every page of a list endpoint. */
 export async function getAll(path, deps) {
   const out = [];
-  let url = CANVAS + path;
+  let url = deps.base + path;
   for (let page = 0; url; page++) {
     if (page >= MAX_PAGES) throw new Error('Too many pages from Canvas');
     const res = await fetchWithBackoff(url, deps);
@@ -67,7 +68,7 @@ export async function getAll(path, deps) {
     }
     if (!Array.isArray(data)) throw new Error('Unexpected response from Canvas');
     out.push(...data);
-    url = parseNextLink(res.headers.get('link'));
+    url = parseNextLink(res.headers.get('link'), deps.base);
   }
   return out;
 }
@@ -76,8 +77,8 @@ export async function getAll(path, deps) {
  * Fetch courses, then each course's assignments, one course at a time.
  * Throws AuthError if not logged in. A single course failing is recorded, not thrown.
  */
-export async function fetchCanvas({ fetchImpl, sleep, delayMs = 300 }) {
-  const deps = { fetchImpl, sleep };
+export async function fetchCanvas({ fetchImpl, sleep, base, delayMs = 300 }) {
+  const deps = { fetchImpl, sleep, base };
   const rawCourses = await getAll('/api/v1/courses?enrollment_state=active&per_page=50', deps);
   const courses = rawCourses.map(normalizeCourse).filter(Boolean);
   const results = [];

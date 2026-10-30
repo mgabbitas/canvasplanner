@@ -11,6 +11,7 @@ import { ACCENTS, ACCENT_COLORS, THEMES, CLASS_COLORS, courseColorKey, courseCol
 import { palette, accentAdjusted } from './color.js';
 import { showToast } from './toast.js';
 import { app } from './app.js';
+import { schoolForm } from './shell.js';
 
 // Rules being edited, including new and incomplete ones that aren't saved yet.
 let draftRules = null;
@@ -487,6 +488,9 @@ function generalSection(ctx) {
       'The first Canvas visit in each browser session opens the planner and syncs. Visiting Canvas also syncs quietly whenever your data is stale.'),
     toggle('includeNonSubmittable', 'Plan items that can\'t be submitted online', 'e.g. "no submission" or "on paper" assignments.'),
     toggle('funMessages', 'Celebrations and late-night notes', 'A cheer when you get days ahead, and a nudge to sleep after midnight.'),
+    el('div', { className: 'field' }, el('span', {}, 'School'),
+      schoolForm({ value: ctx.state.canvas.host ?? '', button: 'Change', confirmChange: true }),
+      el('small', {}, "Your school's Canvas address. Changing it clears the current school's assignments; settings and your own tasks stay.")),
     el('div', { className: 'field' }, el('span', {}, 'Problems'),
       el('a', { href: reportUrl(), target: '_blank', rel: 'noopener noreferrer', 'data-key': 'report' }, 'Found a problem? Report it'),
       el('small', {}, `Opens a new issue on GitHub (you'll need a GitHub account). A screenshot helps. You're on version ${browser.runtime.getManifest().version}.`)),

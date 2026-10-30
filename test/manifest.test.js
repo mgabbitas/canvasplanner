@@ -10,13 +10,14 @@ test('manifest only requests allowed permissions', () => {
   for (const p of manifest.permissions ?? []) {
     assert.ok(allowed.includes(p), `permission not allowed: ${p}`);
   }
-  assert.deepEqual(manifest.host_permissions, ['https://byui.instructure.com/*']);
+  // Any school's Canvas (decided 2026-10-29): *.instructure.com only, never broader.
+  assert.deepEqual(manifest.host_permissions, ['https://*.instructure.com/*']);
   assert.equal(manifest.optional_permissions, undefined);
 });
 
 test('content scripts only run on the Canvas host and read nothing', () => {
   for (const cs of manifest.content_scripts ?? []) {
-    assert.deepEqual(cs.matches, ['https://byui.instructure.com/*']);
+    assert.deepEqual(cs.matches, ['https://*.instructure.com/*']);
     assert.equal(cs.all_frames ?? false, false);
     for (const file of cs.js) {
       const src = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');

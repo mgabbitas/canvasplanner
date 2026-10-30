@@ -131,6 +131,7 @@ async function init() {
   // Opened by the background script after a Canvas visit (?sync=1): always sync.
   const forced = new URLSearchParams(location.search).has('sync');
   if (forced) history.replaceState(null, '', location.pathname + location.hash);
+  if (!app.state.canvas.host) return; // the welcome card asks for your school first
   const last = app.state.meta.lastSyncAt ? Date.parse(app.state.meta.lastSyncAt) : 0;
   if (forced || Date.now() - last > app.state.settings.autoSyncMinutes * 60_000) await sync();
 }
@@ -152,6 +153,7 @@ window.addEventListener('hashchange', () => {
   if (view() !== 'settings') resetSettingsDraft(); // keep unsaved rules across settings tabs
   app.editingDay = null;
   app.selectedDay = null;
+  app.schoolDraft = null;
   app.classFilter = emptyClassFilter();
   render();
 });

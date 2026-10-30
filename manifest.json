@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Canvas Planner",
   "version": "1.2.1",
-  "description": "Plans self-assigned target dates for Canvas assignments.",
+  "description": "Plans self-assigned target dates for your Canvas assignments, so work gets done early.",
   "browser_specific_settings": {
     "gecko": {
       "id": "canvasplanner@local",
@@ -18,7 +18,7 @@
     "storage"
   ],
   "host_permissions": [
-    "https://byui.instructure.com/*"
+    "https://*.instructure.com/*"
   ],
   "chrome_url_overrides": {
     "newtab": "src/ui/planner.html"
@@ -44,7 +44,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://byui.instructure.com/*"
+        "https://*.instructure.com/*"
       ],
       "js": [
         "src/content/canvas-visit.js"

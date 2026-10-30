@@ -356,6 +356,14 @@ the week before, by its target day; Monday-night work stays next week's. Streaks
 using the due date (so past weeks aren't recounted). A separate "Due next" panel was
 dropped as redundant with this rule and the forecast strip.
 
+Decided 2026-10-29 (1.3.0): any school's Canvas at a `*.instructure.com` address. The
+user enters it on the welcome card (or a Canvas visit offers it); stored as `canvas.host`,
+separate from settings. Stores from before 1.3 that already hold data are BYU-Idaho.
+Host permission and content script cover `https://*.instructure.com/*`, but requests
+and the Canvas-visit signal only use the saved school. Changing schools clears that
+school's Canvas items and classes; settings and your tasks stay. Schools on their own
+domains are not supported (they would need optional permissions and `scripting`).
+
 **Open questions:** none.
 
 Decided 2026-09-30: pull-by-size orders by due date,

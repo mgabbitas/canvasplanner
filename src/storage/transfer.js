@@ -1,5 +1,5 @@
 // Export / import of settings and user-owned data. Pure.
-import { migrate, validateItems, sizeToMinutes, legacySizeMinutes, SCHEMA_VERSION } from './schema.js';
+import { migrate, validateItems, validateCanvas, sizeToMinutes, legacySizeMinutes, SCHEMA_VERSION } from './schema.js';
 import { USER_FIELD_DEFAULTS } from './defaults.js';
 
 export const EXPORT_APP = 'canvas-planner';
@@ -32,6 +32,7 @@ export function buildExport(state, nowIso) {
     userItems,
     tasks,
     taskSeries: state.taskSeries ?? {},
+    canvas: state.canvas ?? null,
   };
 }
 
@@ -49,6 +50,8 @@ export function applyImport(state, raw) {
     schemaVersion: raw.schemaVersion, settings: raw.settings, weekState: raw.weekState, dayLog: raw.dayLog,
     taskSeries: raw.taskSeries,
   });
+  // The file's school if it has one (exports from before 1.3 don't); else keep yours.
+  const canvas = isObj(raw.canvas) && validateCanvas(raw.canvas).host ? validateCanvas(raw.canvas) : state.canvas;
 
   // Canvas items keep their Canvas fields; your tasks are replaced by the file's.
   const items = {};
@@ -64,5 +67,5 @@ export function applyImport(state, raw) {
     const valid = validateItems({ [id]: { ...base, ...userFields(u) } })[id];
     if (valid) items[id] = state.items[id] ? { ...items[id], ...userFields(valid) } : valid;
   }
-  return { settings, weekState, dayLog, items, taskSeries };
+  return { settings, weekState, dayLog, items, taskSeries, canvas };
 }

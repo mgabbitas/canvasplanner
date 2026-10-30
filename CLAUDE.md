@@ -10,8 +10,9 @@ file and SPEC.md disagree, stop and ask me.
   submits anything. Planning only.
 - Read-only against Canvas: GET requests only.
 - No server, no accounts, no analytics. All data stays in the browser
-  (`browser.storage.local`). The only network requests go to my Canvas domain
-  (`byui.instructure.com`).
+  (`browser.storage.local`). The only network requests go to the user's own Canvas
+  (the school address they chose, always a `*.instructure.com` host; mine is
+  `byui.instructure.com`).
 
 ## Stack and constraints
 - Firefox WebExtension. Plain JavaScript with ES modules. No framework, no bundler,
@@ -29,8 +30,9 @@ file and SPEC.md disagree, stop and ask me.
 
 ## Security rules (non-negotiable)
 - Manifest permissions: `storage`, `alarms` (only if needed), and host permission for
-  `https://byui.instructure.com/*`. Never `<all_urls>`, `tabs`, or `webRequest`.
-  Tell me before adding any permission.
+  `https://*.instructure.com/*` (any school's Canvas, approved 2026-10-29). Requests
+  only ever go to the one school address the user saved. Never `<all_urls>`, `tabs`,
+  `webRequest`, or schools on their own domains. Tell me before adding any permission.
 - Canvas content is untrusted. Convert assignment descriptions to plain text and insert
   them only with `textContent`. No `innerHTML` with external data, no `eval`, no remote
   scripts, no inline event handlers.

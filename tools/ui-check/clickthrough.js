@@ -14,7 +14,18 @@ async function go(hash) { location.hash = hash; await wait(250); }
 async function runEmpty() {
   await waitFor('.welcome');
   check('welcome shown', !!document.querySelector('.welcome'));
-  await wait(400); // the automatic first sync fails offline
+  check('welcome asks for the school first', !!document.querySelector('[data-key="school-input"]') && !document.querySelector('[data-key="welcome-sync"]'));
+  const input = document.querySelector('[data-key="school-input"]');
+  input.value = 'canvas.evil.com'; fire(input, 'input');
+  await wait(300); // a redraw from the startup save must not lose what was typed
+  check('typed school survives a redraw', document.querySelector('[data-key="school-input"]').value === 'canvas.evil.com');
+  document.querySelector('[data-key="school-save"]').click(); await wait(100);
+  check('bad school address refused', /instructure\.com/.test(document.querySelector('[data-key="school-error"]').textContent) && !window.__store.canvas?.host,
+    `${document.querySelector('[data-key="school-error"]').textContent} | ${JSON.stringify(window.__store.canvas)}`);
+  document.querySelector('[data-key="school-input"]').value = 'https://BYUI.instructure.com/courses';
+  document.querySelector('[data-key="school-save"]').click();
+  await wait(500); // saving the school starts the first sync, which fails offline
+  check('school saved from a pasted link', window.__store.canvas?.host === 'byui.instructure.com', JSON.stringify(window.__store.canvas));
   check('welcome shows offline error', /Couldn't reach Canvas/.test(document.querySelector('.welcome')?.textContent ?? ''));
   check('welcome sync button', !!document.querySelector('[data-key="welcome-sync"]'));
   report.errors = window.__errors;
@@ -398,7 +409,28 @@ async function run() {
   await go('');
   check('back to this week', $$('.day-tab').length >= 2);
   await checkTasks();
+  await checkSchoolChange();
   report.errors = window.__errors;
+}
+
+// Switching schools (last: it clears the Canvas items): asks first, keeps settings and tasks.
+async function checkSchoolChange() {
+  await go('#settings/general');
+  const input = document.querySelector('[data-key="school-input"]');
+  check('school shown in General', input?.value === 'byui.instructure.com', input?.value);
+  const tasksBefore = Object.values(window.__store.items).filter((i) => i.task).length;
+  const realConfirm = window.confirm;
+  window.confirm = () => false;
+  input.value = 'uofu';
+  document.querySelector('[data-key="school-save"]').click(); await wait(200);
+  check('school change can be cancelled', window.__store.canvas.host === 'byui.instructure.com');
+  window.confirm = () => true;
+  document.querySelector('[data-key="school-input"]').value = 'uofu';
+  document.querySelector('[data-key="school-save"]').click(); await wait(500);
+  window.confirm = realConfirm;
+  const items = Object.values(window.__store.items);
+  check('school changed: Canvas items cleared, tasks kept', window.__store.canvas.host === 'uofu.instructure.com'
+    && items.every((i) => i.task) && items.length === tasksBefore && Object.keys(window.__store.courses).length === 0, `${items.length} items`);
 }
 
 // Your own tasks: add a floating one, edit it, add a repeating one, delete with undo.

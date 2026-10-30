@@ -117,6 +117,22 @@ export async function sync() {
   app.render();
 }
 
+/**
+ * Save your school's Canvas host, then sync. Changing schools clears the old school's
+ * assignments and classes (settings and your own tasks stay).
+ */
+export async function setSchool(host) {
+  const changed = app.state.canvas.host && app.state.canvas.host !== host;
+  const patch = { canvas: { host } };
+  if (changed) {
+    patch.items = Object.fromEntries(Object.entries(app.state.items).filter(([, i]) => i.task));
+    patch.courses = {};
+    patch.meta = { lastSyncAt: null, lastError: null };
+  }
+  await saveState(patch);
+  await sync();
+}
+
 /** Ask Firefox for access to Canvas (must run straight from a click), then sync. */
 export async function allowCanvasAccess() {
   if (await browser.permissions.request(CANVAS_ORIGINS).catch(() => false)) await sync();
