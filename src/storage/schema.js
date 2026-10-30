@@ -96,6 +96,7 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     customTint: hexOr(s.customTint, d.customTint ?? DEFAULT_SETTINGS.customTint),
     neonGlow: hexOr(s.neonGlow, d.neonGlow ?? DEFAULT_SETTINGS.neonGlow),
     neonGlow2: hexOr(s.neonGlow2, d.neonGlow2 ?? DEFAULT_SETTINGS.neonGlow2),
+    neonBg: hexOr(s.neonBg, d.neonBg ?? DEFAULT_SETTINGS.neonBg),
     holidayLooks: typeof s.holidayLooks === 'boolean' || s.holidayLooks === null ? s.holidayLooks : (d.holidayLooks ?? null),
     seasonOffers: typeof s.seasonOffers === 'boolean' ? s.seasonOffers : (d.seasonOffers ?? true),
     seasonAnswered: Array.isArray(s.seasonAnswered)

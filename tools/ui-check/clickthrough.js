@@ -239,6 +239,11 @@ async function run() {
   glow.value = '#ff00aa'; fire(glow, 'change'); await wait(200);
   check('neon glow color saved and used', window.__store.settings.neonGlow === '#ff00aa'
     && getComputedStyle(document.documentElement).getPropertyValue('--glow').includes('255, 0, 170'), getComputedStyle(document.documentElement).getPropertyValue('--glow'));
+  const neonBg = document.querySelector('[data-key="neonBg"]');
+  neonBg.value = '#ff0000'; fire(neonBg, 'change'); await wait(200);
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(bg.slice(i, i + 2), 16));
+  check('neon background tinted but still dark', window.__store.settings.neonBg === '#ff0000' && r > g && r < 40 && g < 20 && b < 20, bg);
   document.querySelector('[data-key="look-custom"]').click(); await wait(200);
   const effects = document.querySelector('[data-key="effects"]');
   effects.value = '3'; fire(effects, 'input');

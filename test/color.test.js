@@ -31,8 +31,10 @@ test('every theme and accent stays readable in light and dark', () => {
 });
 
 test('Neon is readable, with your glow colors too (even a dark pick)', () => {
-  for (const glow of [undefined, '#220044', '#ff00aa']) {
-    const p = neonVars({ neonGlow: glow, neonGlow2: '#110022' });
+  for (const [glow, bg] of [[undefined, undefined], ['#220044', '#ffffff'], ['#ff00aa', '#ffff00'], ['#22d3ee', '#000000']]) {
+    const p = neonVars({ neonGlow: glow, neonGlow2: '#110022', neonBg: bg });
+    assert.ok(contrast(p['--text'], p['--bg']) >= 7, `${bg}: text`);
+    assert.ok(contrast(p['--muted'], p['--surface-2']) >= 4.5, `${bg}: muted`);
     assert.ok(contrast(p['--accent'], p['--surface']) >= 4.5, `${glow}: accent`);
     assert.ok(contrast(p['--on-accent'], p['--accent']) >= 4.5, `${glow}: on-accent`);
   }

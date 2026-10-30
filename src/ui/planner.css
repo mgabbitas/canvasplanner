@@ -653,11 +653,11 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
 @media (prefers-reduced-motion: reduce) { .tour-spot { transition: none; } }
 
 /* Neon: always dark; glowing bars, active controls and title, a faint haze behind. */
-:root[data-look="neon"] { --track: #1b1b30; --bad-text: #ff5c7a; } /* --glow, --glow-2 come from your Neon colors */
+:root[data-look="neon"] { --bad-text: #ff5c7a; } /* --glow, --glow-2, --haze-*, --track come from your Neon colors */
 :root[data-look="neon"] body {
   background-attachment: fixed;
-  background-image: radial-gradient(ellipse at 15% -10%, rgba(124, 58, 237, 0.22), transparent 45%),
-    radial-gradient(ellipse at 95% 110%, rgba(34, 211, 238, 0.14), transparent 50%);
+  background-image: radial-gradient(ellipse at 15% -10%, var(--haze-1), transparent 45%),
+    radial-gradient(ellipse at 95% 110%, var(--haze-2), transparent 50%);
 }
 :root[data-look="neon"] :is(.bar, .dt-bar) { overflow: visible; }
 :root[data-look="neon"] :is(.bar, .dt-bar) > .done { box-shadow: 0 0 6px var(--glow), 0 0 14px var(--glow); border-radius: 3px; }

@@ -451,8 +451,9 @@ function appearanceSection(ctx) {
       : null,
     s.look === 'neon'
       ? el('div', { className: 'field' }, el('span', {}, 'Neon colors'),
-        el('div', { className: 'color-picks' }, colorInput('neonGlow', 'Glow'), colorInput('neonGlow2', 'Second glow (planned time)')),
-        el('small', {}, 'Dark picks are brightened a little so they show up on black.'))
+        el('div', { className: 'color-picks' }, colorInput('neonGlow', 'Glow'), colorInput('neonGlow2', 'Second glow (planned time)'),
+          colorInput('neonBg', 'Background')),
+        el('small', {}, 'The background color only tints the dark, so it stays easy to read; the haze behind the page follows your glows. Dark glow picks are brightened a little so they show up.'))
       : null,
     s.look === 'custom'
       ? el('div', { className: 'field' }, el('span', {}, 'Custom colors'),

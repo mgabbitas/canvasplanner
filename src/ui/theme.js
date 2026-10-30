@@ -108,14 +108,31 @@ export function applyTheme(settings, date = toLocalDate(Date.now()), preview = n
   shownTint = colors?.tint ?? null;
   return look;
 }
-/** Neon with your two glow colors, each brightened if needed to read on the near-black cards. */
+/**
+ * Neon with your colors: the background color is mixed lightly into near-black (so it
+ * always stays dark), and the glows are brightened if needed to read on the cards.
+ */
 export function neonVars(settings) {
-  const base = THEMES.neon.vars;
-  const glow = ensureContrast(settings.neonGlow ?? THEMES.neon.accent, base['--surface'], 4.5, '#ffffff');
-  const glow2 = ensureContrast(settings.neonGlow2 ?? '#d946ef', base['--surface'], 3, '#ffffff');
+  const tint = settings.neonBg ?? THEMES.neon.tint;
+  const surface = mix('#0b0b14', tint, 0.07);
+  const surface2 = mix('#111120', tint, 0.09);
+  const base = {
+    ...THEMES.neon.vars,
+    '--bg': mix('#040408', tint, 0.05),
+    '--surface': surface,
+    '--surface-2': surface2,
+    '--border': mix('#1e1e36', tint, 0.22),
+    '--bar': mix('#1a1a2e', tint, 0.12),
+    '--track': mix('#17172a', tint, 0.12),
+    '--muted': ensureContrast(THEMES.neon.vars['--muted'], surface2, 4.5, '#ffffff'),
+  };
+  const glow = ensureContrast(settings.neonGlow ?? THEMES.neon.accent, surface, 4.5, '#ffffff');
+  const glow2 = ensureContrast(settings.neonGlow2 ?? '#d946ef', surface, 3, '#ffffff');
   const rgba = (hex, a) => `rgba(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')}, ${a})`;
   return {
     ...base,
+    '--haze-1': rgba(glow2, 0.2),
+    '--haze-2': rgba(glow, 0.13),
     '--accent': glow,
     '--accent-soft': mix(glow, base['--surface'], 0.82),
     '--on-accent': contrast('#06060c', glow) >= 4.5 ? '#06060c' : '#ffffff',
@@ -125,4 +142,4 @@ export function neonVars(settings) {
   };
 }
 
-const PALETTE_VARS = ['--bg', '--surface', '--surface-2', '--border', '--bar', '--text', '--muted', '--accent', '--accent-soft', '--on-accent', '--glow', '--glow-2', '--glow-2-soft'];
+const PALETTE_VARS = ['--bg', '--surface', '--surface-2', '--border', '--bar', '--text', '--muted', '--accent', '--accent-soft', '--on-accent', '--glow', '--glow-2', '--glow-2-soft', '--track', '--haze-1', '--haze-2'];

@@ -29,6 +29,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   customTint: '#2563c9',
   neonGlow: '#22d3ee', // Neon's main glow (accent, finished time)
   neonGlow2: '#d946ef', // Neon's second glow (planned time)
+  neonBg: '#7c3aed', // tints Neon's near-black background (always stays dark)
   holidayLooks: null, // dress up on holidays (just that day): null until you answer
   seasonOffers: true, // offer the Fall / Christmas theme when the season starts
   seasonAnswered: [], // ['fall-2026', …]: seasons already offered this year
