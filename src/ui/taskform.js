@@ -71,8 +71,10 @@ export function openTaskForm({ item = null, seriesId = null, courseId = null } =
     if (repeatIn.checked) {
       const weekdays = days.map((d) => d.querySelector('input')).filter((i) => i.checked).map((i) => Number(i.value));
       if (!weekdays.length) return void (error.textContent = 'Pick at least one day for it to repeat on.');
+      const start = series?.start ?? today();
+      if (untilIn.value && untilIn.value < start) return void (error.textContent = 'The end date is before it starts.');
       const id = series?.id ?? newId('s');
-      const next = validateTaskSeries({ [id]: { ...fields, id, weekdays, start: series?.start ?? today(), until: untilIn.value || null } })[id];
+      const next = validateTaskSeries({ [id]: { ...fields, id, weekdays, start, until: untilIn.value || null } })[id];
       if (!next) return void (error.textContent = 'Check the dates and try again.');
       saveSeries(next);
     } else {

@@ -19,7 +19,7 @@ function localDue(iso) {
 const minutes = (m) => (m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m`);
 
 /** Escape text values: backslash, semicolon, comma, newline. */
-export const escapeText = (s) => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+export const escapeText = (s) => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
 
 /** Fold lines longer than 75 octets (continuation lines start with a space). */
 export function fold(line) {

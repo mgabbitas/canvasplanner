@@ -59,8 +59,12 @@ const uncheck = (item) => updateItem(item.id, {
 function splitMenu(entry) {
   const { item } = entry;
   const total = estimate(item, app.state.settings).minutes;
-  if (entry.inClass || entry.overdue || total < 10) return [];
-  const most = Math.min(MAX_PARTS, Math.max(4, Math.floor(total / 30)));
+  if (entry.inClass) return [];
+  // New splits only for upcoming work worth splitting; "Don't split" stays reachable.
+  const canSplit = !entry.overdue && total >= 10;
+  const canUnsplit = item.splitParts && !item.partsDone?.length;
+  if (!canSplit && !canUnsplit) return [];
+  const most = canSplit ? Math.min(MAX_PARTS, Math.max(4, Math.floor(total / 30))) : 1;
   const out = [el('div', { className: 'menu-label' }, 'Split across days')];
   for (let n = 2; n <= most; n++) {
     out.push(el('button', {
@@ -68,7 +72,7 @@ function splitMenu(entry) {
       onclick: () => updateItem(item.id, { splitParts: n, plannedOn: null, pinned: false }),
     }, `${n} parts · ${minutesLabel(Math.ceil(total / n))} each`, item.splitParts === n ? el('span', { className: 'muted' }, ' · now') : null));
   }
-  if (item.splitParts && !item.partsDone?.length) {
+  if (canUnsplit) {
     out.push(el('button', { role: 'menuitem', 'data-key': `unsplit-${item.id}`, onclick: () => updateItem(item.id, { splitParts: null }) }, "Don't split"));
   }
   out.push(el('hr'));

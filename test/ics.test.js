@@ -32,7 +32,7 @@ test('ics: all-day events on the planned day, due date in the notes', () => {
 });
 
 test('ics: escaping and folding', () => {
-  assert.equal(escapeText('a,b;c\\d\ne'), 'a\\,b\;c\\\\d\\ne');
+  assert.equal(escapeText('a,b;c\\d\ne'), 'a\\,b\\;c\\\\d\\ne');
   const long = `SUMMARY:${'é'.repeat(60)}`;
   const folded = fold(long);
   assert.equal(folded.replace(/\r\n /g, ''), long);

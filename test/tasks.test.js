@@ -106,3 +106,25 @@ test('week streak ignores repeats; export and import carry tasks and series', ()
   assert.equal(next.items['9'].minutesOverride, 15);
   assert.deepEqual(next.taskSeries, { sab: series() });
 });
+
+test('floating task: moving it to a day works; once done it shows under Done', () => {
+  const moved = { ...task(), plannedOn: '2026-10-07' };
+  const p = plan({ items: [moved], settings: S, now: now('2026-10-05') });
+  assert.equal(dateOf(p, 't1'), '2026-10-07');
+  assert.equal(p.days.flatMap((d) => d.items).find((e) => e.id === 't1').movedTo, '2026-10-07');
+  const finished = { ...task(), manualDone: true, doneOn: '2026-10-05' };
+  const q = plan({ items: [finished], settings: S, now: now('2026-10-06') });
+  assert.deepEqual(q.done.map((e) => e.id), ['t1']);
+  assert.equal(q.done[0].canUncheck, true);
+  // Finished in an earlier week: not in this week's Done.
+  assert.deepEqual(plan({ items: [finished], settings: S, now: now('2026-10-13') }).done, []);
+});
+
+test('sync: tasks follow their class (hidden while it is inactive, back when it returns)', async () => {
+  const { applySync } = await import('../src/sync/canvas.js');
+  const state = migrate({ items: { t1: task(), 9: { courseId: '7', title: 'Canvas' } }, courses: { 7: { name: 'Physics' } } });
+  const gone = applySync(state, { courses: [], results: [] }, '2026-10-05T12:00:00Z');
+  assert.equal(gone.items.t1.hidden, true);
+  const back = applySync({ ...state, items: gone.items }, { courses: [{ id: '7', name: 'Physics' }], results: [] }, '2026-10-06T12:00:00Z');
+  assert.equal(back.items.t1.hidden, false);
+});

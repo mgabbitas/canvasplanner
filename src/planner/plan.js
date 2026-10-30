@@ -130,7 +130,12 @@ export function plan({ items, settings, weekState = {}, now }) {
   for (const e of entries) {
     if (!e.item.task?.floating) continue;
     const deadline = behind ? week.end : week.cutoff;
-    Object.assign(e, { floating: true, dueDay: deadline, workDay: deadline, lastDay: maxDate(deadline, today), dueToday: false, dueTomorrow: false });
+    const lastDay = maxDate(deadline, today);
+    // A day you moved it to counts while it's inside this week's window (toEntry
+    // couldn't tell: a floating task has no due date of its own).
+    const p = e.item.plannedOn;
+    const movedTo = !e.inClass && p && p >= e.firstDay && p <= lastDay ? p : null;
+    Object.assign(e, { floating: true, dueDay: deadline, workDay: deadline, lastDay, movedTo, dueToday: false, dueTomorrow: false });
   }
 
   const inWeek = (d) => d >= week.start && d <= week.end;
@@ -287,8 +292,9 @@ export function plan({ items, settings, weekState = {}, now }) {
 
   // --- done this week (for the collapsible Done section) ---
   const done = all
-    .filter((i) => isDone(i) && !i.hidden && courseIncluded(i, settings) && i.dueAt
-      && (inWeek(toLocalDate(i.dueAt)) || inWeek(workDueDate(i.dueAt)) || i.pulledIn))
+    .filter((i) => isDone(i) && !i.hidden && courseIncluded(i, settings) && (i.dueAt
+      ? inWeek(toLocalDate(i.dueAt)) || inWeek(workDueDate(i.dueAt)) || i.pulledIn
+      : i.task?.floating && inWeek(doneDay(i) ?? ''))) // a floating task: the week you finished it
     .map((i) => ({ ...toEntry(i, settings, today), canUncheck: !i.canvasDone }));
 
   return {

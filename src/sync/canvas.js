@@ -112,7 +112,10 @@ export function applySync(state, { courses, results }, nowIso) {
   }
   items = { ...items };
   for (const [id, item] of Object.entries(items)) {
-    if (!activeIds.has(item.courseId) && !item.hidden) items[id] = { ...item, hidden: true };
+    // Your tasks follow their class: hidden while it isn't active, back when it is.
+    // (Canvas items come back through mergeCourse; tasks aren't part of a fetch.)
+    const hidden = !activeIds.has(item.courseId);
+    if (item.task ? item.hidden !== hidden : hidden && !item.hidden) items[id] = { ...item, hidden };
   }
   const courseMap = { ...state.courses };
   for (const c of courses) courseMap[c.id] = { name: c.name };

@@ -5,6 +5,8 @@ import { loadState } from './storage/store.js';
 import { runSync } from './sync/run.js';
 import { CANVAS } from './sync/canvas.js';
 import { todaySummary, badgeText } from './planner/today.js';
+import { syncSeries } from './planner/tasks.js';
+import { toLocalDate } from './planner/dates.js';
 
 let syncing = false;
 
@@ -37,8 +39,10 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
 
 async function updateBadge() {
   const state = await loadState();
+  // Count today's repeat copies even if no page has created them yet (not saved here).
+  const items = syncSeries(state.items, state.taskSeries, toLocalDate(Date.now()), state.settings);
   const text = state.meta.lastSyncAt
-    ? badgeText(todaySummary({ items: state.items, settings: state.settings, weekState: state.weekState, now: Date.now() }))
+    ? badgeText(todaySummary({ items, settings: state.settings, weekState: state.weekState, now: Date.now() }))
     : '';
   await browser.action.setBadgeText({ text });
 }

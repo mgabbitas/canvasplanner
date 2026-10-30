@@ -163,6 +163,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => rend
 browser.storage.onChanged.addListener(async (_changes, area) => {
   if (area !== 'local' || app.syncing || app.editingDay) return;
   app.state = await loadState();
+  app.seriesDay = null; // an import or another tab may have changed repeating tasks
   render();
 });
 
