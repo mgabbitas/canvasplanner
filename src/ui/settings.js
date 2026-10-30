@@ -471,7 +471,7 @@ function appearanceSection(ctx) {
   );
 }
 
-const ISSUES = 'https://github.com/makowood/canvasplanner/issues/new';
+const ISSUES = 'https://github.com/mgabbitas/canvasplanner/issues/new';
 
 /** A new GitHub issue with the version filled in. Only a link: nothing is sent unless they submit it. */
 function reportUrl() {

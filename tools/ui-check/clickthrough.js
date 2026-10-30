@@ -344,7 +344,7 @@ async function run() {
   await go('#settings/general');
   check('fun messages toggle', !!document.querySelector('[data-key="funMessages"]'));
   const report = document.querySelector('[data-key="report"]');
-  check('report a problem link', report?.href.startsWith('https://github.com/makowood/canvasplanner/issues/new?')
+  check('report a problem link', report?.href.startsWith('https://github.com/mgabbitas/canvasplanner/issues/new?')
     && new URL(report.href).searchParams.get('body').includes('Canvas Planner 1.3.0') && !report.href.includes('+') && report.target === '_blank', report?.href.slice(0, 80));
   document.querySelector('[data-key="replay-tour"]').click();
   check('replay tour from settings', !!(await waitFor('[data-key="tour"]')) && location.hash === ''); // the tour loads on demand

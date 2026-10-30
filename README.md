@@ -30,7 +30,7 @@ Wednesday instead of piling up on Saturday.
 
 ## Install
 
-1. **Download** [canvas-planner.xpi](https://github.com/makowood/canvasplanner/releases/latest/download/canvas-planner.xpi)
+1. **Download** [canvas-planner.xpi](https://github.com/mgabbitas/canvasplanner/releases/latest/download/canvas-planner.xpi)
    (the latest version, signed by Mozilla).
 2. **Drag the downloaded file onto any Firefox window** and click **Add** when Firefox
    asks. (Or open `about:addons`, click the ⚙ gear, choose **Install Add-on From
