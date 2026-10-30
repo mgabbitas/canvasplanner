@@ -298,6 +298,17 @@ async function run() {
   check('class color pick', Object.values(window.__store.settings.courses).some((c) => c.color));
 
   // Turn the pull gate off, then pull an item and send it back.
+  await go('#settings/data');
+  {
+    let blob = null;
+    const realCreate = URL.createObjectURL;
+    URL.createObjectURL = (b) => { blob = b; return realCreate.call(URL, b); };
+    document.querySelector('[data-key="export-ics"]').click(); await wait(100);
+    URL.createObjectURL = realCreate;
+    const text = blob ? await blob.text() : '';
+    check('calendar export', blob?.type === 'text/calendar' && text.startsWith('BEGIN:VCALENDAR') && (text.match(/BEGIN:VEVENT/g) ?? []).length > 3,
+      `${(text.match(/BEGIN:VEVENT/g) ?? []).length} events`);
+  }
   await go('#settings/general');
   check('fun messages toggle', !!document.querySelector('[data-key="funMessages"]'));
   document.querySelector('[data-key="replay-tour"]').click(); await wait(400);

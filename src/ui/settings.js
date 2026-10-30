@@ -2,6 +2,8 @@
 // settings and saved immediately.
 import { validateSettings, validateRule, TYPES } from '../storage/schema.js';
 import { suggestRules, applySuggestion, MIN_LOGS_FOR_SUGGESTION } from '../planner/stats.js';
+import { plan, planNextWeek } from '../planner/plan.js';
+import { buildIcs } from '../planner/ics.js';
 import { DEFAULT_SETTINGS, TIME_PRESETS } from '../storage/defaults.js';
 import { buildExport, applyImport, MAX_IMPORT_BYTES } from '../storage/transfer.js';
 import { el, select, WEEKDAYS, TYPE_LABELS, minutesLabel, readInt } from './dom.js';
@@ -489,16 +491,26 @@ function generalSection(ctx) {
 function dataSection(ctx) {
   const say = (text, bad = false) => { message = { text, bad }; ctx.render(); };
 
-  const exportData = () => {
-    const data = buildExport(ctx.state, new Date().toISOString());
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = el('a', { href: url, download: `canvas-planner-${new Date().toISOString().slice(0, 10)}.json` });
+  const download = (text, type, name) => {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = el('a', { href: url, download: name });
     document.body.append(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const exportData = () => {
+    const data = buildExport(ctx.state, new Date().toISOString());
+    download(JSON.stringify(data, null, 2), 'application/json', `canvas-planner-${new Date().toISOString().slice(0, 10)}.json`);
     say('Exported.');
+  };
+  const exportCalendar = () => {
+    const { items, settings, weekState } = ctx.state;
+    const args = { items, settings, weekState, now: Date.now() };
+    const name = (id) => settings.courses[id]?.displayName || ctx.state.courses[id]?.name || `Class ${id}`;
+    download(buildIcs([plan(args), planNextWeek(args)], { now: Date.now(), courseName: name }), 'text/calendar',
+      `canvas-planner-${new Date().toISOString().slice(0, 10)}.ics`);
+    say('Calendar downloaded. Open the file (or import it in your calendar app) to add the events.');
   };
 
   const importInput = el('input', {
@@ -528,6 +540,9 @@ function dataSection(ctx) {
       importInput,
     ),
     el('p', { className: 'hint' }, 'Export saves settings, your tasks, your per-item changes (minutes, checks, dismissals) and streak history to a file. It contains no Canvas content.'),
+    el('div', { className: 'field' }, el('span', {}, 'Calendar'),
+      el('button', { onclick: exportCalendar, 'data-key': 'export-ics' }, 'Download calendar (.ics)'),
+      el('small', {}, 'This week\'s and next week\'s plan as all-day events on their target days, with the due date in each event. It\'s a snapshot: download again after the plan changes. Some calendar apps (like Google) may add duplicates instead of updating.')),
     message ? el('p', { className: message.bad ? 'warn-text' : 'hint', role: 'status' }, message.text) : null,
     el('div', { className: 'danger-zone' },
       el('h3', {}, 'Danger zone'),
