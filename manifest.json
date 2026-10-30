@@ -3,6 +3,7 @@
   "name": "Canvas Planner",
   "version": "1.4.0",
   "description": "Plans self-assigned target dates for your Canvas assignments, so work gets done early.",
+  "homepage_url": "https://github.com/mgabbitas/canvasplanner",
   "browser_specific_settings": {
     "gecko": {
       "id": "canvasplanner@local",

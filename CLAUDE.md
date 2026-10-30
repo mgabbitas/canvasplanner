@@ -81,8 +81,9 @@ file and SPEC.md disagree, stop and ask me.
 2. `npm test`, `npm run check:ui`, `npx web-ext lint`, a quick Chromium check (sync,
    popup, badge), then `npm run build`.
 3. I upload `web-ext-artifacts/canvas_planner-<version>.zip` at addons.mozilla.org
-   ("On your own"), then put the signed `.xpi` in the project folder. I upload the same
-   zip to the Chrome Web Store developer dashboard.
+   (listed, "On this site", since 1.4.0) and the same zip to the Chrome Web Store
+   developer dashboard (see `STORE.md`). For hand installs, I download the signed
+   `.xpi` from AMO into the project folder.
 4. Publish a GitHub Release `v<version>` with the signed file attached as
    `canvas-planner.xpi` (that exact name: the README links to
    `releases/latest/download/canvas-planner.xpi`). `.xpi` files are never committed.

@@ -27,6 +27,9 @@ Wednesday instead of piling up on Saturday.
   Stats page shows your real averages and suggests better time estimates.
 - **Stays private.** It only reads your assignments, using your normal Canvas login.
   Nothing is sent anywhere else, and it never submits or changes anything in Canvas.
+  Details in the [privacy policy](PRIVACY.md).
+
+Canvas Planner is an independent project, not made by or affiliated with Instructure.
 
 ## Install
 
@@ -94,7 +97,8 @@ npm test           # unit tests
 npm run check:ui   # click through the page in headless Firefox (needs local test data)
 npm start          # open a dev Firefox profile, then Load Temporary Add-on → manifest.json
                    # Chrome: chrome://extensions → Developer mode → Load unpacked → this folder
-npm run build      # package for signing (web-ext-artifacts/)
+npm run build      # package for the stores (web-ext-artifacts/)
+npm run shots:store  # store screenshots from made-up classes (web-ext-artifacts/store/)
 ```
 
 Requirements and design decisions are in [SPEC.md](SPEC.md).
@@ -106,8 +110,9 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Changelog
 
-- **1.4.0**: Also runs in Chrome (Chrome Web Store listing coming). Sync troubleshooting
-  steps name your browser's own menus.
+- **1.4.0**: Also runs in Chrome (Chrome Web Store listing coming). Listed on
+  addons.mozilla.org from this version, so Firefox keeps it up to date. Sync
+  troubleshooting steps name your browser's own menus. A privacy policy.
 - **1.3.0**: Works with any school's Canvas at an instructure.com address: enter yours on
   first run, or change it in Settings → General. Firefox asks to approve access to
   instructure.com sites when you update.

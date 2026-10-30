@@ -458,5 +458,8 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
   worst case one extra sync. Chrome caps `storage.local` at 10 MB; a semester of real
   data is about 310 KB, so no `unlimitedStorage`. Testing: `check:ui` stays on Firefox;
   before each release also Load unpacked in Chromium and check sync, popup, badge and
-  the Canvas-visit open. Distribution: Chrome Web Store, unlisted first (public later
-  needs a listing, screenshots and a privacy policy), uploading the same zip as AMO.
+  the Canvas-visit open. Distribution (decided 2026-10-30): from 1.4.0, listed on
+  addons.mozilla.org so Firefox auto-updates it, and on the Chrome Web Store (unlisted
+  or public, chosen at submission), the same zip for both. Listing text and the
+  checklist are in `STORE.md`, the policy in `PRIVACY.md`; `npm run shots:store`
+  makes store screenshots from made-up classes.
