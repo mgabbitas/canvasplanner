@@ -103,7 +103,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 ## Changelog
 
 - **1.2.1**: Fixed "null" showing under Today in the toolbar popup. "Report a problem" link
-  in Settings → General.
+  in Settings → General. Fixes: moving and unchecking tasks with no due date, tasks staying
+  hidden after a sync hiccup, semicolons in the calendar file, and a few smaller ones.
 - **1.2.0**: Streak counters (weeks on target, days on plan) in the header and on
   Stats. Sync login errors now say what Canvas answered and list what to check, with an
   **Allow access** button if Firefox hasn't given the add-on access to Canvas. Settings
