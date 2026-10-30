@@ -324,8 +324,11 @@ async function run() {
   }
   await go('#settings/general');
   check('fun messages toggle', !!document.querySelector('[data-key="funMessages"]'));
-  document.querySelector('[data-key="replay-tour"]').click(); await wait(400);
-  check('replay tour from settings', !!document.querySelector('[data-key="tour"]') && location.hash === '');
+  const report = document.querySelector('[data-key="report"]');
+  check('report a problem link', report?.href.startsWith('https://github.com/makowood/canvasplanner/issues/new?')
+    && new URL(report.href).searchParams.get('body').includes('Canvas Planner 1.2.1') && !report.href.includes('+') && report.target === '_blank', report?.href.slice(0, 80));
+  document.querySelector('[data-key="replay-tour"]').click();
+  check('replay tour from settings', !!(await waitFor('[data-key="tour"]')) && location.hash === ''); // the tour loads on demand
   document.querySelector('[data-key="tour-skip"]')?.click(); await wait(150);
   check('skip tour', !document.querySelector('[data-key="tour"]'));
   await go('#settings/general');

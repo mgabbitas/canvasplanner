@@ -470,6 +470,15 @@ function appearanceSection(ctx) {
   );
 }
 
+const ISSUES = 'https://github.com/makowood/canvasplanner/issues/new';
+
+/** A new GitHub issue with the version filled in. Only a link: nothing is sent unless they submit it. */
+function reportUrl() {
+  const version = browser.runtime.getManifest().version;
+  const body = `**What happened?**\n\n\n**What did you expect?**\n\n\n---\nCanvas Planner ${version}, ${navigator.userAgent.match(/Firefox\/[\d.]+/)?.[0] ?? 'Firefox'}`;
+  return `${ISSUES}?title=${encodeURIComponent('Problem: ')}&body=${encodeURIComponent(body)}`;
+}
+
 function generalSection(ctx) {
   const s = ctx.state.settings;
   const toggle = (key, label, hint) => toggleField(ctx, key, label, hint);
@@ -478,6 +487,9 @@ function generalSection(ctx) {
       'The first Canvas visit in each browser session opens the planner and syncs. Visiting Canvas also syncs quietly whenever your data is stale.'),
     toggle('includeNonSubmittable', 'Plan items that can\'t be submitted online', 'e.g. "no submission" or "on paper" assignments.'),
     toggle('funMessages', 'Celebrations and late-night notes', 'A cheer when you get days ahead, and a nudge to sleep after midnight.'),
+    el('div', { className: 'field' }, el('span', {}, 'Problems'),
+      el('a', { href: reportUrl(), target: '_blank', rel: 'noopener noreferrer', 'data-key': 'report' }, 'Found a problem? Report it'),
+      el('small', {}, `Opens a new issue on GitHub (you'll need a GitHub account). A screenshot helps. You're on version ${browser.runtime.getManifest().version}.`)),
     el('div', { className: 'field' }, el('span', {}, 'Tour'),
       el('button', { 'data-key': 'replay-tour', onclick: () => { app.replayTour = true; location.hash = ''; } }, 'Take the tour'),
       el('small', {}, 'A quick look at the main parts of the planner.')),

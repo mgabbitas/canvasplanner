@@ -73,7 +73,7 @@ Everything is in **Settings** (left sidebar). Changes save automatically.
 | **Rules** | How long things take. Pick a class to see its rules, e.g. "*report* → 25 min" for Physics, or use All classes for rules like "any *quiz* → 15 min" and the default time per assignment type. |
 | **Classes** | Hide classes you don't want planned, give them shorter names, and pick a color for each. |
 | **Appearance** | Light, dark or system mode; a theme (Plain, Ocean, Forest, Sunset, Lavender, Fall, Christmas, Patriotic, Neon, or your own colors); a few holiday surprises, and falling snow and leaves. |
-| **General** | Whether visiting Canvas opens the planner, celebrations and late-night notes, and **Take the tour**. |
+| **General** | Whether visiting Canvas opens the planner, celebrations and late-night notes, **Take the tour**, and **Report a problem**. |
 | **Data** | Export a backup, import one (for example on a new computer), download your plan as a calendar file (.ics), or reset. |
 
 Each tab has a collapsed **Advanced** section for the finer controls (exact minutes per
@@ -102,7 +102,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Changelog
 
-- **1.2.1**: Fixed "null" showing under Today in the toolbar popup.
+- **1.2.1**: Fixed "null" showing under Today in the toolbar popup. "Report a problem" link
+  in Settings → General.
 - **1.2.0**: Streak counters (weeks on target, days on plan) in the header and on
   Stats. Sync login errors now say what Canvas answered and list what to check, with an
   **Allow access** button if Firefox hasn't given the add-on access to Canvas. Settings
