@@ -43,6 +43,7 @@ async function run() {
   await wait(300);
   check('day tabs render', $$('.day-tab').length >= 2, `${$$('.day-tab').length} tabs`);
   check('week tab first', $$('.day-tab')[0]?.textContent.startsWith('Week'));
+  check('page shows no "null" or "undefined"', !/\b(null|undefined)\b/.test(document.body.innerText), document.body.innerText.match(/.{0,40}\b(null|undefined)\b.{0,20}/)?.[0]);
   // An existing user on a new version: What's new, no tour.
   check('What\'s new for an update', !!document.querySelector('[data-key="whats-new"]') && !document.querySelector('[data-key="tour"]'));
   document.querySelector('[data-key="whats-new-ok"]')?.click(); await wait(200);

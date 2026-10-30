@@ -78,7 +78,8 @@ function render() {
       ? 'Nothing left for today.'
       : 'Open the planner and sync to see today\'s work.');
 
-  document.getElementById('popup').replaceChildren(
+  // replaceChildren() would print a null as the text "null", so drop the empty slots.
+  document.getElementById('popup').replaceChildren(...[
     el('header', { className: 'popup-head' },
       el('h1', {}, 'Today'),
       el('span', { className: 'muted' }, dayLabel(date, { weekday: 'short', month: 'short', day: 'numeric' }))),
@@ -91,7 +92,7 @@ function render() {
       doneCount ? `${doneCount} done today` : null),
     list,
     el('button', { className: 'primary popup-open', onclick: openPlanner, 'data-key': 'open-planner' }, 'Open planner'),
-  );
+  ].filter(Boolean));
 }
 
 state = await loadState();
