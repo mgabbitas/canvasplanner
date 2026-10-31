@@ -160,3 +160,10 @@ rmSync(work, { recursive: true, force: true });
 // Chrome Web Store promo tile (440x280).
 execFileSync('rsvg-convert', ['-w', '440', '-h', '280', join(REPO, 'tools/store-shots/promo-tile.svg'), '-o', join(OUT, 'promo-tile-440x280.png')]);
 console.log('web-ext-artifacts/store/promo-tile-440x280.png');
+
+// Chrome Web Store icon: 128x128 with the logo at 96x96 and 16px of transparent padding.
+const icon96 = join(tmpdir(), 'planner-icon-96.png');
+execFileSync('rsvg-convert', ['-w', '96', '-h', '96', join(REPO, 'icons/logo.svg'), '-o', icon96]);
+execFileSync('magick', [icon96, '-background', 'none', '-gravity', 'center', '-extent', '128x128', join(OUT, 'store-icon-128.png')]);
+rmSync(icon96);
+console.log('web-ext-artifacts/store/store-icon-128.png');

@@ -13,7 +13,7 @@ Web Store. Text to paste is in "Listing text" at the bottom.
    `web-ext-artifacts/planner_for_canvas-1.4.1.zip` (the same file goes to both stores).
 4. [ ] **Make the images:** `npm run shots:store` → `web-ext-artifacts/store/`:
    `1-this-week.png` … `6-popup.png` (1280×800 screenshots, made-up classes) and
-   `promo-tile-440x280.png`. Store icon: `icons/logo-128.png`.
+   `promo-tile-440x280.png` and `store-icon-128.png` (Chrome's store icon).
 
 ## 1. Firefox: addons.mozilla.org
 
@@ -54,7 +54,7 @@ Web Store. Text to paste is in "Listing text" at the bottom.
    - Description: paste **Description** below
    - Category: **Education** (or Productivity → Workflow & Planning)
    - Language: English
-   - Store icon: `icons/logo-128.png`
+   - Store icon: `web-ext-artifacts/store/store-icon-128.png`
    - Screenshots: `1-…` to `6-…` (1280×800)
    - Small promo tile: `promo-tile-440x280.png`
    - Homepage URL: `https://github.com/mgabbitas/canvasplanner`
