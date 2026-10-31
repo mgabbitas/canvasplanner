@@ -1,4 +1,4 @@
-# Submitting Planner for Canvas 1.4.0
+# Submitting Planner for Canvas 1.4.1
 
 Step by step: Firefox (addons.mozilla.org, listed, so it auto-updates) and the Chrome
 Web Store. Text to paste is in "Listing text" at the bottom.
@@ -10,7 +10,7 @@ Web Store. Text to paste is in "Listing text" at the bottom.
 2. [ ] **Check the copyright name** in `LICENSE`: it says `mgabbitas`. Swap in your
    full name if you'd like, then commit and push.
 3. [ ] **Build the zip:** `npm run build` →
-   `web-ext-artifacts/planner_for_canvas-1.4.0.zip` (the same file goes to both stores).
+   `web-ext-artifacts/planner_for_canvas-1.4.1.zip` (the same file goes to both stores).
 4. [ ] **Make the images:** `npm run shots:store` → `web-ext-artifacts/store/`:
    `1-this-week.png` … `6-popup.png` (1280×800 screenshots, made-up classes) and
    `promo-tile-440x280.png`. Store icon: `icons/logo-128.png`.
@@ -21,7 +21,7 @@ Web Store. Text to paste is in "Listing text" at the bottom.
 2. [ ] Open **Canvas Planner** (your existing add-on; the name updates from the new
    zip) → **Upload New Version**.
 3. [ ] **How to distribute this version:** choose **On this site**. Continue.
-4. [ ] Upload `planner_for_canvas-1.4.0.zip`. Wait for validation; the one warning
+4. [ ] Upload `planner_for_canvas-1.4.1.zip`. Wait for validation; the one warning
    (`service_worker` ignored by Firefox) is expected. Continue.
 5. [ ] **Source code:** "Do you need to submit source code?" → **No**.
 6. [ ] **Describe the add-on** (first listed version only):
@@ -40,7 +40,7 @@ Web Store. Text to paste is in "Listing text" at the bottom.
 8. [ ] On the add-on's **Edit Product Page**: upload screenshots `1-…` to `6-…`,
    set Homepage to `https://github.com/mgabbitas/canvasplanner`, and save.
 9. [ ] **Check updates reach your friends:** on a Firefox that has the old version,
-   about:addons → ⚙ → **Check for Updates**. It should offer 1.4.0. (If it doesn't
+   about:addons → ⚙ → **Check for Updates**. It should offer 1.4.1. (If it doesn't
    within a day, they can install from the AMO page once; same ID, settings are kept.)
 10. [ ] Send Claude the AMO page link (`https://addons.mozilla.org/firefox/addon/planner-for-canvas/`
     if the slug was free) to switch the README's install section to it.
@@ -48,7 +48,7 @@ Web Store. Text to paste is in "Listing text" at the bottom.
 ## 2. Chrome Web Store
 
 1. [ ] Go to <https://chrome.google.com/webstore/devconsole> → **New item** → upload
-   `planner_for_canvas-1.4.0.zip`. (A warning about `browser_specific_settings` is
+   `planner_for_canvas-1.4.1.zip`. (A warning about `browser_specific_settings` is
    fine; it's Firefox's section.)
 2. [ ] **Store listing** tab:
    - Description: paste **Description** below

@@ -81,9 +81,10 @@ file and SPEC.md disagree, stop and ask me.
 2. `npm test`, `npm run check:ui`, `npx web-ext lint`, a quick Chromium check (sync,
    popup, badge), then `npm run build`.
 3. I upload `web-ext-artifacts/planner_for_canvas-<version>.zip` at addons.mozilla.org
-   (listed, "On this site", since 1.4.0) and the same zip to the Chrome Web Store
+   (listed, "On this site", since 1.4.1) and the same zip to the Chrome Web Store
    developer dashboard (see `STORE.md`). For hand installs, I download the signed
-   `.xpi` from AMO into the project folder.
+   `.xpi` from AMO into the project folder. AMO never reuses a version number, even
+   one that was deleted: a botched upload means bumping the version.
 4. Publish a GitHub Release `v<version>` with the signed file attached as
    `canvas-planner.xpi` (that exact name: the README links to
    `releases/latest/download/canvas-planner.xpi`). `.xpi` files are never committed.

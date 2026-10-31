@@ -111,7 +111,7 @@ Requirements and design decisions are in [SPEC.md](SPEC.md). MIT licensed (see
 
 ## Changelog
 
-- **1.4.0**: Renamed from Canvas Planner to Planner for Canvas. Also runs in Chrome
+- **1.4.1**: Renamed from Canvas Planner to Planner for Canvas. Also runs in Chrome
   (Chrome Web Store listing coming). Listed on addons.mozilla.org from this version,
   so Firefox keeps it up to date. Sync troubleshooting steps name your browser's own
   menus. Exported files are named with your local date (they could be a day ahead in

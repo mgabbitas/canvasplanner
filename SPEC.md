@@ -1,4 +1,4 @@
-# SPEC: Planner for Canvas (v1; called Canvas Planner until 1.4.0)
+# SPEC: Planner for Canvas (v1; called Canvas Planner before 1.4.1)
 
 ## 1. Problem
 Canvas shows when things are due, not how much lands on one day. One Saturday had 16
@@ -458,9 +458,10 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
   worst case one extra sync. Chrome caps `storage.local` at 10 MB; a semester of real
   data is about 310 KB, so no `unlimitedStorage`. Testing: `check:ui` stays on Firefox;
   before each release also Load unpacked in Chromium and check sync, popup, badge and
-  the Canvas-visit open. Distribution (decided 2026-10-30): from 1.4.0, listed on
-  addons.mozilla.org so Firefox auto-updates it, and on the Chrome Web Store (unlisted
-  or public, chosen at submission), the same zip for both. Listing text and the
+  the Canvas-visit open. Distribution (decided 2026-10-30): from 1.4.1 (1.4.0 was
+  uploaded and deleted, and AMO never reuses a number), listed on addons.mozilla.org
+  so Firefox auto-updates it, and on the Chrome Web Store (unlisted or public, chosen
+  at submission), the same zip for both. Listing text and the
   checklist are in `STORE.md`, the policy in `PRIVACY.md`; `npm run shots:store`
   makes store screenshots from made-up classes. Renamed to Planner for Canvas for the
   listing ("Canvas" is Instructure's trademark), MIT license. Only shown names changed:

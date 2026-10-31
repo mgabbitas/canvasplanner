@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Planner for Canvas",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Plans self-assigned target dates for your Canvas assignments, so work gets done early.",
   "homepage_url": "https://github.com/mgabbitas/canvasplanner",
   "browser_specific_settings": {
