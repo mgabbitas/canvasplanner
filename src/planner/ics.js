@@ -74,8 +74,8 @@ export function buildIcs(plans, { now, courseName }) {
     }
   }
   const lines = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Canvas Planner//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
-    'X-WR-CALNAME:Canvas Planner', ...events.flat(), 'END:VCALENDAR',
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Planner for Canvas//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'X-WR-CALNAME:Planner for Canvas', ...events.flat(), 'END:VCALENDAR',
   ];
   return `${lines.map(fold).join('\r\n')}\r\n`;
 }

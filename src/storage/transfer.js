@@ -42,9 +42,9 @@ export function buildExport(state, nowIso) {
  * Items not synced yet are kept as hidden stubs; the next sync fills them in.
  */
 export function applyImport(state, raw) {
-  if (!isObj(raw) || raw.app !== EXPORT_APP) throw new Error('This file is not a Canvas Planner export.');
+  if (!isObj(raw) || raw.app !== EXPORT_APP) throw new Error('This file is not a Planner for Canvas export.');
   if (!Number.isInteger(raw.schemaVersion) || raw.schemaVersion > SCHEMA_VERSION) {
-    throw new Error('This export is from a newer version of Canvas Planner.');
+    throw new Error('This export is from a newer version of Planner for Canvas.');
   }
   const { settings, weekState, dayLog, taskSeries } = migrate({
     schemaVersion: raw.schemaVersion, settings: raw.settings, weekState: raw.weekState, dayLog: raw.dayLog,

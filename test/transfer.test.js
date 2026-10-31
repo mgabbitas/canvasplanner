@@ -52,8 +52,8 @@ test('import replaces user fields that are not in the file', () => {
 });
 
 test('import rejects other files and clamps bad values', () => {
-  assert.throws(() => applyImport(stored(), { hello: 1 }), /not a Canvas Planner export/);
-  assert.throws(() => applyImport(stored(), []), /not a Canvas Planner export/);
+  assert.throws(() => applyImport(stored(), { hello: 1 }), /not a Planner for Canvas export/);
+  assert.throws(() => applyImport(stored(), []), /not a Planner for Canvas export/);
   assert.throws(() => applyImport(stored(), { app: 'canvas-planner', schemaVersion: 99 }), /newer version/);
   const next = applyImport(stored(), {
     app: 'canvas-planner', schemaVersion: 2,

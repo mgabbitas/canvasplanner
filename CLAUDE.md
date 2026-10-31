@@ -1,4 +1,4 @@
-# Canvas Planner
+# Planner for Canvas
 
 A Firefox and Chrome extension that reads my Canvas assignments and builds a schedule of
 self-assigned target dates, so homework gets finished early instead of on the official
@@ -80,7 +80,7 @@ file and SPEC.md disagree, stop and ask me.
 1. Bump `version` in `manifest.json` and `package.json`; add a changelog line to README.
 2. `npm test`, `npm run check:ui`, `npx web-ext lint`, a quick Chromium check (sync,
    popup, badge), then `npm run build`.
-3. I upload `web-ext-artifacts/canvas_planner-<version>.zip` at addons.mozilla.org
+3. I upload `web-ext-artifacts/planner_for_canvas-<version>.zip` at addons.mozilla.org
    (listed, "On this site", since 1.4.0) and the same zip to the Chrome Web Store
    developer dashboard (see `STORE.md`). For hand installs, I download the signed
    `.xpi` from AMO into the project folder.

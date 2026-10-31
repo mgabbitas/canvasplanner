@@ -13,7 +13,7 @@
       <path d="M8 14h16M12 7.5v4M20 7.5v4M12.5 19l2.5 2.5 4.5-4.5"/>
     </g>
   </g>
-  <text x="152" y="92" font-family="Noto Sans, sans-serif" font-size="30" font-weight="700" fill="#fff">Canvas Planner</text>
+  <text x="152" y="92" font-family="Noto Sans, sans-serif" font-size="27" font-weight="700" fill="#fff">Planner for Canvas</text>
   <text x="152" y="122" font-family="Noto Sans, sans-serif" font-size="16" fill="#dbe7fb">Homework done by Wednesday,</text>
   <text x="152" y="143" font-family="Noto Sans, sans-serif" font-size="16" fill="#dbe7fb">not the night it's due.</text>
   <g font-family="Noto Sans, sans-serif" font-size="13" fill="#fff">

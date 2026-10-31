@@ -335,8 +335,14 @@ async function run() {
     let blob = null;
     const realCreate = URL.createObjectURL;
     URL.createObjectURL = (b) => { blob = b; return realCreate.call(URL, b); };
+    // Catch the file instead of letting headless Firefox save it to ~/Downloads.
+    const realClick = HTMLAnchorElement.prototype.click;
+    let savedAs = null;
+    HTMLAnchorElement.prototype.click = function () { if (this.download) savedAs = this.download; else realClick.call(this); };
     document.querySelector('[data-key="export-ics"]').click(); await wait(100);
     URL.createObjectURL = realCreate;
+    HTMLAnchorElement.prototype.click = realClick;
+    check('calendar file name', /^planner-for-canvas-\d{4}-\d{2}-\d{2}\.ics$/.test(savedAs ?? ''), savedAs);
     const text = blob ? await blob.text() : '';
     check('calendar export', blob?.type === 'text/calendar' && text.startsWith('BEGIN:VCALENDAR') && (text.match(/BEGIN:VEVENT/g) ?? []).length > 3,
       `${(text.match(/BEGIN:VEVENT/g) ?? []).length} events`);
@@ -345,7 +351,7 @@ async function run() {
   check('fun messages toggle', !!document.querySelector('[data-key="funMessages"]'));
   const report = document.querySelector('[data-key="report"]');
   check('report a problem link', report?.href.startsWith('https://github.com/mgabbitas/canvasplanner/issues/new?')
-    && new URL(report.href).searchParams.get('body').includes('Canvas Planner 1.3.0') && !report.href.includes('+') && report.target === '_blank', report?.href.slice(0, 80));
+    && new URL(report.href).searchParams.get('body').includes('Planner for Canvas 1.3.0') && !report.href.includes('+') && report.target === '_blank', report?.href.slice(0, 80));
   document.querySelector('[data-key="replay-tour"]').click();
   check('replay tour from settings', !!(await waitFor('[data-key="tour"]')) && location.hash === ''); // the tour loads on demand
   document.querySelector('[data-key="tour-skip"]')?.click(); await wait(150);

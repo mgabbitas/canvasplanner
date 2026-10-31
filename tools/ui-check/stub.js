@@ -11,7 +11,7 @@
   const q = new URLSearchParams(location.search);
   // ?empty: first run. ?loginerror / ?noaccess: first run after a failed sync.
   const failed = q.has('loginerror') ? "Canvas didn't recognize your login (HTTP 401)."
-    : q.has('noaccess') ? "Canvas Planner isn't allowed to read Canvas yet" : null;
+    : q.has('noaccess') ? "Planner for Canvas isn't allowed to read Canvas yet" : null;
   const store = failed ? { meta: { lastSyncAt: null, lastError: failed } }
     : q.has('empty') ? {} : JSON.parse(xhr.responseText);
   // ?date=2026-10-31: pretend it's that day (noon), for holiday screenshots.

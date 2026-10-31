@@ -1,4 +1,4 @@
-# Canvas Planner
+# Planner for Canvas
 
 A Firefox add-on (Chrome version coming) that turns your Canvas assignments into a weekly plan. Instead of
 working to the official due dates, every assignment gets an earlier target day, and
@@ -29,7 +29,7 @@ Wednesday instead of piling up on Saturday.
   Nothing is sent anywhere else, and it never submits or changes anything in Canvas.
   Details in the [privacy policy](PRIVACY.md).
 
-Canvas Planner is an independent project, not made by or affiliated with Instructure.
+Planner for Canvas is an independent project, not made by or affiliated with Instructure.
 
 ## Install
 
@@ -101,7 +101,8 @@ npm run build      # package for the stores (web-ext-artifacts/)
 npm run shots:store  # store screenshots from made-up classes (web-ext-artifacts/store/)
 ```
 
-Requirements and design decisions are in [SPEC.md](SPEC.md).
+Requirements and design decisions are in [SPEC.md](SPEC.md). MIT licensed (see
+[LICENSE](LICENSE)).
 
 ## Planned
 
@@ -110,9 +111,11 @@ Requirements and design decisions are in [SPEC.md](SPEC.md).
 
 ## Changelog
 
-- **1.4.0**: Also runs in Chrome (Chrome Web Store listing coming). Listed on
-  addons.mozilla.org from this version, so Firefox keeps it up to date. Sync
-  troubleshooting steps name your browser's own menus. A privacy policy.
+- **1.4.0**: Renamed from Canvas Planner to Planner for Canvas. Also runs in Chrome
+  (Chrome Web Store listing coming). Listed on addons.mozilla.org from this version,
+  so Firefox keeps it up to date. Sync troubleshooting steps name your browser's own
+  menus. Exported files are named with your local date (they could be a day ahead in
+  the evening). A privacy policy and an MIT license.
 - **1.3.0**: Works with any school's Canvas at an instructure.com address: enter yours on
   first run, or change it in Settings → General. Firefox asks to approve access to
   instructure.com sites when you update.

@@ -1,8 +1,8 @@
-# Canvas Planner privacy policy
+# Planner for Canvas privacy policy
 
 Last updated: October 30, 2026
 
-Canvas Planner is a browser extension that turns your Canvas assignments into a weekly
+Planner for Canvas is a browser extension that turns your Canvas assignments into a weekly
 plan. It is not made by or affiliated with Instructure, the company behind Canvas.
 
 ## What it reads

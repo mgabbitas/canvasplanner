@@ -41,7 +41,7 @@ export function renderSidebar() {
   return [
     el('div', { className: 'brand' },
       logo(),
-      el('span', {}, 'Canvas Planner'),
+      el('span', {}, 'Planner for Canvas'),
       lookIcon(app.look, toLocalDate(Date.now())),
       el('button', { className: 'icon-btn close-nav', 'aria-label': 'Close menu', onclick: () => setNavOpen(false) }, icon('close')),
     ),
@@ -111,8 +111,8 @@ const loginHelp = () => el('div', {},
   el('ol', { className: 'help-list' },
     el('li', {}, 'Open Canvas in a normal (not private) window and make sure you see your Dashboard. Then come back and sync.'),
     IS_FIREFOX
-      ? el('li', {}, 'In the address bar, go to about:addons, click Canvas Planner, open the Permissions tab, and make sure access to instructure.com sites is turned on.')
-      : el('li', {}, 'In the address bar, go to chrome://extensions, click Details under Canvas Planner, and make sure Site access allows instructure.com sites.'),
+      ? el('li', {}, 'In the address bar, go to about:addons, click Planner for Canvas, open the Permissions tab, and make sure access to instructure.com sites is turned on.')
+      : el('li', {}, 'In the address bar, go to chrome://extensions, click Details under Planner for Canvas, and make sure Site access allows instructure.com sites.'),
     IS_FIREFOX
       ? el('li', {}, `If you changed Firefox privacy settings to block cookies, add ${host()} as an exception: Settings → Privacy & Security → Cookies and Site Data → Manage Exceptions → Allow.`)
       : el('li', {}, `If you changed Chrome's cookie settings, allow ${host()}: Settings → Privacy and security → Third-party cookies → Sites allowed to use third-party cookies → Add.`),
@@ -127,14 +127,14 @@ export function renderWelcome() {
   if (!host()) {
     const suggested = normalizeHost(new URLSearchParams(location.search).get('school')) ?? '';
     return el('section', { className: 'panel welcome' },
-      el('h2', {}, 'Welcome to Canvas Planner'),
+      el('h2', {}, 'Welcome to Planner for Canvas'),
       el('p', {}, "What's your school's Canvas address? It's what you see in the address bar on Canvas, like ",
         el('strong', {}, 'byui.instructure.com'), '.'),
       schoolForm({ value: suggested, button: 'Save and sync' }),
       el('p', { className: 'hint' }, 'The planner uses your existing Canvas login in this browser and only reads your assignments.'));
   }
   return el('section', { className: 'panel welcome' },
-    el('h2', {}, app.syncing ? 'Getting your assignments from Canvas…' : 'Welcome to Canvas Planner'),
+    el('h2', {}, app.syncing ? 'Getting your assignments from Canvas…' : 'Welcome to Planner for Canvas'),
     app.syncing
       ? el('p', { className: 'hint' }, 'This takes a few seconds the first time.')
       : el('div', {},

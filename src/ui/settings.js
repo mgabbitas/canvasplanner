@@ -11,6 +11,7 @@ import { ACCENTS, ACCENT_COLORS, THEMES, CLASS_COLORS, courseColorKey, courseCol
 import { palette, accentAdjusted } from './color.js';
 import { showToast } from './toast.js';
 import { app } from './app.js';
+import { toLocalDate } from '../planner/dates.js';
 import { schoolForm } from './shell.js';
 
 // Rules being edited, including new and incomplete ones that aren't saved yet.
@@ -476,7 +477,7 @@ const ISSUES = 'https://github.com/mgabbitas/canvasplanner/issues/new';
 /** A new GitHub issue with the version filled in. Only a link: nothing is sent unless they submit it. */
 function reportUrl() {
   const version = browser.runtime.getManifest().version;
-  const body = `**What happened?**\n\n\n**What did you expect?**\n\n\n---\nCanvas Planner ${version}, ${navigator.userAgent.match(/(Firefox|Chrome)\/[\d.]+/)?.[0] ?? 'unknown browser'}`;
+  const body = `**What happened?**\n\n\n**What did you expect?**\n\n\n---\nPlanner for Canvas ${version}, ${navigator.userAgent.match(/(Firefox|Chrome)\/[\d.]+/)?.[0] ?? 'unknown browser'}`;
   return `${ISSUES}?title=${encodeURIComponent('Problem: ')}&body=${encodeURIComponent(body)}`;
 }
 
@@ -523,7 +524,7 @@ function dataSection(ctx) {
   };
   const exportData = () => {
     const data = buildExport(ctx.state, new Date().toISOString());
-    download(JSON.stringify(data, null, 2), 'application/json', `canvas-planner-${new Date().toISOString().slice(0, 10)}.json`);
+    download(JSON.stringify(data, null, 2), 'application/json', `planner-for-canvas-${toLocalDate(Date.now())}.json`);
     say('Exported.');
   };
   const exportCalendar = () => {
@@ -531,7 +532,7 @@ function dataSection(ctx) {
     const args = { items, settings, weekState, now: Date.now() };
     const name = (id) => settings.courses[id]?.displayName || ctx.state.courses[id]?.name || `Class ${id}`;
     download(buildIcs([plan(args), planNextWeek(args)], { now: Date.now(), courseName: name }), 'text/calendar',
-      `canvas-planner-${new Date().toISOString().slice(0, 10)}.ics`);
+      `planner-for-canvas-${toLocalDate(Date.now())}.ics`);
     say('Calendar downloaded. Open the file (or import it in your calendar app) to add the events.');
   };
 

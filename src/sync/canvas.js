@@ -5,7 +5,7 @@ import { normalizeAssignment, normalizeCourse } from './normalize.js';
 import { mergeCourse } from '../storage/merge.js';
 
 export const LOGIN_MESSAGE = "Canvas didn't recognize your login";
-export const ACCESS_MESSAGE = "Canvas Planner isn't allowed to read Canvas yet";
+export const ACCESS_MESSAGE = "Planner for Canvas isn't allowed to read Canvas yet";
 export const SCHOOL_MESSAGE = "Choose your school's Canvas address first";
 export const isLoginError = (msg) => String(msg ?? '').startsWith(LOGIN_MESSAGE);
 

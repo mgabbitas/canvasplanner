@@ -1,4 +1,4 @@
-# SPEC: Canvas Planner (v1)
+# SPEC: Planner for Canvas (v1; called Canvas Planner until 1.4.0)
 
 ## 1. Problem
 Canvas shows when things are due, not how much lands on one day. One Saturday had 16
@@ -462,4 +462,7 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
   addons.mozilla.org so Firefox auto-updates it, and on the Chrome Web Store (unlisted
   or public, chosen at submission), the same zip for both. Listing text and the
   checklist are in `STORE.md`, the policy in `PRIVACY.md`; `npm run shots:store`
-  makes store screenshots from made-up classes.
+  makes store screenshots from made-up classes. Renamed to Planner for Canvas for the
+  listing ("Canvas" is Instructure's trademark), MIT license. Only shown names changed:
+  the add-on ID, the export marker (`canvas-planner`, so old backups import) and the
+  calendar event UIDs (so re-importing doesn't duplicate events) stay the same.
