@@ -84,3 +84,15 @@ test('plannedToday: undone homework on today, sorted, in-class left out', () => 
   assert.deepEqual(plannedToday(p), ['10', '20']);
   assert.deepEqual(plannedToday({ today: '2026-10-24', days: [] }), []);
 });
+
+test('dismissing a missed item brings both streaks back', () => {
+  const missed = item({ dueAt: '2026-10-14T23:59:00-06:00' }); // week of 10-12, never done
+  const items = [done('2026-10-06'), missed, done('2026-10-20', { dueAt: '2026-10-21T23:59:00-06:00' })];
+  const dayLog = { '2026-10-13': { left: [missed.id] }, '2026-10-20': { left: [items[2].id] } };
+  const at = now('2026-10-22');
+  assert.equal(weekStreak({ items, settings: S, now: at }).current, 1);
+  assert.equal(dayStreak({ items, settings: S, dayLog, now: at }).current, 1);
+  const after = items.map((i) => (i === missed ? { ...i, dismissed: true } : i));
+  assert.equal(weekStreak({ items: after, settings: S, now: at }).current, 2);
+  assert.equal(dayStreak({ items: after, settings: S, dayLog, now: at }).current, 2); // 10-13's miss is gone
+});
