@@ -265,8 +265,8 @@ function renderDay(day, today, kind, { upNext = false, ahead = null } = {}) {
     el('div', { className: 'day-head' },
       el('h2', {}, heading),
       el('span', { className: 'load' },
-        day.blocked && day.capacity > 0 ? 'blocked · '
-          : `${itemCount(day.items)} · ${minutesLabel(day.load - done)} left${done ? ` · ${minutesLabel(done)} done` : ''} · out of `,
+        // Same "planned / hours" as the day tab. What you finished is in the header.
+        day.blocked && day.capacity > 0 ? 'blocked · ' : `${minutesLabel(day.load)} / `,
         ...capacityControl(day)),
     ),
     day.blocked ? null : el('div', { className: 'bar' },
