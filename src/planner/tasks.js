@@ -24,7 +24,7 @@ export function taskItem({ id, courseId, title, minutes, dueDate = null, notes =
   return {
     id, courseId: String(courseId), title, type: 'other', nonSubmittable: false,
     dueAt: dueDate ? endOfDay(dueDate) : null, unlockAt: null, lockAt: null, points: null,
-    canvasStatus: null, canvasDone: false, submittedAt: null, descriptionText: '', url: null,
+    canvasStatus: null, canvasDone: false, canvasMissing: false, submittedAt: null, descriptionText: '', url: null,
     prevDueAt: null, hidden: false,
     manualDone: false, minutesOverride: minutes, pinned: Boolean(seriesId), dismissed: false, pulledIn: false,
     inClass: false, log: null, doneOn: null, plannedOn: null, notExam: true,

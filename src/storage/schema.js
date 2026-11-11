@@ -129,6 +129,7 @@ function validateItem(id, raw) {
     points: Number.isFinite(raw.points) ? raw.points : null,
     canvasStatus: str(raw.canvasStatus, 50),
     canvasDone: raw.canvasDone === true,
+    canvasMissing: raw.canvasMissing === true,
     submittedAt: isoOrNull(raw.submittedAt),
     descriptionText: str(raw.descriptionText, 2000) ?? '',
     url: !TASK_ID.test(id) && isCanvasUrl(url) ? url : null, // your tasks have no Canvas page

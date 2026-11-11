@@ -39,7 +39,9 @@ Confirmed from real data (see `test/fixtures/`):
 - `workflow_state` values seen: `unsubmitted`, `submitted`, `graded`, `pending_review`.
   `submission.excused: true` also occurs.
 - `graded` can have `submitted_at: null` (0-point evaluations), so "done" must use
-  `workflow_state`, not the timestamp.
+  `workflow_state`, not the timestamp. Exception (decided 2026-11-11): a teacher can grade
+  a missing item 0 (`submission.missing: true`, score 0, e.g. "L03 Prepare: Checkpoint").
+  That is not done.
 - Types seen: `online_quiz`, `discussion_topic`, `online_upload`, `external_tool`,
   `online_text_entry`, `online_url`, `media_recording`, `none`, `on_paper`.
   `submission_types` is often a multi-type array (e.g. `online_text_entry` +
@@ -82,7 +84,9 @@ so no migration is needed.
 Merge rules:
 - Match on Canvas `id`. Never create duplicates.
 - `done = manualDone || canvasDone`, where canvasDone means `workflow_state` is
-  `submitted`, `graded`, or `pending_review`, or `submission.excused` is true.
+  `submitted`, `graded`, or `pending_review`, or `submission.excused` is true, unless the
+  item is missing: `submission.missing` is true, nothing was submitted, not excused, and
+  the score isn't above 0 (stored as `canvasMissing`, shown as a "missing" chip).
   Canvas-done items can't be un-checked. Manually-done items can.
 - If `dueAt` changes, keep `prevDueAt` and show a "due date changed" chip.
 - If an item disappears from a successful fetch of its course, hide it (don't delete).
@@ -129,6 +133,9 @@ Definitions:
   `noDueDate` and shown in a small list.
 - Overdue: in scope, due date before today, including earlier weeks. Scheduled
   first, on today, flagged, until done or dismissed (each has a Dismiss action).
+- Closed (decided 2026-11-11): a missing item whose `lockAt` has passed can't be
+  submitted anymore. Never scheduled. Listed greyed out under "Closed in Canvas" (with
+  Dismiss) on the day it closed and the day after, then it drops off.
 
 Algorithm:
 1. Each item's eligible window: from `max(today, local date of unlockAt)` to
@@ -294,7 +301,7 @@ Each one ends with `npm test` passing, a commit, and a short walkthrough.
   2. Overflow appears, then Add a day resolves it.
   3. Wednesday passed: remaining items are flagged behind and scheduled ASAP.
   4. A locked item (weekly evaluation) is never scheduled before its unlock date.
-  5. `graded` with a null `submitted_at` counts as done.
+  5. `graded` with a null `submitted_at` counts as done (unless missing, see section 4).
   6. Date math across the DST change on 1 Nov 2026 (the last evaluation is due that
      night).
   7. Blocked weekday, oversized item, pinned item.

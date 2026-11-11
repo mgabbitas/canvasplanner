@@ -57,6 +57,9 @@ export function normalizeAssignment(raw, courseId) {
   const sub = raw.submission ?? {};
   const types = Array.isArray(raw.submission_types) ? raw.submission_types : [];
   const status = typeof sub.workflow_state === 'string' ? sub.workflow_state : null;
+  // Graded with nothing submitted usually means done outside Canvas (a survey, a paper
+  // check-in). But a teacher can also grade a missing item 0, and that isn't done.
+  const missing = sub.missing === true && !sub.submitted_at && sub.excused !== true && !(sub.score > 0);
   return {
     id: String(raw.id),
     courseId: String(courseId),
@@ -68,7 +71,8 @@ export function normalizeAssignment(raw, courseId) {
     lockAt: isoOrNull(raw.lock_at),
     points: Number.isFinite(raw.points_possible) ? raw.points_possible : null,
     canvasStatus: status,
-    canvasDone: DONE_STATES.includes(status) || sub.excused === true,
+    canvasDone: (DONE_STATES.includes(status) || sub.excused === true) && !missing,
+    canvasMissing: missing,
     submittedAt: isoOrNull(sub.submitted_at),
     descriptionText: htmlToText(raw.description).slice(0, DESCRIPTION_MAX),
     url: canvasUrl(raw.html_url),

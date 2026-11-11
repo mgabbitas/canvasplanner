@@ -53,6 +53,14 @@ export function doneDay(item) {
   return item.canvasDone && item.submittedAt ? toLocalDate(item.submittedAt) : null;
 }
 
+/**
+ * Missing in Canvas and past its lock date: it can't be submitted anymore, so it isn't
+ * planned. It shows greyed out under "Closed in Canvas" on the day it closed and the
+ * day after (CLOSED_SHOW_DAYS), then drops off.
+ */
+export const isClosed = (item, nowMs) => Boolean(item.canvasMissing && item.lockAt && Date.parse(item.lockAt) <= nowMs);
+export const CLOSED_SHOW_DAYS = 1;
+
 const courseIncluded = (item, settings) => settings.courses?.[item.courseId]?.include !== false;
 
 /** Not done, not dismissed or hidden, and not filtered out by settings. */
@@ -122,8 +130,12 @@ export function plan({ items, settings, weekState = {}, now }) {
   const week = planningWeek(today, settings, weekState?.[weekStart]?.extraDays ?? 0);
   const all = Array.isArray(items) ? items : Object.values(items ?? {});
   const behind = today > week.cutoff;
+  const nowMs = new Date(now).getTime();
+  const closed = all
+    .filter((i) => isActive(i, settings) && isClosed(i, nowMs) && today <= addDays(toLocalDate(i.lockAt), CLOSED_SHOW_DAYS))
+    .map((i) => toEntry(i, settings, today));
   // A missed repeat of one of your tasks just drops off (it isn't work to catch up on).
-  const entries = all.filter((i) => isActive(i, settings) && !isMissedRepeat(i, today))
+  const entries = all.filter((i) => isActive(i, settings) && !isMissedRepeat(i, today) && !isClosed(i, nowMs))
     .map((i) => toEntry(i, settings, today));
   // Floating tasks (no due date) are due by this week's target day, or by the end of the
   // week once that has passed. Recomputed each week, so they carry over and never go overdue.
@@ -312,6 +324,7 @@ export function plan({ items, settings, weekState = {}, now }) {
     atRisk,
     atRiskMinutes: sum(atRisk),
     noDueDate,
+    closed,
     dismissed,
     pull,
     forecast,
@@ -352,7 +365,7 @@ export function canPullItem(pull, minutes) {
 export function classEntries({ items, settings, courseId, now }) {
   const today = toLocalDate(now);
   return (Array.isArray(items) ? items : Object.values(items ?? {}))
-    .filter((i) => i.courseId === String(courseId) && isActive(i, settings))
+    .filter((i) => i.courseId === String(courseId) && isActive(i, settings) && !isClosed(i, new Date(now).getTime()))
     .map((i) => toEntry(i, settings, today))
     .sort((a, b) => {
       const ta = a.item.dueAt ? Date.parse(a.item.dueAt) : Infinity;

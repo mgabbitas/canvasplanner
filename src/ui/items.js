@@ -189,16 +189,16 @@ const editTask = (item) => openTaskForm(item.task.seriesId ? { seriesId: item.ta
 // Rows whose minutes, pin and dismiss can be changed.
 const editable = (kind) => kind === 'plan' || kind === 'next' || kind === 'class';
 
-/** One item. kind: 'plan' (this week), 'next' (next week), 'class', 'done', 'dismissed'. */
+/** One item. kind: 'plan' (this week), 'next' (next week), 'class', 'done', 'dismissed', 'closed'. */
 export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = true } = {}) {
   const { item } = entry;
   const done = kind === 'done';
   const checkbox = el('input', {
     type: 'checkbox',
     checked: done,
-    disabled: (done && !entry.canUncheck) || kind === 'dismissed',
+    disabled: (done && !entry.canUncheck) || kind === 'dismissed' || kind === 'closed',
     'aria-label': `Mark "${item.title}" ${done ? 'not done' : 'done'}`,
-    title: done && !entry.canUncheck ? 'Submitted in Canvas' : '',
+    title: done && !entry.canUncheck ? 'Submitted in Canvas' : kind === 'closed' ? 'Closed in Canvas' : '',
     'data-key': `done-${entry.part ? entry.id : item.id}`,
     onchange: (e) => (e.target.checked ? markDone(item) : uncheck(item)),
   });
@@ -223,6 +223,8 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     if (entry.floating && kind !== 'done') chips.push(el('span', { className: 'chip', title: 'No due date: any time this week' }, 'this week'));
   }
   if (entry.inClass) chips.push(el('span', { className: 'chip' }, 'in class'));
+  if (kind === 'closed') chips.push(el('span', { className: 'chip', title: "Canvas closed this before it was turned in. It can't be submitted anymore." }, 'closed'));
+  else if (item.canvasMissing) chips.push(el('span', { className: 'chip bad', title: 'Canvas marks this missing' }, 'missing'));
   if (entry.overdue) chips.push(el('span', { className: 'chip bad' }, 'overdue'));
   else if (urgency.dueToday && kind !== 'done') chips.push(el('span', { className: 'chip bad' }, 'due today'));
   else if (urgency.dueTomorrow && kind !== 'done') chips.push(el('span', { className: 'chip warn' }, 'due tomorrow'));
@@ -246,6 +248,9 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
       onclick: () => updateItem(item.id, { pulledIn: true }),
     }, 'Pull →'));
   }
+  if (kind === 'closed') {
+    actions.push(el('button', { onclick: () => dismiss(item), 'data-key': `dismiss-${item.id}`, title: 'Hide it now. Restore it from Dismissed.' }, 'Dismiss'));
+  }
   if (kind === 'dismissed') {
     actions.push(el('button', { onclick: () => updateItem(item.id, { dismissed: false }), 'data-key': `restore-${item.id}` }, 'Restore'));
   }
@@ -264,7 +269,7 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
   if (editable(kind)) actions.push(itemMenu(entry, kind));
 
   return el('li', {
-    className: `item${done ? ' done' : ''}${upNext ? ' up-next' : ''}${!done && (urgency.dueToday || entry.overdue) ? ' urgent' : ''}`,
+    className: `item${done ? ' done' : ''}${kind === 'closed' ? ' closed' : ''}${upNext ? ' up-next' : ''}${!done && (urgency.dueToday || entry.overdue) ? ' urgent' : ''}`,
     style: `--course:${courseColor(item.courseId, app.state.settings, app.state.courses)}`,
   },
     checkbox,

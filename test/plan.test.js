@@ -543,3 +543,30 @@ test('day streak counts a split part done that day', async () => {
   assert.equal(s.current, 0); // part 2 wasn't done on the 29th
   assert.equal(s.best, 1);
 });
+
+test('a missing item graded 0 stays overdue', () => {
+  const m = mk({ due: '2026-09-25 23:59', canvasStatus: 'graded', canvasDone: false, canvasMissing: true });
+  const p = run([m]);
+  assert.deepEqual(p.overdue.map((e) => e.id), [m.id]);
+  assert.equal(dateOf(p, m.id), '2026-09-28');
+});
+
+test('closed in Canvas: not planned, listed on the day it closed and the day after, then gone', () => {
+  const lockAt = iso('2026-09-27 23:59');
+  const closed = mk({ due: '2026-09-25 23:59', lockAt, canvasMissing: true });
+  const notMissing = mk({ due: '2026-09-25 23:59', lockAt }); // overdue but not missing: unchanged
+  const p = run([closed, notMissing]);
+  assert.equal(dateOf(p, closed.id), null);
+  assert.deepEqual(p.closed.map((e) => e.id), [closed.id]);
+  assert.deepEqual(p.overdue.map((e) => e.id), [notMissing.id]);
+  assert.deepEqual(run([closed], { now: '2026-09-29 08:00' }).closed, []);
+  assert.deepEqual(run([mk({ ...closed, dismissed: true })]).closed, []);
+  assert.deepEqual(classEntries({ items: [closed], settings: S, courseId: '1', now: iso(MON) }), []);
+});
+
+test('missing but not closed yet (lock date ahead) is still planned', () => {
+  const m = mk({ due: '2026-09-25 23:59', lockAt: iso('2026-10-02 23:59'), canvasMissing: true });
+  const p = run([m]);
+  assert.deepEqual(p.closed, []);
+  assert.deepEqual(p.overdue.map((e) => e.id), [m.id]);
+});

@@ -99,11 +99,34 @@ test('fixture: every assignment normalizes cleanly', needsFixture, () => {
     assert.ok(i.url);
     assert.doesNotMatch(i.descriptionText, /<\/?(p|div|span|a|br|li|ul|ol|strong|em|img|iframe|table|h[1-6])\b/i);
   }
-  // All 9 graded-with-null-submitted_at items count as done.
+  // 9 graded-with-null-submitted_at items: all done except the one graded 0 as missing.
   const graded = fixture.flatMap((c) => c.assignments)
     .filter((a) => a.submission.workflow_state === 'graded' && a.submission.submitted_at === null);
   assert.equal(graded.length, 9);
-  for (const a of graded) assert.equal(normalizeAssignment(a, 0).canvasDone, true);
+  const notDone = graded.filter((a) => !normalizeAssignment(a, 0).canvasDone).map((a) => a.name);
+  assert.deepEqual(notDone, ['L03 Prepare: Checkpoint']);
+});
+
+test('fixture: a missing item graded 0 is not done, and is flagged missing', needsFixture, () => {
+  const { raw: a, courseId } = findRaw('L03 Prepare: Checkpoint');
+  const item = normalizeAssignment(a, courseId);
+  assert.equal(item.canvasDone, false);
+  assert.equal(item.canvasMissing, true);
+});
+
+test('missing: only when nothing was submitted, not excused, and no points', () => {
+  const n = (submission) => normalizeAssignment(raw({ submission }), 9);
+  const missing0 = n({ workflow_state: 'graded', submitted_at: null, missing: true, score: 0 });
+  assert.deepEqual([missing0.canvasDone, missing0.canvasMissing], [false, true]);
+  // Points given anyway: the teacher counted it.
+  assert.equal(n({ workflow_state: 'graded', submitted_at: null, missing: true, score: 5 }).canvasDone, true);
+  assert.equal(n({ workflow_state: 'graded', submitted_at: null, missing: true, excused: true }).canvasDone, true);
+  // Turned in late: done even if Canvas still flags it.
+  assert.equal(n({ workflow_state: 'submitted', submitted_at: '2026-10-05T01:00:00Z', missing: true }).canvasDone, true);
+  // A 0-point evaluation that isn't missing stays done.
+  assert.equal(n({ workflow_state: 'graded', submitted_at: null, missing: false, score: 0 }).canvasDone, true);
+  // Unsubmitted and missing: not done, flagged.
+  assert.equal(n({ workflow_state: 'unsubmitted', submitted_at: null, missing: true }).canvasMissing, true);
 });
 
 test('fixture: excused items are done', needsFixture, () => {
