@@ -95,6 +95,9 @@ file and SPEC.md disagree, stop and ask me.
   don't lecture on simple things.
 - If a request conflicts with the spec or looks like a bad idea, say so and suggest an
   alternative before doing it. Be direct.
+- Guard against bloat. The goal is a simple, intuitive planner that helps students finish
+  early and do better in class. If an idea doesn't fit that, adds clutter, or makes the
+  extension heavier to explain, say so and suggest something smaller, even mid-brainstorm.
 - Don't guess at anything SPEC.md lists under Assumptions or Open questions. Ask.
 - Check Canvas API behavior against `test/fixtures/`, not memory. If the real data
   differs from the spec, tell me.
