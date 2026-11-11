@@ -229,6 +229,7 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
   else if (urgency.dueToday && kind !== 'done') chips.push(el('span', { className: 'chip bad' }, 'due today'));
   else if (urgency.dueTomorrow && kind !== 'done') chips.push(el('span', { className: 'chip warn' }, 'due tomorrow'));
   else if (entry.behind && kind === 'plan') chips.push(el('span', { className: 'chip warn' }, 'behind plan'));
+  if (entry.tight && kind === 'plan') chips.push(el('span', { className: 'chip warn', title: "Doesn't fit in this day's hours, but it's due by then, so it stays here." }, 'over hours'));
   if (entry.notOpenYet) chips.push(el('span', { className: 'chip' }, `opens ${dayLabel(entry.unlockDate, { weekday: 'short', month: 'short', day: 'numeric' })}`));
   if (item.prevDueAt) chips.push(el('span', { className: 'chip warn', title: `Was due ${dueLabel(item.prevDueAt)}` }, 'due date changed'));
   if (entry.pulledIn && kind === 'plan') chips.push(el('span', { className: 'chip' }, 'pulled in'));

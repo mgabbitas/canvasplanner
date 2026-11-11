@@ -263,6 +263,9 @@ button.link.logged { text-decoration: none; color: var(--muted); }
 .class-name { font-weight: 600; }
 .class-group .items { border-left: 3px solid var(--course); border-radius: 2px; }
 .class-group .item { box-shadow: none; }
+/* Overdue work at the top of today. */
+.class-group.catch-up { --course: var(--bad-text); }
+.catch-up .class-name { color: var(--bad-text); font-weight: 600; }
 .day-tab .dt-count { font-size: 12px; font-weight: 600; }
 .day-tab.week { flex-basis: 128px; background: var(--surface-2); }
 

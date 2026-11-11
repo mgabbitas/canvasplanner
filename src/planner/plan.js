@@ -105,6 +105,7 @@ function toEntry(item, settings, today) {
     date: null,
     overdue: false,
     behind: false,
+    tight: false,
   };
 }
 
@@ -198,9 +199,15 @@ export function plan({ items, settings, weekState = {}, now }) {
   const rest = upcoming.filter((e) => !e.movedTo && !e.pinned).sort(byDueThenSizeDesc);
 
   for (const e of work) e.behind = behind;
+  // Catch up: overdue work shows on today but doesn't use today's hours, so it never
+  // pushes today's own work off today. Today's bar still counts it (and can go over).
+  let catchUpMinutes = 0;
   for (const e of overdue) {
     e.overdue = true;
-    place(e, today);
+    e.date = today;
+    if (!onDay.has(today)) onDay.set(today, []);
+    onDay.get(today).push(e);
+    catchUpMinutes += e.minutes;
   }
   for (const e of moved) place(e, e.movedTo);
   for (const e of pinned) place(e, e.lastDay);
@@ -222,12 +229,29 @@ export function plan({ items, settings, weekState = {}, now }) {
     if (day || sameDay) {
       place(e, day ?? sameDay);
       if (e.part) partDay.set(e.item.id, day ?? sameDay);
-    } else (behind ? atRisk : overflow).push(e);
+      continue;
+    }
+    // No room. If a later target day would give it more days, it's overflow (Add a day
+    // helps). Otherwise it has to be done by then anyway: put it on the day in its window
+    // that's least over, flag it tight, and report it in atRisk.
+    if (!behind && !opensLate && e.lastDay > week.cutoff) {
+      overflow.push(e);
+      continue;
+    }
+    const options = dateRange(start, end).filter(usable);
+    if (!options.length && prev && prev <= end && usable(prev)) options.push(prev);
+    atRisk.push(e);
+    if (!options.length) continue; // no usable day at all (e.g. all days off): listed only
+    const overBy = (d) => (load.get(d) ?? 0) - capacity(d);
+    const best = options.reduce((a, b) => (overBy(b) < overBy(a) ? b : a));
+    e.tight = true;
+    place(e, best);
+    if (e.part) partDay.set(e.item.id, best);
   }
 
   const lastPlaced = [...onDay.keys()].reduce(maxDate, week.cutoff);
   const days = dateRange(today, maxDate(today, lastPlaced)).map((date) => {
-    const l = load.get(date) ?? 0;
+    const l = (load.get(date) ?? 0) + (date === today ? catchUpMinutes : 0);
     return {
       date,
       weekday: weekday(date),

@@ -131,8 +131,11 @@ Definitions:
   the planning week (carried-over overdue), OR `pulledIn`).
 - No due date: never scheduled, never pulled, never in the forecast. Returned as
   `noDueDate` and shown in a small list.
-- Overdue: in scope, due date before today, including earlier weeks. Scheduled
-  first, on today, flagged, until done or dismissed (each has a Dismiss action).
+- Overdue: in scope, due date before today, including earlier weeks. Shown on today in a
+  "Catch up" group at the top, flagged, until done or dismissed (each has a Dismiss
+  action). Decided 2026-11-11: overdue minutes don't use today's hours when planning, so
+  they never push today's own work off today; today's bar still counts them and can go
+  over. Up next is today's first non-overdue item (late work never makes you miss today's).
 - Closed (decided 2026-11-11): a missing item whose `lockAt` has passed can't be
   submitted anymore. Never scheduled. Listed greyed out under "Closed in Canvas" (with
   Dismiss) on the day it closed and the day after, then it drops off.
@@ -152,11 +155,16 @@ Algorithm:
 5. Place each on the earliest eligible day where `load + minutes <= capacity`. A day
    with nothing on it accepts any item, even one larger than the capacity (flag the
    day as over capacity).
-6. No eligible day has room: put it in `overflow`. The UI shows a banner ("N items,
-   X min won't fit by Wednesday") with an Add a day button.
+6. No eligible day has room (revised 2026-11-11): if the item's last day is after the
+   cutoff (more days would help), put it in `overflow`; the UI shows a banner ("N items,
+   X min won't fit by Wednesday") with an Add a day button. Otherwise more days can't
+   help: place it anyway on the usable day in its window that is least over capacity
+   (earliest on a tie), flag it `tight` ("over hours" chip) and list it in `atRisk`. The
+   banner names the days that go over ("Tue +1h 20m"). With no usable day at all it is
+   only listed.
 7. If `today > cutoff` (Wednesday has passed): use `dueDate` as the window end instead
    of the cutoff, schedule as soon as possible, and flag every remaining item
-   `behind`. Items that still can't fit before their due date go in `atRisk`.
+   `behind`. Items that still can't fit before their due date are placed as in step 6.
 
 Add a day: increments `extraDays` for this week (the cutoff moves to Thursday, then
 Friday). Also offer Remove a day. Cannot pass the end of the planning week.

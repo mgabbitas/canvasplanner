@@ -14,7 +14,7 @@ export function renderBanners(p) {
   const target = dayLabel(p.week.cutoff, { weekday: 'long' });
   if (p.overdue.length) {
     out.push(el('div', { className: 'banner bad' },
-      `${plural(p.overdue.length, 'overdue item')} (${minutesLabel(sumMinutes(p.overdue))}) scheduled today.`));
+      `${plural(p.overdue.length, 'overdue item')} (${minutesLabel(sumMinutes(p.overdue))}) to catch up on. They're at the top of today and don't take today's planned time.`));
   }
   if (p.behind) {
     out.push(el('div', { className: 'banner warn' },
@@ -27,8 +27,12 @@ export function renderBanners(p) {
     ));
   }
   if (p.atRisk.length) {
+    // Days holding work that doesn't fit in their hours but can't go later.
+    const over = p.days.filter((d) => d.over && d.items.some((e) => e.tight))
+      .map((d) => `${dayLabel(d.date, { weekday: 'short' })} +${minutesLabel(d.load - d.capacity)}`);
     out.push(el('div', { className: 'banner bad' },
-      `${plural(p.atRisk.length, 'item')} (${minutesLabel(p.atRiskMinutes)}) may not fit before they're due.`));
+      `${plural(p.atRisk.length, 'item')} (${minutesLabel(p.atRiskMinutes)}) don't fit in your hours before they're due`,
+      over.length ? `, so ${over.length === 1 ? 'a day goes' : 'some days go'} over: ${over.join(', ')}. Move something, or give ${over.length === 1 ? 'that day' : 'those days'} more time.` : '.'));
   }
   return out;
 }
@@ -241,10 +245,15 @@ function aheadCard({ entry, date, today, finished }) {
 
 /** One day: header with count and load, then items grouped by class. */
 function renderDay(day, today, kind, { upNext = false, ahead = null } = {}) {
-  // "Up next": the most urgent homework item today (the planner's first pick).
-  const nextId = upNext ? day.items.find((e) => !e.inClass)?.id : null;
+  // "Up next": the most urgent homework item today (the planner's first pick). Today's
+  // own work comes before catching up, so late work never makes you miss today's.
+  const work = day.items.filter((e) => !e.inClass);
+  const nextId = upNext ? (work.find((e) => !e.overdue) ?? work[0])?.id : null;
+  // Overdue work sits in its own Catch up group at the top of today.
+  const catchUp = day.items.filter((e) => e.overdue);
   const groups = new Map();
   for (const e of day.items) {
+    if (e.overdue) continue;
     if (!groups.has(e.item.courseId)) groups.set(e.item.courseId, []);
     groups.get(e.item.courseId).push(e);
   }
@@ -257,14 +266,19 @@ function renderDay(day, today, kind, { upNext = false, ahead = null } = {}) {
       el('h2', {}, heading),
       el('span', { className: 'load' },
         day.blocked && day.capacity > 0 ? 'blocked · '
-          : `${itemCount(day.items)} · ${minutesLabel(day.load - done)}${done ? ` + ${minutesLabel(done)} done` : ''} of `,
+          : `${itemCount(day.items)} · ${minutesLabel(day.load - done)} left${done ? ` · ${minutesLabel(done)} done` : ''} · out of `,
         ...capacityControl(day)),
     ),
     day.blocked ? null : el('div', { className: 'bar' },
       done ? el('div', { className: 'done', style: `width:${pctOf(done)}%` }) : null,
       el('div', { className: 'planned', style: `width:${Math.max(0, pctOf(day.load) - pctOf(done))}%` })),
     ahead ? aheadCard(ahead) : null,
-    ordered.length
+    catchUp.length ? el('div', { className: 'class-group catch-up', 'data-key': 'catch-up' },
+      el('div', { className: 'class-head' },
+        el('span', { className: 'class-name' }, 'Catch up'),
+        el('span', { className: 'muted' }, `${itemCount(catchUp)} · ${minutesLabel(sumMinutes(catchUp))} overdue`)),
+      el('ul', { className: 'items' }, catchUp.map((e) => itemRow(e, kind, { upNext: e.id === nextId })))) : null,
+    ordered.length || catchUp.length
       ? ordered.map(([courseId, entries]) => el('div', {
         className: 'class-group', style: `--course:${courseColor(courseId, app.state.settings, app.state.courses)}`,
       },

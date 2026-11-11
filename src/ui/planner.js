@@ -101,7 +101,7 @@ function render() {
     fill('days', days('plan'));
     fill('extras', [
       panel("Won't fit by the target day", p.overflow, 'plan', true),
-      panel('At risk', p.atRisk, 'plan', true),
+      panel("Can't fit before it's due", p.atRisk.filter((e) => !e.date), 'plan', true),
       panel('Done this week', p.done, 'done', false, (() => {
         const n = p.done.filter((e) => !e.item.log && !e.inClass).length;
         return n ? `${n} need${n === 1 ? 's' : ''} a time` : '';

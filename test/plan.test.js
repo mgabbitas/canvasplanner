@@ -68,11 +68,14 @@ test('scenario 3: Wednesday passed, items flagged behind and scheduled ASAP', ()
   const items = many(10, { due: '2026-10-03', minutesOverride: 45 });
   const p = run(items, { now: '2026-10-01 09:00' }); // Thursday
   assert.equal(p.behind, true);
+  // 2 fit per day; the 4 left over still have to be done by Saturday, so they go on the
+  // least-full days anyway, flagged tight.
   assert.deepEqual(p.days.map((d) => [d.date, d.items.length]), [
-    ['2026-10-01', 2], ['2026-10-02', 2], ['2026-10-03', 2],
+    ['2026-10-01', 4], ['2026-10-02', 3], ['2026-10-03', 3],
   ]);
   assert.ok(p.days.flatMap((d) => d.items).every((e) => e.behind));
   assert.equal(p.atRisk.length, 4);
+  assert.ok(p.atRisk.every((e) => e.tight && e.date));
   assert.equal(p.overflow.length, 0);
 });
 
@@ -141,8 +144,14 @@ test('scenario 7c: pinned item sits on its due date and counts toward load', () 
   const p = run([pinned, other]);
   assert.equal(dateOf(p, pinned.id), '2026-09-30');
   assert.equal(dateOf(p, other.id), '2026-09-28');
-  const tight = run([pinned, mk({ due: '2026-09-30', minutesOverride: 20 })], { now: '2026-09-30 08:00' });
-  assert.equal(tight.overflow.length, 1); // Wed is full with the pinned 120 min
+  // Wed is full with the pinned 120 min. More days can't help something due Wed, so it
+  // isn't "won't fit" (Add a day): it goes on Wed anyway, over its hours, flagged.
+  const squeezed = mk({ due: '2026-09-30', minutesOverride: 20 });
+  const tight = run([pinned, squeezed], { now: '2026-09-30 08:00' });
+  assert.equal(tight.overflow.length, 0);
+  assert.deepEqual(tight.atRisk.map((e) => e.id), [squeezed.id]);
+  assert.equal(dateOf(tight, squeezed.id), '2026-09-30');
+  assert.equal(tight.days[0].over, true);
 });
 
 test('scenario 8: pull next week, by day and by amount', () => {
@@ -269,7 +278,7 @@ test('fixture: plan invariants hold on real data', needsFixture, () => {
         }
         assert.ok(!e.item.canvasDone);
       }
-      if (day.items.length > 1) assert.ok(!day.over || day.items.some((e) => e.overdue || e.pinned));
+      if (day.items.length > 1) assert.ok(!day.over || day.items.some((e) => e.overdue || e.pinned || e.tight));
     }
   }
   // The W07 evaluation across the DST change comes from real data.
@@ -569,4 +578,26 @@ test('missing but not closed yet (lock date ahead) is still planned', () => {
   const p = run([m]);
   assert.deepEqual(p.closed, []);
   assert.deepEqual(p.overdue.map((e) => e.id), [m.id]);
+});
+
+test('overdue work is shown today but does not push today\'s own work off today', () => {
+  const late = many(4, { due: '2026-09-25', minutesOverride: 60 }); // 4 h overdue
+  const dueTue = mk({ due: '2026-09-29 09:00', minutesOverride: 60 }); // must be done Mon
+  const p = run([...late, dueTue]);
+  assert.equal(dateOf(p, dueTue.id), '2026-09-28');
+  assert.equal(p.overflow.length, 0);
+  assert.equal(p.atRisk.length, 0);
+  assert.equal(p.days[0].load, 300); // the bar still shows all of it
+  assert.equal(p.days[0].over, true);
+});
+
+test('won\'t fit (Add a day) only when more days would help', () => {
+  // 7 x 45 min, 2 fit per day. Due Saturday: the 7th is overflow and Add a day fixes it
+  // (scenario 2). Due Wednesday: more days can't help, so it goes on a day anyway.
+  const wed = many(7, { due: '2026-09-30', minutesOverride: 45 });
+  const p = run(wed);
+  assert.equal(p.overflow.length, 0);
+  assert.equal(p.atRisk.length, 1);
+  assert.equal(p.days.flatMap((d) => d.items).length, 7);
+  assert.deepEqual(p.days.filter((d) => d.over).map((d) => d.date), ['2026-09-28']);
 });
