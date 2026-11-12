@@ -316,7 +316,7 @@ ol.fc li.today .fc-date { color: var(--text); font-weight: 700; }
 ol.fc li.over .fc-bar > div { background: var(--heavy); opacity: 1; }
 .fc-note { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
 .fc-note .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--heavy); margin: 0 3px 0 2px; }
-.fc-n { min-height: 1.2em; color: var(--muted); }
+.fc-n { min-height: 1.3em; color: var(--text); font-weight: 600; }
 
 /* ---------- 7. Settings ---------- */
 nav.subtabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px; }

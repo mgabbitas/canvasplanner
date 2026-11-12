@@ -85,14 +85,16 @@ export function renderForecast(p) {
       const text = `${dayLabel(f.date)}: ${f.count ? `${plural(f.count, 'item')}, ${minutesLabel(f.minutes)} due` : 'nothing due'}${f.over ? ' (more than that day\'s time)' : ''}`;
       return el('li', { className: `${f.over ? 'over' : ''}${f.date === p.today ? ' today' : ''}`, title: text },
         el('span', { className: 'visually-hidden' }, text),
+        // Items due sits on top of its bar; day and date underneath, like a calendar.
+        el('span', { className: 'fc-n', 'aria-hidden': 'true' }, f.count ? String(f.count) : ''),
         el('div', { className: 'fc-bar', 'aria-hidden': 'true' }, el('div', { style: `height:${Math.round((f.minutes / max) * 100)}%` })),
         el('span', { className: 'fc-day', 'aria-hidden': 'true' }, dayLabel(f.date, { weekday: 'narrow' })),
         el('span', { className: 'fc-date', 'aria-hidden': 'true' }, dayLabel(f.date, { day: 'numeric' })),
-        el('span', { className: 'fc-n', 'aria-hidden': 'true' }, f.count ? String(f.count) : ''),
       );
     })),
-    el('p', { className: 'fc-note', 'aria-hidden': 'true' }, 'Bottom number: items due.',
-      p.forecast.some((f) => f.over) ? [' ', el('span', { className: 'swatch' }), 'More than that day\'s hours.'] : null),
+    p.forecast.some((f) => f.over)
+      ? el('p', { className: 'fc-note', 'aria-hidden': 'true' }, el('span', { className: 'swatch' }), 'More than that day\'s hours.')
+      : null,
   );
 }
 
