@@ -270,7 +270,7 @@ button.link.logged { text-decoration: none; color: var(--muted); }
 /* Bonus: finished more than the day's hours, nothing left. Gold, not red. */
 :is(.day.bonus .bar, .day-tab.bonus .dt-bar) > * { background: var(--gold) !important; }
 :is(.day.bonus .load, .day-tab.bonus .dt-load) { color: var(--gold-text); font-weight: 600; }
-.dt-wontfit { font-size: 12px; color: var(--warn-text); font-weight: 600; } /* amber, like its banner */
+.dt-wontfit { font-size: 12px; color: var(--muted); font-weight: 600; } /* the amber banner above flags it; amber here read like the gold "extra" */
 .nowrap { white-space: nowrap; }
 .day-tab.blocked { opacity: 0.6; }
 

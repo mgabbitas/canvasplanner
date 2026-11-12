@@ -189,7 +189,8 @@ export function renderDayLayout(p, kind) {
       el('span', { className: 'dt-bar', 'aria-hidden': 'true' },
         done ? el('span', { className: 'done', style: `width:${pct(done)}%` }) : null,
         el('span', { className: 'planned', style: `width:${Math.max(0, pct(load) - pct(done))}%` })),
-      el('span', { className: 'dt-count' }, itemCount(items)),
+      // A gold day with nothing left: say so, rather than a bare "0 items".
+      el('span', { className: 'dt-count' }, bonus && !over && !required(items).length ? 'All done' : itemCount(items)),
       el('span', { className: 'dt-load' }, capacity === 0 && id !== 'week' ? 'day off'
         // A gold day: your hours, plus what you did beyond them (not "5h 40m / 4h", which reads like a mistake).
         : bonus && !over ? `${minutesLabel(capacity)} + ${minutesLabel(done - capacity)} extra`
@@ -207,7 +208,7 @@ export function renderDayLayout(p, kind) {
     tab('week', 0, {
       name: 'Week', date: `${short(days[0].date)} – ${short(days.at(-1).date)}`,
       items: all, load: weekLoad, done: weekDone, capacity: weekCap, blocked: false, wontFit,
-      over: days.some((d) => d.over), // what won't fit is its own amber line
+      over: weekLoad > weekCap, // a single over day shows on its own tab; what won't fit is its own line
     }),
     days.map((d, i) => tab(d.date, i + 1, {
       name: d.date === p.today && kind === 'plan' ? 'Today' : dayLabel(d.date, { weekday: 'short' }),

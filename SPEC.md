@@ -218,15 +218,18 @@ dismissed or hidden, class included.
 
 Forecast: for the next 14 days, minutes and count of undone items *due* each day,
 independent of the plan. Highlight days over that weekday's capacity (amber, not red;
-a note under the chart explains the numbers and the color).
+each bar has its item count on top and weekday and date below; a note explains the
+amber only when an amber day is shown).
 
 Over and bonus (decided 2026-11-11): a day is `over` when its load, not counting work you
-moved there yourself, is past its hours and it still has unfinished work. Finished work
-counts at the time you logged, else its estimate (the same number the header shows).
+moved there yourself, is past its hours and it still has unfinished work you didn't move
+there. For display, finished work counts at the time you logged, else its estimate (the
+same number the header shows); scheduling still uses the estimate (step 2).
 Today's finished work alone going past the hours (on a usable day) is `bonus`: the bar and line turn gold, and a cheer says "1h 30m past your hours today".
 The header reads "Today: 9 items · 3h 5m left" ("Today: all done" when nothing's left).
-The Week tab is over when any day is, and adds an amber "+Xh won't fit" when work has no
-day. The header doesn't repeat the overdue count, and its counts leave out extra credit. No overdue banner (the Catch up
+The Week tab is over only when the week's load is past its hours, and adds a grey
+"+Xh won't fit" when work has no day (the amber banner says it). A gold Today tab with
+nothing left says "All done" and "4h + 1h 40m extra" instead of "5h 40m / 4h". The header doesn't repeat the overdue count, and its counts leave out extra credit. No overdue banner (the Catch up
 group says it); "Wednesday has passed" only while work is left. Only one of What's new
 and the theme offer shows at a time; What's new lists only the newest version. Before
 the first sync, only the welcome card shows (no streaks, today line, Finish by, Add task

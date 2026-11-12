@@ -659,4 +659,19 @@ test('over/bonus: logged time, work you moved to today, a blocked day', () => {
   // A blocked weekday never turns gold.
   const r = run(many(3, { due: '2026-10-02', minutesOverride: 60, manualDone: true, doneOn: '2026-09-28' }), { settings: { blockedWeekdays: [1] } });
   assert.equal(r.days[0].bonus, false);
+  // Past your hours (180 of 120), then you start one from tomorrow: still gold, not red.
+  const pulled2 = mk({ due: '2026-10-01', minutesOverride: 45, plannedOn: '2026-09-28' });
+  const g = run([...many(3, { due: '2026-10-02', minutesOverride: 60, manualDone: true, doneOn: '2026-09-28' }), pulled2]);
+  assert.deepEqual([g.days[0].over, g.days[0].bonus], [false, true]);
+});
+
+test('logging a time never reshuffles the plan (scheduling uses the estimate)', () => {
+  const done = many(2, { due: '2026-10-02', minutesOverride: 60, manualDone: true, doneOn: '2026-09-28' });
+  const later = mk({ due: '2026-10-02', minutesOverride: 60 });
+  const before = run([...done, later]);
+  const logged = run([...done.map((i) => ({ ...i, log: { minutes: 20 } })), later]);
+  assert.equal(dateOf(logged, later.id), dateOf(before, later.id));
+  assert.notEqual(dateOf(logged, later.id), '2026-09-28');
+  assert.equal(logged.days[0].doneMinutes, 40); // shown: the time you spent
+  assert.equal(logged.days[0].load, 40);
 });

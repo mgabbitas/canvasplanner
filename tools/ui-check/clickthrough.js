@@ -398,7 +398,7 @@ async function run() {
     b.checked = true; fire(b, 'change'); await wait(80);
   }
   const ahead = document.querySelector('[data-key="ahead"]');
-  check('today stays done (no refill)', /0 items/.test(document.querySelector('.day-tab:not(.week)')?.textContent ?? ''), document.querySelector('.day-tab:not(.week)')?.textContent);
+  check('today stays done (no refill)', /0 items|All done/.test(document.querySelector('.day-tab:not(.week)')?.textContent ?? ''), document.querySelector('.day-tab:not(.week)')?.textContent);
   check('get-ahead button', !!ahead, ahead?.textContent);
   check('get-ahead button is one line', ahead && ahead.getBoundingClientRect().height < 40, ahead?.getBoundingClientRect().height);
   if (ahead) {
