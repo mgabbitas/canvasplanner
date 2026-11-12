@@ -2,12 +2,13 @@
 // change minutes, the ⋮ menu (move to a day, pin, dismiss), pull, send back, restore.
 import { canPullItem, doneDay, looksLikeExam, checkOffPatch, MAX_PARTS } from '../planner/plan.js';
 import { estimate } from '../planner/estimate.js';
+import { daysEarly } from '../planner/ahead.js';
 import { toLocalDate, addDays, dateRange, minDate } from '../planner/dates.js';
 import { validateLog } from '../storage/schema.js';
 import { el, select, dayLabel, dueLabel, minutesLabel } from './dom.js';
-import { showToast, logForm } from './toast.js';
+import { showToast, logForm, celebrate } from './toast.js';
 import { courseColor } from './theme.js';
-import { app, courseName, SOURCE_LABEL, updateItem } from './app.js';
+import { app, courseName, SOURCE_LABEL, updateItem, plural } from './app.js';
 import { openTaskForm } from './taskform.js';
 
 // --- done, undo, and time logging -------------------------------------------------
@@ -47,6 +48,8 @@ export function markDone(item) {
       ...(item.inClass || !finished ? [] : [{ label: 'Log time', onclick: () => openLog(app.state.items[item.id], t) }]),
     ],
   });
+  const early = finished && !item.inClass ? daysEarly(item, patch.doneOn) : 0;
+  if (early && app.state.settings.funMessages) celebrate(`${plural(early, 'day')} early!`);
 }
 
 /** Uncheck a finished item; a split item gets its last part back. */

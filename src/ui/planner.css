@@ -5,6 +5,7 @@
 
 /* ---------- 1. Tokens and themes ---------- */
 :root {
+  --flame: #f97316; /* streak flame: orange in every theme */
   color-scheme: light;
   --bg: #f5f6f8;
   --surface: #ffffff;
@@ -166,10 +167,13 @@ input[type=number], input[type=text], input[type=search], select {
 .menu-btn { display: none; }
 @media (max-width: 820px) { .menu-btn { display: inline-flex; } }
 .streaks { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; }
-.streak { display: inline-flex; align-items: baseline; gap: 5px; padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font-size: 12px; color: var(--muted); white-space: nowrap; }
-.streak strong { font-size: 15px; color: var(--text); }
-.streak.lit { border-color: var(--good); }
-.streak.lit strong { color: var(--good); }
+.streak { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; padding: 2px 10px 3px; font-size: 11px; color: var(--muted); white-space: nowrap; cursor: default; }
+.streak-label { text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.streak-count { display: inline-flex; align-items: center; gap: 3px; }
+.streak-count .icon { width: 18px; height: 18px; color: var(--muted); }
+.streak strong { font-size: 16px; color: var(--text); }
+.streak:not(.zero) .icon { color: var(--flame); }
+.streak.lit .icon { fill: var(--flame); }
 .streak.zero strong { color: var(--muted); }
 .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; background: var(--surface); }
 .seg button { border: none; border-radius: 0; padding: 5px 12px; background: transparent; color: var(--muted); }

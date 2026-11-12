@@ -190,7 +190,13 @@ Done today: count of homework items finished today and their minutes (logged tim
 any, else the estimate), shown in the header.
 
 Streaks (decided 2026-10-24): two counters side by side in the This week header, with
-current and best on Stats. Neither needs a setting. Homework means not in-class, not
+current and best on Stats. Look (2026-11-11): a small label ("Week", "Day") over a flame
+icon and the count; the flame is grey at 0, an orange outline while the streak runs,
+and filled once this week / today already counts. Cheers (2026-11-11), each a short
+toast line, only on a change seen by the page (so a new tab never repeats one), off with
+the Celebrations setting: "N days early!" when you check off an item before its due day;
+"Today's list is done" when today's last homework is checked off; "N days ahead" as
+before; "The whole week is done by Wednesday" when the week is done by the target day. Neither needs a setting. Homework means not in-class, not
 dismissed or hidden, class included.
 - Weeks on target, computed from items: a week's homework is what's due in it. Each item
   must be done by that week's target day plus added days, or by its due day if it opens

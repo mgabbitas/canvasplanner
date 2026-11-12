@@ -175,13 +175,16 @@ export function renderWelcome() {
 /** The two streak counters, side by side. `lit` when this week / today already counts. */
 function renderStreaks() {
   const { days, weeks } = streaks();
+  // "Week" on top, a flame and the count under it. The flame lights up once this week /
+  // today already counts.
   const counter = (key, n, label, lit, title) => el('span', {
-    className: `streak${n ? '' : ' zero'}${lit ? ' lit' : ''}`, 'data-key': key, title,
-  }, el('strong', {}, String(n)), el('span', {}, label));
+    className: `streak${n ? '' : ' zero'}${lit ? ' lit' : ''}`, 'data-key': key, title, 'aria-label': `${label} streak: ${n}. ${title}`,
+  }, el('span', { className: 'streak-label' }, label),
+  el('span', { className: 'streak-count' }, icon('flame'), el('strong', {}, String(n))));
   return el('div', { className: 'streaks', 'aria-label': 'Streaks' },
-    counter('streak-weeks', weeks.current, weeks.current === 1 ? 'week on target' : 'weeks on target', weeks.thisWeek === 'hit',
+    counter('streak-weeks', weeks.current, 'Week', weeks.thisWeek === 'hit',
       `Weeks in a row with everything done by the target day. Best: ${plural(weeks.best, 'week')}.`),
-    counter('streak-days', days.current, days.current === 1 ? 'day on plan' : 'days on plan', days.today === 'hit',
+    counter('streak-days', days.current, 'Day', days.today === 'hit',
       `Days in a row where you finished everything planned for the day. Best: ${plural(days.best, 'day')}.`),
   );
 }

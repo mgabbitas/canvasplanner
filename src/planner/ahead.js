@@ -1,4 +1,5 @@
-// "You're N days ahead". Pure: works on a plan from plan().
+// "You're N days ahead", "done early" and other cheers. Pure: works on a plan from plan().
+import { toLocalDate, daysBetween } from './dates.js';
 
 const homework = (items) => items.filter((e) => !e.inClass);
 
@@ -23,3 +24,23 @@ export function daysAhead(p) {
 
 /** Between midnight and 4 AM: late enough to suggest bed. */
 export const isLateNight = (hour) => hour >= 0 && hour < 4;
+
+/** Whole days between finishing on `today` and the item's due date (0 if due today, late or none). */
+export function daysEarly(item, today) {
+  if (!item?.dueAt) return 0;
+  return Math.max(0, daysBetween(today, toLocalDate(item.dueAt)));
+}
+
+/**
+ * Which cheer a change in progress earns, comparing what this page saw before (`before`)
+ * with now. Only changes count, so opening a new tab never repeats one.
+ * Returns 'week' | 'ahead' | 'today' | null.
+ */
+export function progressCheer(before, now) {
+  if (!before) return null;
+  if (now.weekDone && !before.weekDone && now.onTime) return 'week';
+  if (now.days > before.days) return 'ahead';
+  if (now.todayClear && !before.todayClear && now.doneToday > 0) return 'today';
+  return null;
+}
+

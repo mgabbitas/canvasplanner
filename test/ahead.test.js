@@ -1,7 +1,7 @@
 process.env.TZ = 'America/Denver';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { daysAhead, isLateNight } from '../src/planner/ahead.js';
+import { daysAhead, isLateNight, daysEarly, progressCheer } from '../src/planner/ahead.js';
 
 const day = (date, n = 0, blocked = false) => ({ date, blocked, items: Array.from({ length: n }, () => ({ inClass: false })) });
 const plan = (days, { doneToday = 1, done = 1 } = {}) => ({
@@ -24,4 +24,25 @@ test('days ahead: an empty week with nothing done is not "ahead"', () => {
 
 test('late night is midnight to 4 AM', () => {
   assert.deepEqual([23, 0, 2, 3, 4].map(isLateNight), [false, true, true, true, false]);
+});
+
+test('daysEarly: whole days before the due date, never negative', () => {
+  assert.equal(daysEarly({ dueAt: '2026-10-09T23:59:00-06:00' }, '2026-10-07'), 2);
+  assert.equal(daysEarly({ dueAt: '2026-10-09T23:59:00-06:00' }, '2026-10-09'), 0);
+  assert.equal(daysEarly({ dueAt: '2026-10-09T23:59:00-06:00' }, '2026-10-11'), 0);
+  assert.equal(daysEarly({ dueAt: null }, '2026-10-07'), 0);
+  // Across the DST change (1 Nov 2026).
+  assert.equal(daysEarly({ dueAt: '2026-11-02T23:59:00-07:00' }, '2026-10-31'), 2);
+});
+
+test('progressCheer: only on a change seen by this page', () => {
+  const base = { days: 0, weekDone: false, onTime: true, todayClear: false, doneToday: 1 };
+  assert.equal(progressCheer(null, { ...base, todayClear: true }), null); // first look: no cheer
+  assert.equal(progressCheer(base, { ...base, todayClear: true }), 'today');
+  assert.equal(progressCheer(base, { ...base, todayClear: true, doneToday: 0 }), null); // nothing done: just empty
+  assert.equal(progressCheer(base, { ...base, days: 1, todayClear: true }), 'ahead');
+  assert.equal(progressCheer(base, { ...base, days: 2, weekDone: true, todayClear: true }), 'week');
+  assert.equal(progressCheer(base, { ...base, weekDone: true, onTime: false, todayClear: true }), 'today');
+  const clear = { ...base, todayClear: true };
+  assert.equal(progressCheer(clear, clear), null); // no repeats
 });
