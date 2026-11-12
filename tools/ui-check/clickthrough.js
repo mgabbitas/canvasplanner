@@ -400,6 +400,7 @@ async function run() {
   const ahead = document.querySelector('[data-key="ahead"]');
   check('today stays done (no refill)', /0 items/.test(document.querySelector('.day-tab:not(.week)')?.textContent ?? ''), document.querySelector('.day-tab:not(.week)')?.textContent);
   check('get-ahead button', !!ahead, ahead?.textContent);
+  check('get-ahead button is one line', ahead && ahead.getBoundingClientRect().height < 40, ahead?.getBoundingClientRect().height);
   if (ahead) {
     const before = Object.values(window.__store.items).filter((it) => it.plannedOn).length;
     ahead.click(); await wait(250);

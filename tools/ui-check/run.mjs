@@ -142,7 +142,7 @@ if (process.argv.includes('--screenshot')) {
     ['christmasday', '', '1400,1000', '?preview=christmasday&mode=light'],
     ['ocean', '', '1400,1000', '?look=ocean'], ['ocean-dark', '', '1400,1000', '?look=ocean&mode=dark'],
     ['sunset', '', '1400,1000', '?look=sunset'], ['forest', '', '1400,1000', '?look=forest'], ['lavender-dark', '', '1400,1000', '?look=lavender&mode=dark'], ['patriotic', '', '1400,1000', '?look=patriotic&somedone&roomy'], ['christmas-done', '', '1400,1000', '?look=christmas&somedone&roomy'],
-    ['sunset-done', '', '1400,1000', '?look=sunset&somedone&roomy'],
+    ['sunset-done', '', '1400,1000', '?look=sunset&somedone&roomy'], ['fall-alldone', '', '1400,1000', '?look=fall&mode=dark&alldone'],
     ['whatsnew', '', '1400,1000', ''], ['tour', '', '1400,1000', '?newuser'], ['neon', '', '1400,1000', '?look=neon&mode=light&somedone&roomy'],
     ['neon-appearance', 'settings/appearance', '1400,1000', '?look=neon'], ['welcome', '', '1400,800', '?empty'],
     ['general', 'settings/general', '1400,1000', '']]) {

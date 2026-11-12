@@ -188,7 +188,10 @@ export function renderDayLayout(p, kind) {
         done ? el('span', { className: 'done', style: `width:${pct(done)}%` }) : null,
         el('span', { className: 'planned', style: `width:${Math.max(0, pct(load) - pct(done))}%` })),
       el('span', { className: 'dt-count' }, itemCount(items)),
-      el('span', { className: 'dt-load' }, capacity === 0 && id !== 'week' ? 'day off' : `${minutesLabel(load)} / ${minutesLabel(capacity)}`),
+      el('span', { className: 'dt-load' }, capacity === 0 && id !== 'week' ? 'day off'
+        // A gold day: your hours, plus what you did beyond them (not "5h 40m / 4h", which reads like a mistake).
+        : bonus && !over ? `${minutesLabel(capacity)} + ${minutesLabel(done - capacity)} extra`
+          : `${minutesLabel(load)} / ${minutesLabel(capacity)}`),
       wontFit ? el('span', { className: 'dt-wontfit', 'data-key': 'week-wontfit' }, `+${minutesLabel(wontFit)} won't fit`) : null,
     );
   };
@@ -239,11 +242,12 @@ function aheadCard({ entry, date, today, finished }) {
     el('p', {}, finished ? 'All done for today. Nice work! ' : 'Nothing left today. ',
       el('span', { className: 'muted' }, 'Want to get ahead?')),
     el('button', {
-      className: 'primary', 'data-key': 'ahead',
-      title: 'Moves it to today. Use ⋮ on the item to undo.',
+      'data-key': 'ahead',
+      title: `${entry.item.title}\nMoves it to today. Use ⋮ on the item to undo.`,
       onclick: () => updateItems([entry.id], { plannedOn: today, pinned: false }),
-    }, `Start one from ${from}: `,
-    el('strong', {}, entry.item.title), ' ', el('span', { className: 'nowrap' }, `(${minutesLabel(entry.minutes)})`)),
+    }, el('span', { className: 'nowrap' }, `Start one from ${from}:`),
+    el('span', { className: 'ahead-title' }, entry.item.title),
+    el('span', { className: 'muted nowrap' }, minutesLabel(entry.minutes))),
   );
 }
 
@@ -270,8 +274,9 @@ function renderDay(day, today, kind, { upNext = false, ahead = null } = {}) {
       el('h2', {}, heading),
       el('span', { className: 'load' },
         // Same "planned / hours" as the day tab. What you finished is in the header.
-        day.blocked && day.capacity > 0 ? 'blocked · ' : `${minutesLabel(day.load)} / `,
-        ...capacityControl(day)),
+        ...(day.bonus && !day.over
+          ? [...capacityControl(day), ` + ${minutesLabel(done - day.capacity)} extra`]
+          : [day.blocked && day.capacity > 0 ? 'blocked · ' : `${minutesLabel(day.load)} / `, ...capacityControl(day)])),
     ),
     day.blocked ? null : el('div', { className: 'bar' },
       done ? el('div', { className: 'done', style: `width:${pctOf(done)}%` }) : null,

@@ -35,6 +35,13 @@
     Object.values(store.items).filter((i) => !i.canvasDone && i.dueAt && Date.parse(i.dueAt) > now && Date.parse(i.dueAt) < now + 7 * 864e5)
       .slice(0, 3).forEach((i) => { i.manualDone = true; i.doneOn = today; });
   }
+  // ?alldone: everything due in the next day is finished today (gold day + get-ahead card).
+  if (q.has('alldone') && store.items) {
+    const now = Date.now();
+    const today = new Date(now - new Date(now).getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    Object.values(store.items).filter((i) => !i.canvasDone && !i.manualDone && i.dueAt && Date.parse(i.dueAt) < now + 864e5)
+      .forEach((i) => { i.manualDone = true; i.doneOn = today; });
+  }
   window.__store = store;
   const listeners = [];
   const clone = (v) => JSON.parse(JSON.stringify(v));
