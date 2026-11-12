@@ -152,6 +152,9 @@ export async function allowCanvasAccess() {
 }
 
 export const homework = (entries) => entries.filter((e) => !e.inClass);
+/** Before the first sync: only the welcome card means anything yet. */
+export const firstRun = () => !app.state.meta.lastSyncAt && !Object.keys(app.state.items).length;
+
 /** Homework you have to do: not in-class, not optional extra credit. */
 export const required = (entries) => entries.filter((e) => !e.inClass && !e.optional);
 export const itemCount = (entries) => {

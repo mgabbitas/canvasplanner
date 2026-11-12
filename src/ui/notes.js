@@ -3,7 +3,7 @@
 import { daysAhead, isLateNight, progressCheer } from '../planner/ahead.js';
 import { daysBetween } from '../planner/dates.js';
 import { save } from '../storage/store.js';
-import { el, dayLabel } from './dom.js';
+import { el, dayLabel, minutesLabel } from './dom.js';
 import { celebrate } from './toast.js';
 import { app, plural } from './app.js';
 
@@ -11,12 +11,9 @@ import { app, plural } from './app.js';
 // updating into that version, so bug-fix releases don't hide it.
 export const WHATS_NEW = {
   '1.5': [
-    'Overdue work gets its own Catch up list at the top of today, and no longer pushes today\'s work off the plan.',
-    'Missing items a teacher graded 0 stay on your list instead of disappearing.',
-    '"Won\'t fit" only shows when another day would help. Otherwise the item stays on its day and the day shows it\'s over.',
-    'Extra credit is optional: it only fills time you have left, and never breaks a streak.',
-    'New streak look, and cheers when you finish early or clear today\'s list.',
-    'Syncs when you come back to the tab, every 30 minutes, with a progress bar. "Open Canvas" is in the sidebar.',
+    'Overdue work now sits in a Catch up list at the top of today, and missing items stay on it until done.',
+    'Extra credit only fills spare time, finished-extra days turn gold, and there are cheers for finishing early.',
+    'Syncs when you come back to the tab, with a progress bar. "Open Canvas" is in the sidebar.',
   ],
   '1.3': [
     'Works with any school\'s Canvas at an instructure.com address. Yours is in Settings → General → School.',
@@ -50,8 +47,8 @@ export function renderLateNight() {
 }
 
 /**
- * "What's new" once after an update: a card at the top until you dismiss it, listing
- * every version since the last one you saw (newest first).
+ * "What's new" once after an update: a card at the top until you dismiss it, with the
+ * newest version's few lines only (older ones are in the README changelog).
  */
 export function renderWhatsNew() {
   const v = feature(version());
@@ -71,10 +68,7 @@ export function renderWhatsNew() {
     el('div', { className: 'whats-new-head' },
       el('h2', {}, `What's new in ${unseen[0]}`),
       el('button', { className: 'primary', onclick: dismiss, 'data-key': 'whats-new-ok' }, 'Got it')),
-    unseen.flatMap((k, i) => [
-      i ? el('h3', { className: 'whats-new-older' }, `And in ${k}`) : null,
-      el('ul', {}, WHATS_NEW[k].map((line) => el('li', {}, line))),
-    ]),
+    el('ul', {}, WHATS_NEW[unseen[0]].map((line) => el('li', {}, line))),
     el('p', { className: 'hint' }, 'Want the tour? Settings → General → Take the tour.'));
 }
 
@@ -108,6 +102,7 @@ export function celebrateAhead(p) {
   const now = {
     days, weekDone, onTime: p.today <= p.week.cutoff,
     todayClear: !(today?.items ?? []).some((e) => !e.inClass && !e.optional), doneToday: p.doneToday.count,
+    bonus: Boolean(today?.bonus && !today.over),
   };
   const cheer = progressCheer(app.progressSeen, now);
   app.progressSeen = now;
@@ -117,6 +112,7 @@ export function celebrateAhead(p) {
     week: weekDoneText(p),
     ahead: `Congrats! You're ${plural(days, 'day')} ahead.`,
     today: "Today's list is done. Nice work!",
+    extra: `${minutesLabel(today ? today.doneMinutes - today.capacity : 0)} past your hours today. Above and beyond!`,
   }[cheer]);
 }
 

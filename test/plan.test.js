@@ -629,3 +629,15 @@ test('a dismissed closed item leaves Dismissed once its Closed window is over', 
   assert.equal(run([c]).dismissed.length, 1); // Mon 28: still in the window, Restore brings it back
   assert.equal(run([c], { now: '2026-09-29 08:00' }).dismissed.length, 0);
 });
+
+test('finished work past the day\'s hours is a bonus, not over', () => {
+  const doneToday = many(3, { due: '2026-10-02', minutesOverride: 60, manualDone: true, doneOn: '2026-09-28' });
+  const p = run(doneToday);
+  const mon = p.days[0];
+  assert.equal(mon.load, 180);
+  assert.deepEqual([mon.over, mon.bonus], [false, true]);
+  // Still work left on top of that: over, as before.
+  const left = mk({ due: '2026-09-28 23:59', minutesOverride: 30 });
+  const q = run([...doneToday, left]);
+  assert.deepEqual([q.days[0].over, q.days[0].bonus], [true, true]);
+});

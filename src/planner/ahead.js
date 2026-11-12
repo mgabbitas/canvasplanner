@@ -37,12 +37,13 @@ export function daysEarly(item, today) {
 /**
  * Which cheer a change in progress earns, comparing what this page saw before (`before`)
  * with now. Only changes count, so opening a new tab never repeats one.
- * Returns 'week' | 'ahead' | 'today' | null.
+ * Returns 'week' | 'ahead' | 'extra' | 'today' | null.
  */
 export function progressCheer(before, now) {
   if (!before) return null;
   if (now.weekDone && !before.weekDone && now.onTime) return 'week';
   if (now.days > before.days) return 'ahead';
+  if (now.bonus && !before.bonus) return 'extra';
   if (now.todayClear && !before.todayClear && now.doneToday > 0) return 'today';
   return null;
 }

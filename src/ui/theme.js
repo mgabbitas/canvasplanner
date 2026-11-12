@@ -59,8 +59,11 @@ function accentVars(accent, dark) {
 export const CLASS_COLORS = {
   blue: '#3b82f6', orange: '#ea580c', green: '#16a34a', purple: '#9333ea', red: '#dc2626',
   teal: '#0d9488', pink: '#db2777', amber: '#d97706', indigo: '#6366f1', slate: '#64748b',
+  brown: '#a0693a',
 };
-const CLASS_COLOR_KEYS = Object.keys(CLASS_COLORS);
+// Colors given out automatically, in order. Red only if you pick it: on its own it
+// looks like "overdue". Brown takes red's slot so no other class changes color.
+const CLASS_COLOR_KEYS = ['blue', 'orange', 'green', 'purple', 'brown', 'teal', 'pink', 'amber', 'indigo', 'slate'];
 
 /**
  * A class's color key: the one you picked, else assigned by course id order so it

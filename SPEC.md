@@ -217,7 +217,20 @@ dismissed or hidden, class included.
   once it's a hit. Moving or dismissing an item takes it off a day.
 
 Forecast: for the next 14 days, minutes and count of undone items *due* each day,
-independent of the plan. Highlight days over that weekday's capacity.
+independent of the plan. Highlight days over that weekday's capacity (amber, not red;
+a note under the chart explains the numbers and the color).
+
+Over and bonus (decided 2026-11-11): a day is `over` when its load is past its hours and
+it still has unfinished work. Today's finished work alone going past the hours is
+`bonus`: the bar and line turn gold, and a cheer says "1h 30m past your hours today".
+The header reads "Today: 9 items · 3h 5m left" ("Today: all done" when nothing's left).
+The Week tab adds "+Xh won't fit" when work has no day. No overdue banner (the Catch up
+group says it); "Wednesday has passed" only while work is left. Only one of What's new
+and the theme offer shows at a time; What's new lists only the newest version. Before
+the first sync, only the welcome card shows (no streaks, today line, Finish by, Add task
+or sidebar Sync now). Class colors: red is never given out automatically (brown takes
+its slot), only if you pick it; overdue rows have no "overdue" chip or red title (the
+Catch up group says it).
 
 ## 7. UI (new-tab page, plain HTML/CSS/JS)
 - Header: last sync time or error, Sync now, week label, target-day control with the

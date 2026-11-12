@@ -229,7 +229,8 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
   if (entry.optional) chips.push(el('span', { className: 'chip good', title: 'Extra credit: planned only into time left over, and never breaks a streak.' }, 'optional'));
   if (kind === 'closed') chips.push(el('span', { className: 'chip', title: "Canvas closed this before it was turned in. It can't be submitted anymore." }, 'closed'));
   else if (item.canvasMissing) chips.push(el('span', { className: 'chip bad', title: 'Canvas marks this missing' }, 'missing'));
-  if (entry.overdue) chips.push(el('span', { className: 'chip bad' }, 'overdue'));
+  // Overdue items sit under "Catch up", which already says so: no chip of their own.
+  if (entry.overdue) chips.push(null);
   else if (urgency.dueToday && kind !== 'done') chips.push(el('span', { className: 'chip bad' }, 'due today'));
   else if (urgency.dueTomorrow && kind !== 'done') chips.push(el('span', { className: 'chip warn' }, 'due tomorrow'));
   else if (entry.behind && kind === 'plan') chips.push(el('span', { className: 'chip warn' }, 'behind plan'));
@@ -274,7 +275,7 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
   if (editable(kind)) actions.push(itemMenu(entry, kind));
 
   return el('li', {
-    className: `item${done ? ' done' : ''}${kind === 'closed' ? ' closed' : ''}${upNext ? ' up-next' : ''}${!done && (urgency.dueToday || entry.overdue) ? ' urgent' : ''}`,
+    className: `item${done ? ' done' : ''}${kind === 'closed' ? ' closed' : ''}${upNext ? ' up-next' : ''}${!done && urgency.dueToday && !entry.overdue ? ' urgent' : ''}`,
     style: `--course:${courseColor(item.courseId, app.state.settings, app.state.courses)}`,
   },
     checkbox,

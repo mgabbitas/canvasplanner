@@ -11,7 +11,7 @@ import { renderSettings, resetSettingsDraft } from './settings.js';
 import { renderStats } from './statsview.js';
 import { renderClass, emptyClassFilter } from './classview.js';
 import { applyTheme } from './theme.js';
-import { app, view, settingsTab, classId, saveState, sync, courseName, recordDay } from './app.js';
+import { app, view, settingsTab, classId, saveState, sync, courseName, recordDay, firstRun } from './app.js';
 import { finishDay, openLog, panel } from './items.js';
 import { setNavOpen, renderSidebar, renderHeader, renderWelcome } from './shell.js';
 import { renderBanners, renderPullCard, renderForecast, renderDayLayout, renderExams } from './week.js';
@@ -87,7 +87,7 @@ function render() {
     fill('banners', []);
     fill('days', renderClass(classId()));
     fill('extras', []);
-  } else if (!app.state.meta.lastSyncAt && !Object.keys(app.state.items).length) {
+  } else if (firstRun()) {
     fill('banners', []);
     fill('days', [renderWelcome()]);
     fill('extras', []);
@@ -101,7 +101,9 @@ function render() {
     ]);
     rail = [renderPullCard(), renderForecast(app.thisWeekPlan), renderExams(p, 'next week')];
   } else {
-    fill('banners', [renderLateNight(), renderWhatsNew(), renderThemeOffer(), ...renderBanners(p)]);
+    // One friendly card at a time: What's new first, then a theme offer another day.
+    const whatsNew = renderWhatsNew();
+    fill('banners', [renderLateNight(), whatsNew, whatsNew ? null : renderThemeOffer(), ...renderBanners(p)]);
     fill('days', days('plan'));
     fill('extras', [
       panel("Won't fit by the target day", p.overflow, 'plan', true),

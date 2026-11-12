@@ -59,3 +59,9 @@ test('daysAhead: extra credit on a day never stands in the way', () => {
   const p = plan([day('2026-10-05'), { date: '2026-10-06', blocked: false, items: [{ inClass: false, optional: true }] }]);
   assert.deepEqual(daysAhead(p), { days: 1, weekDone: true });
 });
+
+test('progressCheer: going past your hours with finished work', () => {
+  const base = { days: 0, weekDone: false, onTime: true, todayClear: true, doneToday: 3, bonus: false };
+  assert.equal(progressCheer(base, { ...base, bonus: true }), 'extra');
+  assert.equal(progressCheer({ ...base, bonus: true }, { ...base, bonus: true }), null);
+});

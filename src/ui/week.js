@@ -12,11 +12,9 @@ import { itemRow, pullBlockedText, relativeDay } from './items.js';
 export function renderBanners(p) {
   const out = [];
   const target = dayLabel(p.week.cutoff, { weekday: 'long' });
-  if (p.overdue.length) {
-    out.push(el('div', { className: 'banner bad' },
-      `${plural(p.overdue.length, 'overdue item')} (${minutesLabel(sumMinutes(p.overdue))}) to catch up on. They're at the top of today and don't take today's planned time.`));
-  }
-  if (p.behind) {
+  // Overdue work needs no banner: the Catch up group and the header already say it.
+  const workLeft = p.days.some((d) => required(d.items).length) || p.overflow.length || p.atRisk.length;
+  if (p.behind && workLeft) {
     out.push(el('div', { className: 'banner warn' },
       `${target} has passed. Remaining work is scheduled as soon as possible.`));
   }
@@ -93,6 +91,8 @@ export function renderForecast(p) {
         el('span', { className: 'fc-n', 'aria-hidden': 'true' }, f.count ? String(f.count) : ''),
       );
     })),
+    el('p', { className: 'fc-note', 'aria-hidden': 'true' }, 'Bottom number: items due.',
+      p.forecast.some((f) => f.over) ? [' ', el('span', { className: 'swatch' }), 'More than that day\'s hours.'] : null),
   );
 }
 
@@ -167,12 +167,12 @@ export function renderDayLayout(p, kind) {
     app.render();
     document.querySelector(`[data-key="daytab-${CSS.escape(id)}"]`)?.focus();
   };
-  const tab = (id, i, { name, date, items, load, done = 0, capacity, over, blocked }) => {
+  const tab = (id, i, { name, date, items, load, done = 0, capacity, over, bonus = false, blocked, wontFit = 0 }) => {
     const active = id === selected;
     const pct = (m) => (capacity ? Math.min(100, (m / capacity) * 100) : 0);
     return el('button', {
       role: 'tab', 'aria-selected': String(active), tabIndex: active ? 0 : -1, 'data-key': `daytab-${id}`,
-      className: `day-tab${active ? ' active' : ''}${over ? ' over' : ''}${blocked ? ' blocked' : ''}${id === 'week' ? ' week' : ''}`,
+      className: `day-tab${active ? ' active' : ''}${over ? ' over' : ''}${bonus && !over ? ' bonus' : ''}${blocked ? ' blocked' : ''}${id === 'week' ? ' week' : ''}`,
       'aria-label': `${name}, ${date}: ${itemCount(items)}, ${minutesLabel(load)} planned of ${minutesLabel(capacity)}${done ? `, ${minutesLabel(done)} done` : ''}`,
       onclick: () => pick(id),
       onkeydown: (e) => {
@@ -189,20 +189,24 @@ export function renderDayLayout(p, kind) {
         el('span', { className: 'planned', style: `width:${Math.max(0, pct(load) - pct(done))}%` })),
       el('span', { className: 'dt-count' }, itemCount(items)),
       el('span', { className: 'dt-load' }, capacity === 0 && id !== 'week' ? 'day off' : `${minutesLabel(load)} / ${minutesLabel(capacity)}`),
+      wontFit ? el('span', { className: 'dt-wontfit', 'data-key': 'week-wontfit' }, `+${minutesLabel(wontFit)} won't fit`) : null,
     );
   };
   const short = (d) => dayLabel(d, { month: 'short', day: 'numeric' });
   const all = days.flatMap((d) => d.items);
   const weekLoad = days.reduce((s, d) => s + d.load, 0);
   const weekCap = days.reduce((s, d) => s + d.capacity, 0);
+  const weekDone = days.reduce((s, d) => s + (d.doneMinutes ?? 0), 0);
+  const wontFit = p.overflowMinutes + sumMinutes(p.atRisk.filter((e) => !e.date));
   const tabs = el('div', { className: 'day-tabs', role: 'tablist', 'aria-label': 'Days' },
     tab('week', 0, {
       name: 'Week', date: `${short(days[0].date)} – ${short(days.at(-1).date)}`,
-      items: all, load: weekLoad, done: days.reduce((s, d) => s + (d.doneMinutes ?? 0), 0), capacity: weekCap, over: weekLoad > weekCap, blocked: false,
+      items: all, load: weekLoad, done: weekDone, capacity: weekCap, blocked: false, wontFit,
+      over: wontFit > 0 || (weekLoad > weekCap && weekLoad - weekDone > 0),
     }),
     days.map((d, i) => tab(d.date, i + 1, {
       name: d.date === p.today && kind === 'plan' ? 'Today' : dayLabel(d.date, { weekday: 'short' }),
-      date: short(d.date), items: d.items, load: d.load, done: d.doneMinutes ?? 0, capacity: d.capacity, over: d.over, blocked: d.blocked,
+      date: short(d.date), items: d.items, load: d.load, done: d.doneMinutes ?? 0, capacity: d.capacity, over: d.over, bonus: d.bonus, blocked: d.blocked,
     })),
   );
   const shown = selected === 'week' ? days : [days.find((d) => d.date === selected)];
@@ -239,7 +243,7 @@ function aheadCard({ entry, date, today, finished }) {
       title: 'Moves it to today. Use ⋮ on the item to undo.',
       onclick: () => updateItems([entry.id], { plannedOn: today, pinned: false }),
     }, `Start one from ${from}: `,
-    el('strong', {}, entry.item.title), ` (${minutesLabel(entry.minutes)})`),
+    el('strong', {}, entry.item.title), ' ', el('span', { className: 'nowrap' }, `(${minutesLabel(entry.minutes)})`)),
   );
 }
 
@@ -261,7 +265,7 @@ function renderDay(day, today, kind, { upNext = false, ahead = null } = {}) {
   const pctOf = (m) => (day.capacity ? Math.min(100, (m / day.capacity) * 100) : 0);
   const done = day.doneMinutes ?? 0;
   const heading = dayLabel(day.date) + (day.date === today && kind === 'plan' ? ' · Today' : '');
-  return el('section', { className: `day${day.over ? ' over' : ''}${day.blocked ? ' blocked' : ''}` },
+  return el('section', { className: `day${day.over ? ' over' : ''}${day.bonus && !day.over ? ' bonus' : ''}${day.blocked ? ' blocked' : ''}` },
     el('div', { className: 'day-head' },
       el('h2', {}, heading),
       el('span', { className: 'load' },

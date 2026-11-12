@@ -7,7 +7,7 @@ import { aheadText } from './notes.js';
 import { toLocalDate } from '../planner/dates.js';
 import { ACCESS_MESSAGE, isLoginError } from '../sync/canvas.js';
 import { canvasBase, normalizeHost } from '../sync/school.js';
-import { app, IS_FIREFOX, BROWSER, view, classId, timeAgo, courseName, sync, allowCanvasAccess, setSchool, changeExtraDays, homework, itemCount, streaks, plural } from './app.js';
+import { app, IS_FIREFOX, BROWSER, view, classId, timeAgo, courseName, sync, allowCanvasAccess, setSchool, changeExtraDays, homework, itemCount, streaks, plural, firstRun } from './app.js';
 
 const NAV = [
   ['', 'this', 'This week', 'week'],
@@ -82,7 +82,8 @@ export function renderSidebar() {
         el('span', { className: 'legend-name' }, courseName(id))))))) : null,
     el('div', { className: 'side-sync' },
       el('div', { className: 'sync-status' }, status),
-      el('button', { onclick: sync, disabled: app.syncing, 'data-key': 'sync' }, icon('sync'), el('span', {}, app.syncing ? 'Syncing…' : 'Sync now')),
+      // Before the first sync the welcome card has the button.
+      firstRun() ? null : el('button', { onclick: sync, disabled: app.syncing, 'data-key': 'sync' }, icon('sync'), el('span', {}, app.syncing ? 'Syncing…' : 'Sync now')),
     ),
   ];
 }
@@ -215,10 +216,14 @@ export function renderHeader(p) {
   if (v === 'settings') subtitle = el('p', { className: 'subtitle' }, 'Changes save automatically.');
   if (v === 'stats') subtitle = el('p', { className: 'subtitle' }, 'How long your work actually takes, from the times you log.');
   if (v === 'class') subtitle = el('p', { className: 'subtitle' }, 'Everything left in this class. Filter, then set many estimates at once.');
-  if (weekView) {
+  if (weekView && !firstRun()) {
     const today = v === 'this' ? p.days.find((d) => d.date === p.today) : null;
     const parts = [];
-    if (today) parts.push(el('strong', {}, `Today: ${itemCount(today.items)} · ${minutesLabel(today.load - today.doneMinutes)}`));
+    if (today) {
+      parts.push(el('strong', {}, homework(today.items).length
+        ? `Today: ${itemCount(today.items)} · ${minutesLabel(Math.max(0, today.load - today.doneMinutes))} left`
+        : 'Today: all done'));
+    }
     const { count: doneCount, minutes: doneMinutes } = v === 'this' ? p.doneToday : { count: 0 };
     if (doneCount) {
       parts.push(el('span', { className: 'good-text', 'data-key': 'done-today', title: 'Finished today (logged time where you logged it)' },
@@ -251,8 +256,8 @@ export function renderHeader(p) {
 
   return [
     el('div', { className: 'title-row' }, menuBtn, el('h1', {}, title),
-      v === 'this' ? renderStreaks() : null,
-      weekView || v === 'class' ? el('button', {
+      v === 'this' && !firstRun() ? renderStreaks() : null,
+      (weekView || v === 'class') && !firstRun() ? el('button', {
         className: 'add-task', 'data-key': 'add-task',
         onclick: () => openTaskForm({ courseId: v === 'class' ? classId() : null }),
       }, '+ Add task') : null),

@@ -286,7 +286,10 @@ export function plan({ items, settings, weekState = {}, now }) {
       blocked: !usable(date),
       load: l,
       doneMinutes: date === today ? doneMinutes : 0,
-      over: l > capacity(date),
+      // Over: more than the day's hours with work still left. Finished work alone going
+      // past the hours is extra effort ("bonus"), not a problem.
+      over: l > capacity(date) && l - (date === today ? doneMinutes : 0) > 0,
+      bonus: date === today && capacity(date) > 0 && doneMinutes > capacity(date),
       items: onDay.get(date) ?? [],
     };
   });
