@@ -180,6 +180,13 @@ Pull next week:
 - Pulled items set `pulledIn` and are planned by the same algorithm. Each has a "send
   back" action. Items that aren't unlocked yet are listed as "not open yet".
 
+Extra credit (decided 2026-11-11): Canvas has no flag, so an item whose title says
+"extra credit" or "bonus" is optional ("optional" chip). It is planned after all required
+work, only on a day where it fits in the hours left (an empty day doesn't take it over
+capacity); otherwise it waits in an "Extra credit" list in the side column. Never
+overdue (past its due date it drops off), never in the pull gate, the due forecast,
+"days ahead" or streaks.
+
 Exams (decided 2026-10-06): unfinished items whose title contains "exam" or
 "midterm", or a quiz with "final" in the title, due from today through the end of the
 week, earliest first. A user field `notExam` removes a false match. Shown in the right

@@ -1,7 +1,8 @@
 // "You're N days ahead", "done early" and other cheers. Pure: works on a plan from plan().
 import { toLocalDate, daysBetween } from './dates.js';
 
-const homework = (items) => items.filter((e) => !e.inClass);
+// Extra credit is optional, so it never stands between you and "ahead".
+const homework = (items) => items.filter((e) => !e.inClass && !e.optional);
 
 /**
  * { days, weekDone }: once today's homework is all done (and something got done this

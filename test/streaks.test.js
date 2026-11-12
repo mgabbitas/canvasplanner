@@ -96,3 +96,8 @@ test('dismissing a missed item brings both streaks back', () => {
   assert.equal(weekStreak({ items: after, settings: S, now: at }).current, 2);
   assert.equal(dayStreak({ items: after, settings: S, dayLog, now: at }).current, 2); // 10-13's miss is gone
 });
+
+test('extra credit never breaks a streak', () => {
+  const items = [done('2026-10-06'), item({ title: 'Extra Credit: Bonus Quiz', dueAt: '2026-10-07T23:59:00-06:00' })];
+  assert.equal(weekStreak({ items, settings: S, now: now('2026-10-10') }).current, 1);
+});

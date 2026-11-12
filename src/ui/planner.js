@@ -111,6 +111,7 @@ function render() {
       renderForecast(p),
       renderExams(p, 'this week'),
       panel('No due date', p.noDueDate, 'plan'),
+      panel('Extra credit', p.extraCredit, 'plan', false, 'if you have time'),
       panel('Closed in Canvas', p.closed, 'closed', true),
       panel('Dismissed', p.dismissed, 'dismissed'),
     ];

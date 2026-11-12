@@ -236,6 +236,7 @@ a.title:hover { color: var(--accent); text-decoration: underline; }
 .chip.bad { background: var(--bad-bg); color: var(--bad-text); border-color: transparent; }
 .chip.warn { background: var(--warn-bg); color: var(--warn-text); border-color: transparent; }
 .chip.next { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+.chip.good { color: var(--good); border-color: var(--good); }
 select.chip.size { appearance: none; background: transparent; cursor: pointer; padding: 1px 8px; }
 select.chip.size.set { color: var(--accent); border-color: var(--accent); }
 button.link.logged { text-decoration: none; color: var(--muted); }

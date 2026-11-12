@@ -226,6 +226,7 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     if (entry.floating && kind !== 'done') chips.push(el('span', { className: 'chip', title: 'No due date: any time this week' }, 'this week'));
   }
   if (entry.inClass) chips.push(el('span', { className: 'chip' }, 'in class'));
+  if (entry.optional) chips.push(el('span', { className: 'chip good', title: 'Extra credit: planned only into time left over, and never breaks a streak.' }, 'optional'));
   if (kind === 'closed') chips.push(el('span', { className: 'chip', title: "Canvas closed this before it was turned in. It can't be submitted anymore." }, 'closed'));
   else if (item.canvasMissing) chips.push(el('span', { className: 'chip bad', title: 'Canvas marks this missing' }, 'missing'));
   if (entry.overdue) chips.push(el('span', { className: 'chip bad' }, 'overdue'));

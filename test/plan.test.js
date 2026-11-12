@@ -601,3 +601,25 @@ test('won\'t fit (Add a day) only when more days would help', () => {
   assert.equal(p.days.flatMap((d) => d.items).length, 7);
   assert.deepEqual(p.days.filter((d) => d.over).map((d) => d.date), ['2026-09-28']);
 });
+
+test('extra credit: only into hours left over, never overdue, never in the pull gate', () => {
+  const required = many(2, { due: '2026-09-29 23:59', minutesOverride: 60 }); // Mon full (120)
+  const bonus = mk({ title: 'Stand Forever --Extra Credit', due: '2026-09-28 23:59', minutesOverride: 30 });
+  const p = run([...required, bonus]);
+  // Due Mon, Mon has no room left: waits in its own list, no overflow or over days.
+  assert.deepEqual(p.extraCredit.map((e) => e.id), [bonus.id]);
+  assert.equal(p.overflow.length + p.atRisk.length, 0);
+  assert.ok(p.days.every((d) => !d.over));
+  // With room it's planned, after required work.
+  const roomy = run([required[0], mk({ ...bonus, dueAt: iso('2026-09-30') })]);
+  assert.equal(roomy.extraCredit.length, 0);
+  assert.ok(roomy.days.flatMap((d) => d.items).find((e) => e.id === bonus.id).optional);
+  // Past due: dropped, not overdue.
+  const late = run([mk({ title: 'Bonus reflection', due: '2026-09-25' })]);
+  assert.equal(late.overdue.length, 0);
+  assert.equal(late.extraCredit.length, 0);
+  // Doesn't hold up pulling next week; not in the due forecast.
+  const pullOk = run([mk({ title: 'Extra credit essay', due: '2026-10-02' }), mk({ due: '2026-10-06', minutesOverride: 20 })]);
+  assert.equal(pullOk.pull.enabled, true);
+  assert.equal(pullOk.forecast.find((f) => f.date === '2026-10-02').count, 0);
+});

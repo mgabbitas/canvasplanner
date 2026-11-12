@@ -46,6 +46,12 @@ const FINAL = /\bfinal\b/i;
 export const looksLikeExam = (item) => EXAM_WORDS.test(item.title) || (item.type === 'quiz' && FINAL.test(item.title));
 export const isExam = (item) => !item.notExam && looksLikeExam(item);
 
+// Extra credit (decided 2026-11-11): Canvas has no flag for it, so go by title. It's
+// optional: planned only into time left after required work, never overdue, never
+// part of a streak or the pull gate.
+const EXTRA_CREDIT = /\b(extra[\s-]*credit|bonus)\b/i;
+export const isOptional = (item) => !item.task && EXTRA_CREDIT.test(item.title);
+
 /** The local date a done item was finished: when you checked it off, else when Canvas got it. */
 export function doneDay(item) {
   if (!isDone(item)) return null;
@@ -97,6 +103,7 @@ function toEntry(item, settings, today) {
     firstDay,
     movedTo,
     notOpenYet: unlockDate != null && unlockDate > today,
+    optional: isOptional(item),
     pinned: Boolean(item.pinned),
     pulledIn: Boolean(item.pulledIn),
     // Real Canvas due date vs today, for urgency flags (independent of the plan).
@@ -192,11 +199,14 @@ export function plan({ items, settings, weekState = {}, now }) {
   const doneMinutes = sum(finishedToday) + partsToday.reduce((s, m) => s + m, 0);
   if (doneMinutes) load.set(today, doneMinutes);
 
-  const overdue = work.filter((e) => e.dueDay < today);
+  // Extra credit past its due date just drops off (not work to catch up on).
+  const overdue = work.filter((e) => e.dueDay < today && !e.optional);
   const upcoming = work.filter((e) => e.dueDay >= today);
   const moved = upcoming.filter((e) => e.movedTo);
   const pinned = upcoming.filter((e) => !e.movedTo && e.pinned);
-  const rest = upcoming.filter((e) => !e.movedTo && !e.pinned).sort(byDueThenSizeDesc);
+  const free = upcoming.filter((e) => !e.movedTo && !e.pinned);
+  const rest = free.filter((e) => !e.optional).sort(byDueThenSizeDesc);
+  const optionalRest = free.filter((e) => e.optional).sort(byDueThenSizeDesc);
 
   for (const e of work) e.behind = behind;
   // Catch up: overdue work shows on today but doesn't use today's hours, so it never
@@ -249,6 +259,20 @@ export function plan({ items, settings, weekState = {}, now }) {
     if (e.part) partDay.set(e.item.id, best);
   }
 
+  // Extra credit last, only where it fits in the hours left (an empty day doesn't take
+  // anything here). What doesn't fit waits in its own list.
+  const extraCredit = [];
+  for (const e of optionalRest) {
+    const prev = e.part ? partDay.get(e.item.id) : null;
+    const start = maxDate(maxDate(today, e.unlockDate ?? today), prev ? addDays(prev, 1) : today);
+    const end = behind ? e.lastDay : minDate(e.lastDay, week.end);
+    const day = dateRange(start, end).find((d) => usable(d) && (load.get(d) ?? 0) + e.minutes <= capacity(d));
+    if (day) {
+      place(e, day);
+      if (e.part) partDay.set(e.item.id, day);
+    } else extraCredit.push(e);
+  }
+
   const lastPlaced = [...onDay.keys()].reduce(maxDate, week.cutoff);
   const days = dateRange(today, maxDate(today, lastPlaced)).map((date) => {
     const l = (load.get(date) ?? 0) + (date === today ? catchUpMinutes : 0);
@@ -271,7 +295,7 @@ export function plan({ items, settings, weekState = {}, now }) {
   // don't count), then pulling continues until unfinished pulled work reaches the cap.
   const pulledMinutes = sum(work.filter((e) => e.pulledIn));
   const remaining = Math.max(0, (settings.pullCapMinutes ?? Infinity) - pulledMinutes);
-  const weekDone = work.every((e) => e.pulledIn);
+  const weekDone = work.every((e) => e.pulledIn || e.optional);
   const unlocked = !settings.gatePullOnCompletion || weekDone;
   // With nothing pulled yet, one item may exceed the cap so a big item is never stuck.
   const fitsOne = (minutes) => minutes <= remaining || pulledMinutes === 0;
@@ -311,7 +335,7 @@ export function plan({ items, settings, weekState = {}, now }) {
 
   // --- forecast: what's *due* each day, independent of the plan ---
   const forecast = dateRange(today, addDays(today, FORECAST_DAYS - 1)).map((date) => {
-    const due = entries.filter((e) => e.dueDay === date && !e.inClass && !e.floating);
+    const due = entries.filter((e) => e.dueDay === date && !e.inClass && !e.floating && !e.optional);
     const minutes = due.reduce((sum, e) => sum + e.minutes, 0);
     return { date, count: due.length, minutes, over: minutes > capacity(date) };
   });
@@ -348,6 +372,7 @@ export function plan({ items, settings, weekState = {}, now }) {
     atRisk,
     atRiskMinutes: sum(atRisk),
     noDueDate,
+    extraCredit,
     closed,
     dismissed,
     pull,

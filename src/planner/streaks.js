@@ -2,13 +2,13 @@
 // finished what the planner gave you. Pure: `now` comes in as an argument.
 import { toLocalDate, planningWeek } from './dates.js';
 import { estimate } from './estimate.js';
-import { isDone, doneDay } from './plan.js';
+import { isDone, doneDay, isOptional } from './plan.js';
 
 const list = (items) => (Array.isArray(items) ? items : Object.values(items ?? {}));
 const courseIncluded = (item, settings) => settings.courses?.[item.courseId]?.include !== false;
 
-/** Homework the streaks look at: not in-class, not dismissed or hidden, not filtered out. */
-const counts = (item, settings) => !item.dismissed && !item.hidden && courseIncluded(item, settings)
+/** Homework the streaks look at: not in-class, extra credit, dismissed or hidden, not filtered out. */
+const counts = (item, settings) => !item.dismissed && !item.hidden && !isOptional(item) && courseIncluded(item, settings)
   && (settings.includeNonSubmittable || !item.nonSubmittable) && !estimate(item, settings).inClass;
 
 /** Done on or before `date`. A done item with no known finish day gets the benefit of the doubt. */
