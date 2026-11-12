@@ -35,6 +35,8 @@
 - Celebrate getting ahead and finishing on time. Users rarely see the "N days ahead" cheer: it needs all of tomorrow's work done too, and the planner never moves tomorrow's work into today on its own, so it almost never fires. Add small, quiet cheers for things that do happen: finishing an item early ("Done 2 days early"), clearing today's list, finishing the week by the target day. Short toasts, respect the Celebrations setting, don't repeat the same one over and over. **Done 2026-11-11.**
 - Streaks: simpler look. Two small counters: a label on top ("Week" / "Day") and a flame with the number under it (the layout you described). Use a small flame icon drawn in the page, not the emoji (emoji look different on every system and can't take the theme's colors). **Done 2026-11-11.**
 
+- Click the streak card to open Stats (later Insights, see below). Stats should catch up with the 1.5 streaks: same Week/Day names and flame look, show current and best streaks, and which days/weeks counted (dismissed items don't count against you, extra credit isn't required). Wanted 2026-11-11.
+
 **Onboarding**
 
 - Choose your classes on first sync: a checklist before the plan shows ("Which classes do you want to plan?"). Pre-uncheck classes that look like announcement shells (e.g. "CSE Majors": no assignments, or nothing but old/overdue items, or no term). Ask again when a new class shows up mid-semester.
@@ -81,6 +83,23 @@
 - Also, do assignments that aren't submittable in Canvas show up? Or is there a way to add them? (Assignments with no submission do show, setting "Include non-submittable". Readings that are only module pages don't: see Modules above.)
 - Chrome compatibility if possible. (Later) 
 - Show class grades (optional, not necessary; see Grades above). Current score per class in the class view and/or Stats. Needs one more read-only call (`/courses?include[]=total_scores`). Display only: don't reorder the normal schedule by grade (Catch up may be ordered by grade impact, decided 2026-11-11). Maybe: a "late"/"missing" chip from the submission data we already sync.
+
+**Themes and look** (wanted 2026-11-11; workshop before building)
+
+- Overall: the themes are great as they are. After living with them and hearing what users think, do a round of tweaks. Workshop it: screenshots of each theme in light and dark, design review, pick changes together. Collect people's reactions in the meantime.
+- Plain looks plain, holidays festive (see the icon and bar notes under Next update).
+- Fall: keep the falling leaves.
+- Halloween only: swap the falling leaves for pumpkins, bats and ghosts that fly around (an animation update, not just a new shape falling). Must respect reduced motion (no movement when the system asks for less) and stay light on CPU.
+- Backgrounds, subtle: Halloween gets a slightly Halloween-y background; Thanksgiving gets one too (cornucopias, pilgrim hats or turkeys, something small and faint). Same faintness as today's leaf background so text stays easy to read.
+
+**Accessibility** (wanted 2026-11-11; research first)
+
+- Dyslexia-friendly font option. Research first and find hard data, not marketing: you found two fonts said to help. My understanding (to verify): studies of OpenDyslexic and Dyslexie mostly found no reading benefit over a plain sans-serif, while larger text, more letter/line spacing and shorter lines did help. So the option might be "easier reading" (font plus spacing), not just a font. Fonts must be bundled in the extension (no remote fonts) with a license that allows it (OpenDyslexic is SIL OFL; Dyslexie is commercial). Candidates to look at: your two, Lexend, Atkinson Hyperlegible.
+- Colorblind toggle, maybe. First check whether it's needed: color should never be the only signal (chips already have words: "due today", "missing"), and run each theme through a colorblind simulator (red vs green done/over, amber vs gold). Only add a toggle if that check finds problems a palette fix can't solve; a toggle is one more setting to explain.
+
+**Insights: Stats page overhaul** (wanted 2026-11-11)
+
+- Rename Stats to Insights and overhaul it: more helpful analytics and insights into how you work and your homework time, not just numbers. Each insight should say something you can act on ("Physics takes you 40% longer than planned: raise its estimate?"). Workshop which ones before building; pick a few good ones, not all. Includes the streak follow-up above, grade analytics (under Grades), and the list below.
 
 **Stats ideas** (pick some, not all)
 
