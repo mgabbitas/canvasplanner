@@ -203,7 +203,7 @@ and filled once this week / today already counts. Cheers (2026-11-11), each a sh
 toast line, only on a change seen by the page (so a new tab never repeats one), off with
 the Celebrations setting: "N days early!" when you check off an item before its due day;
 "Today's list is done" when today's last homework is checked off; "N days ahead" as
-before; "The whole week is done by Wednesday" when the week is done by the target day. Neither needs a setting. Homework means not in-class, not
+before; "The whole week is done, 2 days before your Wednesday target! Go touch some grass." (or "right on target") when the week is done by the target day. Neither needs a setting. Homework means not in-class, not
 dismissed or hidden, class included.
 - Weeks on target, computed from items: a week's homework is what's due in it. Each item
   must be done by that week's target day plus added days, or by its due day if it opens

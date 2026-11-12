@@ -1,6 +1,7 @@
 // Small notes at the top of This week: the late-night nudge, "What's new" after an
 // update, and the "days ahead" celebration when you get further ahead.
 import { daysAhead, isLateNight, progressCheer } from '../planner/ahead.js';
+import { daysBetween } from '../planner/dates.js';
 import { save } from '../storage/store.js';
 import { el, dayLabel } from './dom.js';
 import { celebrate } from './toast.js';
@@ -89,6 +90,14 @@ export async function settleOnboarding() {
   await save({ onboarding: app.state.onboarding });
 }
 
+/** "Week done" cheer: how early you finished, then go enjoy it. */
+function weekDoneText(p) {
+  const early = daysBetween(p.today, p.week.cutoff);
+  const target = dayLabel(p.week.cutoff, { weekday: 'long' });
+  const when = early > 0 ? `${plural(early, 'day')} before your ${target} target` : 'right on target';
+  return `The whole week is done, ${when}! Go touch some grass.`;
+}
+
 /**
  * After a render of This week: cheer when progress changes on this page: the week done
  * by the target day, getting further ahead, or clearing today's list.
@@ -105,7 +114,7 @@ export function celebrateAhead(p) {
   app.ahead = { days, weekDone };
   if (!cheer || !app.state.settings.funMessages) return;
   celebrate({
-    week: `The whole week is done by ${dayLabel(p.week.cutoff, { weekday: 'long' })}. That's the plan working!`,
+    week: weekDoneText(p),
     ahead: `Congrats! You're ${plural(days, 'day')} ahead.`,
     today: "Today's list is done. Nice work!",
   }[cheer]);
