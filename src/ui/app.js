@@ -16,6 +16,7 @@ export const app = {
   state: null, // validated stored state (settings, items, meta, weekState, courses)
   syncing: false,
   syncProgress: null, // { done, total } classes while syncing
+  drawProgress: () => document.createElement('span'), // set by shell.js
   syncMessage: null,
   editingDay: null, // date whose capacity is being edited
   pullAmount: 60, // minutes picked in the "pull about …" control
@@ -120,7 +121,12 @@ export async function sync() {
   app.syncMessage = null;
   app.syncProgress = null;
   app.render();
-  const onProgress = (done, total) => { app.syncProgress = { done, total }; app.render(); };
+  // Redraw only the progress line, not the page (a full redraw would reset what you're
+  // typing in Settings and close open menus).
+  const onProgress = (done, total) => {
+    app.syncProgress = { done, total };
+    for (const node of document.querySelectorAll('[data-key="sync-progress"]')) node.replaceWith(app.drawProgress());
+  };
   const result = await runSync({ onProgress }).catch((e) => ({ ok: false, error: `Sync failed: ${e.message}` }));
   app.syncing = false;
   app.syncProgress = null;
@@ -146,6 +152,8 @@ export async function allowCanvasAccess() {
 }
 
 export const homework = (entries) => entries.filter((e) => !e.inClass);
+/** Homework you have to do: not in-class, not optional extra credit. */
+export const required = (entries) => entries.filter((e) => !e.inClass && !e.optional);
 export const itemCount = (entries) => {
   const n = homework(entries).length;
   return `${n} item${n === 1 ? '' : 's'}`;

@@ -5,7 +5,7 @@ import { courseColor } from './theme.js';
 import { toLocalDate, addDays } from '../planner/dates.js';
 import { PULL_AMOUNTS } from '../planner/plan.js';
 import {
-  app, courseName, sumMinutes, plural, updateItems, changeExtraDays, setDayCapacity, saveState, homework, itemCount,
+  app, courseName, sumMinutes, plural, updateItems, changeExtraDays, setDayCapacity, saveState, homework, required, itemCount,
 } from './app.js';
 import { itemRow, pullBlockedText, relativeDay } from './items.js';
 
@@ -219,11 +219,11 @@ export function renderDayLayout(p, kind) {
  */
 function getAhead(p) {
   const today = p.days.find((d) => d.date === p.today);
-  if (!today || homework(today.items).length) return null;
+  if (!today || required(today.items).length) return null;
   for (const day of p.days) {
     if (day.date <= p.today) continue;
     // A split part can't be moved on its own (the planner places parts), so skip those.
-    const entry = homework(day.items).find((e) => e.firstDay === p.today && !e.movedTo && !e.part);
+    const entry = required(day.items).find((e) => e.firstDay === p.today && !e.movedTo && !e.part);
     if (entry) return { entry, date: day.date, today: p.today, finished: p.doneToday.count > 0 };
   }
   return null;

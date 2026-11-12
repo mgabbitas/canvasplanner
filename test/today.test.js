@@ -28,5 +28,10 @@ test("today: overdue first, then by due time; in-class and done items left out",
 
 test('today: nothing left gives an empty badge; big counts are capped', () => {
   assert.equal(badgeText(todaySummary({ items: [], settings: S, now })), '');
-  assert.equal(badgeText({ remaining: Array(120) }), '99');
+  assert.equal(badgeText({ remaining: Array(120).fill({}) }), '99');
+});
+
+test('badge leaves out extra credit', () => {
+  assert.equal(badgeText({ remaining: [{ optional: true }] }), '');
+  assert.equal(badgeText({ remaining: [{ optional: true }, { optional: false }] }), '1');
 });

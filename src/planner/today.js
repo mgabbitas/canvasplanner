@@ -16,5 +16,8 @@ export function todaySummary({ items, settings, weekState = {}, now }) {
   return { date: p.today, remaining, doneCount: p.doneToday.count };
 }
 
-/** Badge text: today's remaining count, or nothing when there's none. */
-export const badgeText = (summary) => (summary.remaining.length ? String(Math.min(summary.remaining.length, 99)) : '');
+/** Badge text: today's remaining required count, or nothing when there's none. */
+export const badgeText = (summary) => {
+  const n = summary.remaining.filter((e) => !e.optional).length; // extra credit is optional
+  return n ? String(Math.min(n, 99)) : '';
+};

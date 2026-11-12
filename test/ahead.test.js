@@ -46,3 +46,16 @@ test('progressCheer: only on a change seen by this page', () => {
   const clear = { ...base, todayClear: true };
   assert.equal(progressCheer(clear, clear), null); // no repeats
 });
+
+test('daysAhead: work with no day to sit on means the week is not done', () => {
+  const p = plan([day('2026-10-05'), day('2026-10-06')]);
+  p.atRisk = [{ inClass: false, date: null }];
+  assert.equal(daysAhead(p).weekDone, false);
+  p.atRisk = [{ inClass: false, date: '2026-10-06' }]; // placed (tight): its day shows it
+  assert.equal(daysAhead(p).weekDone, true);
+});
+
+test('daysAhead: extra credit on a day never stands in the way', () => {
+  const p = plan([day('2026-10-05'), { date: '2026-10-06', blocked: false, items: [{ inClass: false, optional: true }] }]);
+  assert.deepEqual(daysAhead(p), { days: 1, weekDone: true });
+});

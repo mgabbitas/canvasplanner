@@ -107,7 +107,7 @@ export function celebrateAhead(p) {
   const today = p.days.find((d) => d.date === p.today);
   const now = {
     days, weekDone, onTime: p.today <= p.week.cutoff,
-    todayClear: !(today?.items ?? []).some((e) => !e.inClass), doneToday: p.doneToday.count,
+    todayClear: !(today?.items ?? []).some((e) => !e.inClass && !e.optional), doneToday: p.doneToday.count,
   };
   const cheer = progressCheer(app.progressSeen, now);
   app.progressSeen = now;

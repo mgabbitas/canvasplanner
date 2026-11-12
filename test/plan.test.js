@@ -623,3 +623,9 @@ test('extra credit: only into hours left over, never overdue, never in the pull 
   assert.equal(pullOk.pull.enabled, true);
   assert.equal(pullOk.forecast.find((f) => f.date === '2026-10-02').count, 0);
 });
+
+test('a dismissed closed item leaves Dismissed once its Closed window is over', () => {
+  const c = mk({ due: '2026-09-25 23:59', lockAt: iso('2026-09-27 23:59'), canvasMissing: true, dismissed: true });
+  assert.equal(run([c]).dismissed.length, 1); // Mon 28: still in the window, Restore brings it back
+  assert.equal(run([c], { now: '2026-09-29 08:00' }).dismissed.length, 0);
+});

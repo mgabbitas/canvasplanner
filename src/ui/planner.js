@@ -94,7 +94,11 @@ function render() {
   } else if (v === 'next') {
     fill('banners', renderBanners(p));
     fill('days', days('next'));
-    fill('extras', [panel("Won't fit by next week's target day", p.overflow, 'next', true)]);
+    fill('extras', [
+      panel("Won't fit by next week's target day", p.overflow, 'next', true),
+      panel("Can't fit before it's due", p.atRisk.filter((e) => !e.date), 'next', true),
+      panel('Extra credit', p.extraCredit, 'next', false, 'if you have time'),
+    ]);
     rail = [renderPullCard(), renderForecast(app.thisWeekPlan), renderExams(p, 'next week')];
   } else {
     fill('banners', [renderLateNight(), renderWhatsNew(), renderThemeOffer(), ...renderBanners(p)]);

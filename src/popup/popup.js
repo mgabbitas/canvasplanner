@@ -53,7 +53,7 @@ function openPlanner() {
 
 function render() {
   const { doneCount, date } = summary();
-  const left = shown.filter((e) => !checked.has(e.id)).length;
+  const left = shown.filter((e) => !checked.has(e.id) && !e.optional).length;
   const synced = Boolean(state.meta.lastSyncAt);
 
   const list = shown.length

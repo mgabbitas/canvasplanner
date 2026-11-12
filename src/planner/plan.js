@@ -139,8 +139,9 @@ export function plan({ items, settings, weekState = {}, now }) {
   const all = Array.isArray(items) ? items : Object.values(items ?? {});
   const behind = today > week.cutoff;
   const nowMs = new Date(now).getTime();
+  const closedShown = (i) => today <= addDays(toLocalDate(i.lockAt), CLOSED_SHOW_DAYS);
   const closed = all
-    .filter((i) => isActive(i, settings) && isClosed(i, nowMs) && today <= addDays(toLocalDate(i.lockAt), CLOSED_SHOW_DAYS))
+    .filter((i) => isActive(i, settings) && isClosed(i, nowMs) && closedShown(i))
     .map((i) => toEntry(i, settings, today));
   // A missed repeat of one of your tasks just drops off (it isn't work to catch up on).
   const entries = all.filter((i) => isActive(i, settings) && !isMissedRepeat(i, today) && !isClosed(i, nowMs))
@@ -347,7 +348,8 @@ export function plan({ items, settings, weekState = {}, now }) {
 
   // --- dismissed (so a dismissal can be undone) ---
   const dismissed = all
-    .filter((i) => i.dismissed && !isDone(i) && !i.hidden && courseIncluded(i, settings))
+    // A closed item past its Closed window would come back nowhere, so it isn't listed.
+    .filter((i) => i.dismissed && !isDone(i) && !i.hidden && courseIncluded(i, settings) && !(isClosed(i, nowMs) && !closedShown(i)))
     .map((i) => toEntry(i, settings, today));
 
   // --- done this week (for the collapsible Done section) ---

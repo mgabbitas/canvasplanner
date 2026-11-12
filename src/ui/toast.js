@@ -49,7 +49,12 @@ export function showToast({ message, actions = [], duration = 10_000 }) {
 /** A cheerful line: added on top of the open toast (keeping its Undo), else a toast of its own. */
 export function celebrate(text) {
   if (current) {
-    current.node.querySelector('.toast-celebrate')?.remove();
+    // Keep one already there ("2 days early!" then "Today's list is done") as one line.
+    const line = current.node.querySelector('.toast-celebrate');
+    if (line) {
+      if (!line.textContent.includes(text)) line.textContent = `${line.textContent} ${text}`;
+      return;
+    }
     current.node.prepend(el('div', { className: 'toast-celebrate', 'data-key': 'celebrate' }, text));
     return;
   }

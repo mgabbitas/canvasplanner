@@ -20,7 +20,9 @@ export function daysAhead(p) {
     if (homework(d.items).length) return { days, weekDone: false };
     days++;
   }
-  return { days, weekDone: !homework(p.overflow ?? []).length };
+  // Work with no day to sit on (won't fit, or can't fit before it's due) still counts.
+  const unplaced = [...(p.overflow ?? []), ...(p.atRisk ?? []).filter((e) => !e.date)];
+  return { days, weekDone: !homework(unplaced).length };
 }
 
 /** Between midnight and 4 AM: late enough to suggest bed. */

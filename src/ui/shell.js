@@ -26,7 +26,7 @@ export function setNavOpen(open) {
 /** "Syncing class 3 of 7" and a bar, while a sync runs. */
 export function syncProgress() {
   const pr = app.syncProgress;
-  if (!pr?.total) return el('span', {}, 'Syncing…');
+  if (!pr?.total) return el('span', { 'data-key': 'sync-progress' }, 'Syncing…');
   const pct = Math.round((pr.done / pr.total) * 100);
   return el('div', { className: 'sync-progress', 'data-key': 'sync-progress' },
     el('span', {}, pr.done < pr.total ? `Syncing class ${pr.done + 1} of ${pr.total}…` : 'Saving…'),
@@ -35,6 +35,8 @@ export function syncProgress() {
       'aria-valuemin': '0', 'aria-valuemax': String(pr.total), 'aria-valuenow': String(pr.done),
     }, el('span', { style: `width:${pct}%` })));
 }
+
+app.drawProgress = syncProgress;
 
 export function renderSidebar() {
   const v = view();
