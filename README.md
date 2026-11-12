@@ -12,8 +12,8 @@ Wednesday instead of piling up on Saturday.
 
 - **Plans your week.** Each day shows what to work on, grouped by class, with how many
   items and minutes it adds up to. Today's most urgent item is marked **up next**.
-- **Flags what's urgent.** Anything due today is red; anything overdue is called out
-  at the top.
+- **Flags what's urgent.** Anything due today is red; overdue work sits in a Catch up
+  list at the top of today.
 - **Fits your schedule.** You choose how many minutes you have each day; work that
   doesn't fit is reported, never quietly pushed past its due date.
 - **Takes your own tasks.** Add things Canvas doesn't track (study for a midterm, a
@@ -111,6 +111,13 @@ Requirements and design decisions are in [SPEC.md](SPEC.md). MIT licensed (see
 
 ## Changelog
 
+- **1.5.0**: Overdue work sits in a Catch up list at the top of today; missing items
+  stay there until done, and closed ones move to a "Closed in Canvas" box. Work that
+  can't fit is placed on the least-full day and flagged instead of vanishing. Extra
+  credit only fills spare time. Days where you did more than your hours turn gold,
+  with cheers for finishing early. Streaks show as a small card. Syncs every 30
+  minutes and when you come back to the tab, with a progress bar. "Open Canvas" in
+  the sidebar; visiting Canvas first sets your school.
 - **1.4.1**: Renamed from Canvas Planner to Planner for Canvas. Also runs in Chrome
   (Chrome Web Store listing coming). Listed on addons.mozilla.org from this version,
   so Firefox keeps it up to date. Sync troubleshooting steps name your browser's own
