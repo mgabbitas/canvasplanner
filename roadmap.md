@@ -8,9 +8,15 @@
 
 - Invite people to leave a review, without being annoying. Only ask once, ever: whether they click the link, dismiss it, or ignore it, it never comes back. A small note inside the planner page, not a browser notification (no new permissions). Show it after a good moment, like finishing an item, and only once they've used the planner for a while (maybe 2+ weeks and 10+ items done). Link to the AMO or Chrome Web Store page depending on the browser.
 
-- Top row isn't aligned at the top: the streak card, "+ Add task" and the "Due in the next 14 days" panel start at different heights. `.title-row` (`planner.css:167`) centers its items, and the streak card is taller than the button, so the button sits lower. Fix: top-align the row (or make Add task as tall as the streak card) so its tops line up with the side panel. Check light and dark, and narrow widths where the row wraps.
-- Theme icons (the leaf, pumpkin, snowflake, star next to the name, `icons.js` LOOK_ICONS): nice because they're simple, but the leaf looks lonely and out of place sitting alone after the name. Ideas, smallest first: (a) tuck it onto the logo as a small badge on its corner instead of after the name; (b) redraw the set so they share one style and size with the logo (same stroke, filled, theme color); (c) show it only on holiday looks, not plain Fall. Pick one; don't add more decoration.
+- Top row isn't aligned at the top: the streak card, "+ Add task" and the "Due in the next 14 days" panel start at different heights (`.title-row`, `planner.css:167`, centers its items and the streak card is taller than the button). **Decided 2026-11-11:** workshop it with the design-review agent: show it two or three options as real screenshots (light and dark, wide and narrow), then pick together. Fold into the layout pass below if that happens first.
+- Theme icons (leaf, pumpkin, snowflake, star next to the name, `icons.js` LOOK_ICONS). **Decided 2026-11-11: (b) + (c).** Redraw the set in one style matching the logo (same stroke and size, filled, theme color), and show one only on holiday looks (Halloween, Thanksgiving, Christmas, July 4), not plain Fall. Keep them simple; that's what's nice about them.
 - Forecast bars look flat in grey, mostly in light mode. Grey was picked so amber "too much" days stand out in every theme. Ideas: a soft tint of the theme accent at low strength (check it doesn't blend with amber in Fall/Halloween), or a darker/warmer grey just for light mode. A tweak, not a redesign.
+
+- Simple layout pass (bigger, its own update). Goal: someone opening the page for the first time can tell in a few seconds what to do today, and nothing on the page needs explaining. Not new features; mostly moving, merging and removing. Process:
+  1. Design review of the current page as-is (every screen, light and dark, wide and narrow), listing what's repeated, crowded or unclear.
+  2. Agree on a short list of principles (e.g. one place for today's numbers, one card style, consistent spacing and top edges) before changing anything.
+  3. Change in small steps, with screenshots after each and a design review every round, until it's simple. Bug hunt before release as usual.
+  Watch for bloat: a redesign that adds panels or settings has missed the point.
 
 **Bugs (fix first, users are hitting these)**
 
