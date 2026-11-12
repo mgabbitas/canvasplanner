@@ -2,7 +2,7 @@
 // session) or sync quietly if the data is stale. Also keeps the toolbar badge (today's
 // remaining homework) up to date.
 import './browser.js';
-import { loadState } from './storage/store.js';
+import { loadState, save } from './storage/store.js';
 import { runSync } from './sync/run.js';
 import { onSchool, normalizeHost } from './sync/school.js';
 import { todaySummary, badgeText } from './planner/today.js';
@@ -25,9 +25,19 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
   if (msg?.type !== 'canvas-visit' || sender.id !== browser.runtime.id) return;
   const { settings, meta, canvas } = await loadState();
   if (!canvas.host) {
-    // No school chosen yet: open the planner once with this Canvas filled in to confirm.
+    // No school chosen yet: the Canvas you're logged in to is your school. Save it and
+    // sync (an open welcome page picks it up through the storage change).
     const host = normalizeHost(sender.url);
-    if (host && settings.openOnCanvasVisit) await openPlannerOnce(`?school=${encodeURIComponent(host)}`);
+    if (!host || (await loadState()).canvas.host) return;
+    await save({ canvas: { host } });
+    if (settings.openOnCanvasVisit && await openPlannerOnce('?sync=1')) return;
+    if (syncing) return;
+    syncing = true;
+    try {
+      await runSync();
+    } finally {
+      syncing = false;
+    }
     return;
   }
   if (!onSchool(sender.url, canvas.host)) return;

@@ -75,7 +75,7 @@ async function run() {
   check('header streak counters', $$('#header .streak').length === 2, $$('#header .streak').map((x) => x.textContent).join(' | '));
   const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
   check('today recorded for streak', Array.isArray(window.__store.dayLog?.[todayKey]?.left), JSON.stringify(window.__store.dayLog?.[todayKey]));
-  check('sidebar nav', $$('.nav-link').length === 4);
+  check('sidebar nav', $$('.nav-link').length === 5 && !!document.querySelector('[data-key="open-canvas"]'));
   check('class legend', $$('.legend li').length > 0, `${$$('.legend li').length} classes`);
   check('rail forecast', !!document.querySelector('#rail .forecast'));
   check('class groups', $$('.class-group').length > 0, `${$$('.class-group').length} groups`);

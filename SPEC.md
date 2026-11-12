@@ -293,7 +293,9 @@ clamp every value, and fall back to the last valid setting on bad input.
   pages) only messages the background script; it reads nothing from the page. The
   first visit per browser session opens the planner with `?sync=1` (setting
   `openOnCanvasVisit`, default on); later visits sync in the background when data is
-  stale. No extra permissions: the host permission covers the content script and
+  stale. With no school saved yet (decided 2026-11-11), the visited Canvas host is saved
+  as your school right away and synced; an open welcome page updates by itself. The
+  sidebar has an "Open Canvas" link once a school is saved. No extra permissions: the host permission covers the content script and
   `tabs.create` needs none.
 - Sync entry point: background script, `fetch` with `credentials: 'include'`. Confirmed
   in M0 (2026-09-29): 200 JSON, all 9 courses, no content script needed.

@@ -63,7 +63,11 @@ export function renderSidebar() {
       href: `#${hash}`, className: `nav-link${v === key ? ' active' : ''}`, 'aria-current': v === key ? 'page' : null,
       'data-key': `nav-${key}`,
       onclick: (e) => { e.preventDefault(); setNavOpen(false); location.hash = hash; },
-    }, icon(ic), el('span', {}, label)))),
+    }, icon(ic), el('span', {}, label))),
+    host() ? el('a', {
+      href: `${canvasBase(host())}/`, target: '_blank', rel: 'noopener noreferrer',
+      className: 'nav-link', 'data-key': 'open-canvas', title: `Open ${host()} in a new tab`,
+    }, icon('external'), el('span', {}, 'Open Canvas')) : null),
     courses.length ? el('div', { className: 'side-section' },
       el('h2', {}, 'Classes'),
       el('ul', { className: 'legend' }, courses.map((id) => el('li', {}, el('a', {
@@ -106,7 +110,7 @@ export function schoolForm({ value = '', button = 'Save', onSaved = setSchool, c
   const save = (e) => {
     e.preventDefault();
     const h = normalizeHost(input.value);
-    if (!h) return fail("That doesn't look like a Canvas address. It should end in instructure.com, like byui.instructure.com.");
+    if (!h) return fail("That doesn't look like a Canvas address. It should end in instructure.com, like yourschool.instructure.com.");
     if (h === host()) return fail('');
     if (confirmChange && host() && !confirm(`Switch to ${h}? Everything from ${host()} is cleared: assignments, classes, class names, colors and rules, and the tasks you added to those classes. Your other settings, themes and history stay.`)) return;
     app.schoolDraft = null;
@@ -141,8 +145,9 @@ export function renderWelcome() {
     const suggested = normalizeHost(new URLSearchParams(location.search).get('school')) ?? '';
     return el('section', { className: 'panel welcome' },
       el('h2', {}, 'Welcome to Planner for Canvas'),
-      el('p', {}, "What's your school's Canvas address? It's what you see in the address bar on Canvas, like ",
-        el('strong', {}, 'byui.instructure.com'), '.'),
+      el('p', {}, el('strong', {}, 'Open Canvas in another tab and log in.'),
+        ' The planner picks up your school from there and brings in your assignments.'),
+      el('p', { className: 'hint' }, "Or type your school's Canvas address (what you see in the address bar on Canvas):"),
       schoolForm({ value: suggested, button: 'Save and sync' }),
       el('p', { className: 'hint' }, 'The planner uses your existing Canvas login in this browser and only reads your assignments.'));
   }

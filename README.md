@@ -6,7 +6,7 @@ the week's work is spread across the time you actually have each day, so it's do
 Wednesday instead of piling up on Saturday.
 
 > Works in Firefox with any school's Canvas at an `instructure.com` address (like
-> `byui.instructure.com`).
+> `yourschool.instructure.com`).
 
 ## What it does
 
@@ -38,8 +38,8 @@ Planner for Canvas is an independent project, not made by or affiliated with Ins
 2. **Drag the downloaded file onto any Firefox window** and click **Add** when Firefox
    asks. (Or open `about:addons`, click the ⚙ gear, choose **Install Add-on From
    File…**, and pick the file.)
-3. **Open a new tab** and enter your school's Canvas address (or just open Canvas while
-   logged in, and the planner offers it). It then pulls in your assignments.
+3. **Open Canvas** in a tab and log in. The planner picks up your school from there and
+   pulls in your assignments. (Or open a new tab and type your school's Canvas address.)
 
 The planner also becomes your **new tab page**, so it's one Ctrl+T away. The toolbar
 button shows how many items are left today; click it to check things off without
