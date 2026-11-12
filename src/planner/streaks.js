@@ -32,7 +32,7 @@ function runs(statuses) {
 /** The ids of today's planned homework that's still undone (stored in dayLog each render). */
 export function plannedToday(p) {
   const today = p.days.find((d) => d.date === p.today);
-  return (today?.items ?? []).filter((e) => !e.inClass).map((e) => e.id).sort();
+  return (today?.items ?? []).filter((e) => !e.inClass && !e.optional).map((e) => e.id).sort(); // extra credit never counts
 }
 
 /**

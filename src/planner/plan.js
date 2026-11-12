@@ -197,7 +197,9 @@ export function plan({ items, settings, weekState = {}, now }) {
   const partsToday = all
     .filter((i) => i.splitParts && !i.hidden && courseIncluded(i, settings))
     .flatMap((i) => (i.partsDone ?? []).filter((d) => d === today).map(() => partMinutes(i, settings)));
-  const doneMinutes = sum(finishedToday) + partsToday.reduce((s, m) => s + m, 0);
+  // Time spent: what you logged, else the estimate (the same number the header shows).
+  const spent = (e) => (e.inClass ? 0 : e.item.log?.minutes ?? e.minutes);
+  const doneMinutes = finishedToday.reduce((s, e) => s + spent(e), 0) + partsToday.reduce((s, m) => s + m, 0);
   if (doneMinutes) load.set(today, doneMinutes);
 
   // Extra credit past its due date just drops off (not work to catch up on).
@@ -220,7 +222,13 @@ export function plan({ items, settings, weekState = {}, now }) {
     onDay.get(today).push(e);
     catchUpMinutes += e.minutes;
   }
-  for (const e of moved) place(e, e.movedTo);
+  // Work you moved to a day yourself (e.g. "Start one from tomorrow") is your choice, so
+  // it never makes that day count as over.
+  const chosen = new Map();
+  for (const e of moved) {
+    place(e, e.movedTo);
+    chosen.set(e.movedTo, (chosen.get(e.movedTo) ?? 0) + e.minutes);
+  }
   for (const e of pinned) place(e, e.lastDay);
 
   const overflow = [];
@@ -286,10 +294,11 @@ export function plan({ items, settings, weekState = {}, now }) {
       blocked: !usable(date),
       load: l,
       doneMinutes: date === today ? doneMinutes : 0,
-      // Over: more than the day's hours with work still left. Finished work alone going
-      // past the hours is extra effort ("bonus"), not a problem.
-      over: l > capacity(date) && l - (date === today ? doneMinutes : 0) > 0,
-      bonus: date === today && capacity(date) > 0 && doneMinutes > capacity(date),
+      // Over: more than the day's hours with work still left (not counting work you moved
+      // there yourself). Finished work alone going past the hours is extra effort
+      // ("bonus"), not a problem.
+      over: l - (chosen.get(date) ?? 0) > capacity(date) && l - (date === today ? doneMinutes : 0) > 0,
+      bonus: date === today && usable(date) && doneMinutes > capacity(date),
       items: onDay.get(date) ?? [],
     };
   });
@@ -387,8 +396,7 @@ export function plan({ items, settings, weekState = {}, now }) {
     // Homework finished today: count and minutes (logged time if any, else the estimate).
     doneToday: {
       count: finishedToday.filter((e) => !e.inClass).length + partsToday.length,
-      minutes: finishedToday.reduce((s, e) => s + (e.inClass ? 0 : e.item.log?.minutes ?? e.minutes), 0)
-        + partsToday.reduce((s, m) => s + m, 0),
+      minutes: doneMinutes,
     },
   };
 }

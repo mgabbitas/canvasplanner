@@ -220,11 +220,13 @@ Forecast: for the next 14 days, minutes and count of undone items *due* each day
 independent of the plan. Highlight days over that weekday's capacity (amber, not red;
 a note under the chart explains the numbers and the color).
 
-Over and bonus (decided 2026-11-11): a day is `over` when its load is past its hours and
-it still has unfinished work. Today's finished work alone going past the hours is
-`bonus`: the bar and line turn gold, and a cheer says "1h 30m past your hours today".
+Over and bonus (decided 2026-11-11): a day is `over` when its load, not counting work you
+moved there yourself, is past its hours and it still has unfinished work. Finished work
+counts at the time you logged, else its estimate (the same number the header shows).
+Today's finished work alone going past the hours (on a usable day) is `bonus`: the bar and line turn gold, and a cheer says "1h 30m past your hours today".
 The header reads "Today: 9 items · 3h 5m left" ("Today: all done" when nothing's left).
-The Week tab adds "+Xh won't fit" when work has no day. No overdue banner (the Catch up
+The Week tab is over when any day is, and adds an amber "+Xh won't fit" when work has no
+day. The header doesn't repeat the overdue count, and its counts leave out extra credit. No overdue banner (the Catch up
 group says it); "Wednesday has passed" only while work is left. Only one of What's new
 and the theme offer shows at a time; What's new lists only the newest version. Before
 the first sync, only the welcome card shows (no streaks, today line, Finish by, Add task
@@ -235,7 +237,7 @@ Catch up group says it).
 ## 7. UI (new-tab page, plain HTML/CSS/JS)
 - Header: last sync time or error, Sync now, week label, target-day control with the
   add-a-day buttons, gear for settings.
-- Banners: overflow, behind plan, overdue.
+- Banners: overflow, behind plan (while work is left), at risk. Overdue work is the Catch up group (section 6).
 - One section per day from today through the cutoff. Each shows a load bar (minutes over
   capacity) and its items: checkbox, title, course, due time, size chip (click to
   change), pin toggle. Clicking a title opens the Canvas page in a new tab with

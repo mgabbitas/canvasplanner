@@ -427,7 +427,7 @@ test('done today: Canvas submissions today count, older ones do not', () => {
   ];
   const p = run(items);
   assert.deepEqual(p.doneToday, { count: 2, minutes: 55 }); // logged 25 beats the 45 estimate
-  assert.equal(p.days[0].doneMinutes, 75); // load uses estimates: 30 + 45
+  assert.equal(p.days[0].doneMinutes, 55); // time spent, like the header: 30 + logged 25
 });
 
 test('move to a day: tomorrow, or today even past capacity', () => {
@@ -446,12 +446,13 @@ test('move to a day: tomorrow, or today even past capacity', () => {
   // Moved items are placed first, so c takes today and the planner fits a and b after it.
   assert.deepEqual(placedOn(sooner), { '2026-09-28': [c.id, a.id], '2026-09-29': [b.id], '2026-09-30': [] });
 
-  // Moving a third hour onto a full today goes over capacity rather than refusing.
+  // Moving a third hour onto a full today goes past capacity rather than refusing. It was
+  // your choice, so the day isn't flagged over (decided 2026-11-11).
   const finished = mk({ manualDone: true, doneOn: '2026-09-28', minutesOverride: 120 });
   const full = run([finished, a, b, { ...c, plannedOn: '2026-09-28' }]);
   assert.deepEqual(placedOn(full)['2026-09-28'], [c.id]);
   assert.equal(full.days[0].load, 180);
-  assert.equal(full.days[0].over, true);
+  assert.equal(full.days[0].over, false);
 
   // Past the cutoff but before the due date is allowed; the days list extends.
   const thursday = run([{ ...a, plannedOn: '2026-10-01' }]);
@@ -640,4 +641,22 @@ test('finished work past the day\'s hours is a bonus, not over', () => {
   const left = mk({ due: '2026-09-28 23:59', minutesOverride: 30 });
   const q = run([...doneToday, left]);
   assert.deepEqual([q.days[0].over, q.days[0].bonus], [true, true]);
+});
+
+test('over/bonus: logged time, work you moved to today, a blocked day', () => {
+  // Logged less than the estimates: 60 min spent of 120, so no bonus.
+  const logged = many(3, { due: '2026-10-02', minutesOverride: 60, manualDone: true, doneOn: '2026-09-28', log: { minutes: 20 } });
+  const p = run(logged);
+  assert.equal(p.days[0].doneMinutes, 60);
+  assert.equal(p.days[0].bonus, false);
+  assert.equal(p.doneToday.minutes, 60);
+  // All 120 done, then you start one from tomorrow: your choice, not "over".
+  const done = many(2, { due: '2026-10-02', minutesOverride: 60, manualDone: true, doneOn: '2026-09-28' });
+  const pulled = mk({ due: '2026-10-01', minutesOverride: 45, plannedOn: '2026-09-28' });
+  const q = run([...done, pulled]);
+  assert.equal(dateOf(q, pulled.id), '2026-09-28');
+  assert.equal(q.days[0].over, false);
+  // A blocked weekday never turns gold.
+  const r = run(many(3, { due: '2026-10-02', minutesOverride: 60, manualDone: true, doneOn: '2026-09-28' }), { settings: { blockedWeekdays: [1] } });
+  assert.equal(r.days[0].bonus, false);
 });

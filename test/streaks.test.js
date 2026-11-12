@@ -101,3 +101,8 @@ test('extra credit never breaks a streak', () => {
   const items = [done('2026-10-06'), item({ title: 'Extra Credit: Bonus Quiz', dueAt: '2026-10-07T23:59:00-06:00' })];
   assert.equal(weekStreak({ items, settings: S, now: now('2026-10-10') }).current, 1);
 });
+
+test('a day with only extra credit planned is not a Day-streak hit', () => {
+  const p = { today: '2026-10-24', days: [{ date: '2026-10-24', items: [{ id: 'ec', inClass: false, optional: true }] }] };
+  assert.deepEqual(plannedToday(p), []);
+});

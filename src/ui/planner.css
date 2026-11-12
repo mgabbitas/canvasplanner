@@ -195,6 +195,7 @@ input[type=number], input[type=text], input[type=search], select {
   padding: 10px 14px; border-radius: 10px; margin-bottom: 10px;
 }
 .banner.warn { background: var(--warn-bg); color: var(--warn-text); }
+.banner button { white-space: nowrap; }
 .banner.bad { background: var(--bad-bg); color: var(--bad-text); }
 .banner.offer { background: var(--accent-soft); color: var(--text); flex-wrap: wrap; }
 .offer-buttons { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -269,7 +270,7 @@ button.link.logged { text-decoration: none; color: var(--muted); }
 /* Bonus: finished more than the day's hours, nothing left. Gold, not red. */
 :is(.day.bonus .bar, .day-tab.bonus .dt-bar) > * { background: var(--gold) !important; }
 :is(.day.bonus .load, .day-tab.bonus .dt-load) { color: var(--gold-text); font-weight: 600; }
-.dt-wontfit { font-size: 12px; color: var(--bad-text); font-weight: 600; }
+.dt-wontfit { font-size: 12px; color: var(--warn-text); font-weight: 600; } /* amber, like its banner */
 .nowrap { white-space: nowrap; }
 .day-tab.blocked { opacity: 0.6; }
 
@@ -310,12 +311,12 @@ ol.fc { list-style: none; margin: 0; padding: 0; display: grid; grid-template-co
 ol.fc li { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: var(--muted); }
 ol.fc li.today .fc-date { color: var(--text); font-weight: 700; }
 .fc-bar { width: 100%; height: 44px; display: flex; align-items: flex-end; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
-.fc-bar > div { width: 100%; background: var(--accent); opacity: 0.55; }
+.fc-bar > div { width: 100%; background: var(--muted); opacity: 0.45; } /* neutral: amber is the only color in the chart */
 /* A heavy day: more due than that day's hours. Amber, not red: a lot due on one day is normal. */
 ol.fc li.over .fc-bar > div { background: var(--heavy); opacity: 1; }
 .fc-note { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
-.fc-note .swatch { display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: var(--heavy); margin: 0 3px 0 2px; }
-.fc-n { min-height: 1.2em; font-weight: 600; color: var(--text); }
+.fc-note .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--heavy); margin: 0 3px 0 2px; }
+.fc-n { min-height: 1.2em; color: var(--muted); }
 
 /* ---------- 7. Settings ---------- */
 nav.subtabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px; }
@@ -696,7 +697,8 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
 :root[data-look="neon"] :is(.bar, .dt-bar) > .done { box-shadow: 0 0 6px var(--glow), 0 0 14px var(--glow); border-radius: 3px; }
 :root[data-look="neon"] :is(.bar, .dt-bar) > .planned { background: var(--glow-2); box-shadow: 0 0 6px var(--glow-2-soft); }
 :root[data-look="neon"] :is(.day.over .bar, .day-tab.over .dt-bar) > * { box-shadow: 0 0 6px rgba(255, 92, 122, 0.7), 0 0 14px rgba(255, 92, 122, 0.4); }
-:root[data-look="neon"] .meter > span, :root[data-look="neon"] ol.fc .fc-bar > div { box-shadow: 0 0 6px var(--glow); }
+:root[data-look="neon"] .meter > span { box-shadow: 0 0 6px var(--glow); }
+:root[data-look="neon"] ol.fc li.over .fc-bar > div { box-shadow: 0 0 6px var(--heavy); }
 :root[data-look="neon"] h1 { text-shadow: 0 0 14px var(--glow); }
 :root[data-look="neon"] :is(.day-tab.active, .nav-link.active, .theme-card.on, .daycard.target) { box-shadow: 0 0 0 1px var(--accent), 0 0 12px var(--glow); }
 :root[data-look="neon"] button.primary { box-shadow: 0 0 10px var(--glow); }

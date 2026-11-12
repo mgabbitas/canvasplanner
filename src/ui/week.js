@@ -66,7 +66,7 @@ export function renderPullCard() {
     ),
     pull.enabled
       ? el('p', { className: 'hint' }, 'Or use Pull → on any item. Pulled items can be sent back from This week.')
-      : el('p', { className: 'warn-text' }, pullBlockedText(pull)),
+      : el('p', { className: 'hint' }, pullBlockedText(pull)), // information, not a problem
   );
 }
 
@@ -202,7 +202,7 @@ export function renderDayLayout(p, kind) {
     tab('week', 0, {
       name: 'Week', date: `${short(days[0].date)} – ${short(days.at(-1).date)}`,
       items: all, load: weekLoad, done: weekDone, capacity: weekCap, blocked: false, wontFit,
-      over: wontFit > 0 || (weekLoad > weekCap && weekLoad - weekDone > 0),
+      over: days.some((d) => d.over), // what won't fit is its own amber line
     }),
     days.map((d, i) => tab(d.date, i + 1, {
       name: d.date === p.today && kind === 'plan' ? 'Today' : dayLabel(d.date, { weekday: 'short' }),
@@ -294,6 +294,7 @@ function renderDay(day, today, kind, { upNext = false, ahead = null } = {}) {
         ),
         el('ul', { className: 'items' }, entries.map((e) => itemRow(e, kind, { upNext: e.id === nextId, showCourse: false }))),
       ))
-      : ahead ? null : el('p', { className: 'empty' }, day.blocked ? 'No work planned on this day.' : 'Nothing planned.'),
+      : ahead ? null : el('p', { className: 'empty' }, day.blocked ? 'No work planned on this day.'
+        : day.doneMinutes ? 'All done for today.' : 'Nothing planned.'),
   );
 }

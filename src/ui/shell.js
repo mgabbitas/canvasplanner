@@ -7,7 +7,7 @@ import { aheadText } from './notes.js';
 import { toLocalDate } from '../planner/dates.js';
 import { ACCESS_MESSAGE, isLoginError } from '../sync/canvas.js';
 import { canvasBase, normalizeHost } from '../sync/school.js';
-import { app, IS_FIREFOX, BROWSER, view, classId, timeAgo, courseName, sync, allowCanvasAccess, setSchool, changeExtraDays, homework, itemCount, streaks, plural, firstRun } from './app.js';
+import { app, IS_FIREFOX, BROWSER, view, classId, timeAgo, courseName, sync, allowCanvasAccess, setSchool, changeExtraDays, homework, itemCount, streaks, plural, firstRun, required, sumMinutes } from './app.js';
 
 const NAV = [
   ['', 'this', 'This week', 'week'],
@@ -220,20 +220,21 @@ export function renderHeader(p) {
     const today = v === 'this' ? p.days.find((d) => d.date === p.today) : null;
     const parts = [];
     if (today) {
-      parts.push(el('strong', {}, homework(today.items).length
-        ? `Today: ${itemCount(today.items)} · ${minutesLabel(Math.max(0, today.load - today.doneMinutes))} left`
+      const left = required(today.items);
+      parts.push(el('strong', { className: 'nowrap' }, left.length
+        ? `Today: ${plural(left.length, 'item')} · ${minutesLabel(sumMinutes(left))} left`
         : 'Today: all done'));
     }
     const { count: doneCount, minutes: doneMinutes } = v === 'this' ? p.doneToday : { count: 0 };
     if (doneCount) {
       parts.push(el('span', { className: 'good-text', 'data-key': 'done-today', title: 'Finished today (logged time where you logged it)' },
         `✓ ${doneCount} done · ${minutesLabel(doneMinutes)}`));
+      parts.at(-1).classList.add('nowrap');
     }
-    const work = v === 'this' ? homework(p.days.flatMap((d) => d.items)) : [];
-    const dueToday = work.filter((e) => e.dueToday).length;
-    const overdue = work.filter((e) => e.overdue).length;
-    if (dueToday) parts.push(el('span', { className: 'urgent-text' }, `${dueToday} due today`));
-    if (overdue) parts.push(el('span', { className: 'urgent-text' }, `${overdue} overdue`));
+    // Overdue isn't repeated here: the Catch up group says it.
+    const work = v === 'this' ? required(p.days.flatMap((d) => d.items)) : [];
+    const dueToday = work.filter((e) => e.dueToday && !e.overdue).length;
+    if (dueToday) parts.push(el('span', { className: 'urgent-text nowrap' }, `${dueToday} due today`));
     const ahead = v === 'this' ? aheadText() : null;
     if (ahead) parts.push(el('span', { className: 'good-text', 'data-key': 'ahead-text' }, `↑ ${ahead}`));
     if (v === 'next') parts.push(el('span', {}, 'Projected plan'));
