@@ -8,8 +8,8 @@
 
 - Invite people to leave a review, without being annoying. Only ask once, ever: whether they click the link, dismiss it, or ignore it, it never comes back. A small note inside the planner page, not a browser notification (no new permissions). Show it after a good moment, like finishing an item, and only once they've used the planner for a while (maybe 2+ weeks and 10+ items done). Link to the AMO or Chrome Web Store page depending on the browser.
 
-- Today past its hours because of work you moved there yourself (1.5.0 screenshot: "4h 16m / 4h", 1 item left, plain grey). Not red (your choice) and not gold (not finished), so the number looks unexplained. Idea: show it like the gold day, "4h + 16m you added", or count moved work in its own lighter part of the bar. Keep it short; no new legend.
-- Forecast bars look flat in grey (dark themes especially). Grey was picked so amber "too much" days stand out in every theme. Ideas: a soft tint of the theme accent at low strength (check it doesn't blend with amber in Fall/Halloween), or slightly brighter grey in dark mode. A tweak, not a redesign.
+- Day cards (Week, Today, Thu…) aren't the same width: the Week card starts wider (`planner.css` `.day-tab` flex-basis 96px vs `.day-tab.week` 128px), so the row looks uneven. Make them equal and fill the row evenly (same flex-basis, or a grid of equal columns). Check narrow widths still scroll sideways instead of squashing.
+- Forecast bars look flat in grey, mostly in light mode. Grey was picked so amber "too much" days stand out in every theme. Ideas: a soft tint of the theme accent at low strength (check it doesn't blend with amber in Fall/Halloween), or a darker/warmer grey just for light mode. A tweak, not a redesign.
 
 **Bugs (fix first, users are hitting these)**
 
