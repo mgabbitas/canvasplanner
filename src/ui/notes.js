@@ -9,6 +9,14 @@ import { app, plural } from './app.js';
 // What's new, by feature version ("1.2" covers 1.2.0, 1.2.1, …). Shown once after
 // updating into that version, so bug-fix releases don't hide it.
 export const WHATS_NEW = {
+  '1.5': [
+    'Overdue work gets its own Catch up list at the top of today, and no longer pushes today\'s work off the plan.',
+    'Missing items a teacher graded 0 stay on your list instead of disappearing.',
+    '"Won\'t fit" only shows when another day would help. Otherwise the item stays on its day and the day shows it\'s over.',
+    'Extra credit is optional: it only fills time you have left, and never breaks a streak.',
+    'New streak look, and cheers when you finish early or clear today\'s list.',
+    'Syncs when you come back to the tab, every 30 minutes, with a progress bar. "Open Canvas" is in the sidebar.',
+  ],
   '1.3': [
     'Works with any school\'s Canvas at an instructure.com address. Yours is in Settings → General → School.',
     'A "Report a problem" link in Settings → General.',
