@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   ],
   statedScale: 100, // percent applied to instructor-stated minutes
   courses: {}, // courseId -> { include, displayName, color }
-  autoSyncMinutes: 60,
+  autoSyncMinutes: 30,
   gatePullOnCompletion: true,
   pullCapMinutes: 180, // most unfinished pulled-in work allowed in this week
   showForecast: true,

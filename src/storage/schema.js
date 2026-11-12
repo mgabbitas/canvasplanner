@@ -11,7 +11,7 @@ const LOOK_KEYS = ['plain', 'ocean', 'forest', 'sunset', 'lavender', 'fall', 'ch
 const hexOr = (v, fallback) => (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : fallback);
 const CLASS_COLOR_KEYS = ['blue', 'orange', 'green', 'purple', 'red', 'teal', 'pink', 'amber', 'indigo', 'slate'];
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export const TYPES = ['quiz', 'discussion', 'upload', 'external_tool', 'other'];
 const MAX_MINUTES = 24 * 60;
@@ -340,6 +340,10 @@ function upgrade(raw) {
         .map(([t, v]) => [t, minutesOf(v) ?? v]));
     }
     r.settings = settings;
+  }
+  if (version < 5 && isObj(r.settings) && r.settings.autoSyncMinutes === 60) {
+    // v4 -> v5: auto-sync default 60 -> 30 min. 60 was the old default, so move it along.
+    r.settings = { ...r.settings, autoSyncMinutes: 30 };
   }
   return r;
 }

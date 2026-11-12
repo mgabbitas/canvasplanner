@@ -18,7 +18,7 @@ const stored = () => migrate({
 test('export has settings, week state, and only changed user fields', () => {
   const e = buildExport(stored(), '2026-10-04T12:00:00.000Z');
   assert.equal(e.app, 'canvas-planner');
-  assert.equal(e.schemaVersion, 4);
+  assert.equal(e.schemaVersion, 5);
   assert.equal(e.settings.statedScale, 70);
   assert.deepEqual(e.weekState['2026-09-28'].capacity, { '2026-09-29': 30 });
   assert.deepEqual(Object.keys(e.userItems), ['1', '3']);

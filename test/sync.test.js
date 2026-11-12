@@ -127,3 +127,14 @@ test('network failure and rate limiting give plain-language errors', async () =>
   const busy = fakeCanvas({ '/api/v1/courses?': Array.from({ length: 4 }, () => json({}, { status: 429 })) });
   await assert.rejects(fetchCanvas(busy), /Canvas is busy right now/);
 });
+
+test('reports progress class by class', async () => {
+  const fake = fakeCanvas({
+    '/api/v1/courses?': [json([{ id: 1, name: 'Physics' }, { id: 2, name: 'Art' }])],
+    '/api/v1/courses/1/assignments': [json([assignment(10)])],
+    '/api/v1/courses/2/assignments': [json([])],
+  });
+  const seen = [];
+  await fetchCanvas({ ...fake, onProgress: (done, total) => seen.push([done, total]) });
+  assert.deepEqual(seen, [[0, 2], [1, 2], [2, 2]]);
+});

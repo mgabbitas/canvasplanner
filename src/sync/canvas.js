@@ -77,13 +77,14 @@ export async function getAll(path, deps) {
  * Fetch courses, then each course's assignments, one course at a time.
  * Throws AuthError if not logged in. A single course failing is recorded, not thrown.
  */
-export async function fetchCanvas({ fetchImpl, sleep, base, delayMs = 300 }) {
+export async function fetchCanvas({ fetchImpl, sleep, base, delayMs = 300, onProgress = () => {} }) {
   const deps = { fetchImpl, sleep, base };
   const rawCourses = await getAll('/api/v1/courses?enrollment_state=active&per_page=50', deps);
   const courses = rawCourses.map(normalizeCourse).filter(Boolean);
   const results = [];
   for (const [i, course] of courses.entries()) {
     if (i > 0) await sleep(delayMs);
+    onProgress(i, courses.length);
     try {
       const raw = await getAll(`/api/v1/courses/${course.id}/assignments?include[]=submission&per_page=100`, deps);
       results.push({ courseId: course.id, items: raw.map((a) => normalizeAssignment(a, course.id)) });
@@ -92,6 +93,7 @@ export async function fetchCanvas({ fetchImpl, sleep, base, delayMs = 300 }) {
       results.push({ courseId: course.id, error: e.message });
     }
   }
+  onProgress(courses.length, courses.length);
   return { courses, results };
 }
 

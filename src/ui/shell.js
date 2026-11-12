@@ -23,12 +23,25 @@ export function setNavOpen(open) {
   document.querySelector('[data-key="menu"]')?.setAttribute('aria-expanded', String(open));
 }
 
+/** "Syncing class 3 of 7" and a bar, while a sync runs. */
+export function syncProgress() {
+  const pr = app.syncProgress;
+  if (!pr?.total) return el('span', {}, 'Syncing…');
+  const pct = Math.round((pr.done / pr.total) * 100);
+  return el('div', { className: 'sync-progress', 'data-key': 'sync-progress' },
+    el('span', {}, pr.done < pr.total ? `Syncing class ${pr.done + 1} of ${pr.total}…` : 'Saving…'),
+    el('div', {
+      className: 'meter', role: 'progressbar', 'aria-label': 'Sync progress',
+      'aria-valuemin': '0', 'aria-valuemax': String(pr.total), 'aria-valuenow': String(pr.done),
+    }, el('span', { style: `width:${pct}%` })));
+}
+
 export function renderSidebar() {
   const v = view();
   const meta = app.state.meta;
   const error = app.syncMessage || meta.lastError;
   const status = app.syncing
-    ? el('span', {}, 'Syncing…')
+    ? syncProgress()
     : error
       ? el('span', { className: 'error' }, error, isLoginError(error) ? [' ', loginLink()] : null,
         error === ACCESS_MESSAGE ? [' ', allowButton()] : null)
@@ -136,7 +149,7 @@ export function renderWelcome() {
   return el('section', { className: 'panel welcome' },
     el('h2', {}, app.syncing ? 'Getting your assignments from Canvas…' : 'Welcome to Planner for Canvas'),
     app.syncing
-      ? el('p', { className: 'hint' }, 'This takes a few seconds the first time.')
+      ? el('div', {}, syncProgress(), el('p', { className: 'hint' }, 'This takes a few seconds the first time.'))
       : el('div', {},
         error ? el('p', { className: 'warn-text' }, error) : null,
         error === ACCESS_MESSAGE

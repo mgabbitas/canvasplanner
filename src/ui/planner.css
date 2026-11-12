@@ -272,7 +272,9 @@ button.link.logged { text-decoration: none; color: var(--muted); }
 /* Pull card (Next week, right column) */
 .pullcard h2 { font-size: 15px; margin-bottom: 10px; }
 .meter { height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
-.meter > span { display: block; height: 100%; background: var(--accent); }
+.meter > span { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+.sync-progress { display: grid; gap: 4px; }
+@media (prefers-reduced-motion: reduce) { .meter > span { transition: none; } }
 .pullcard .hint, .pullcard .warn-text { margin: 6px 0 10px; }
 .pullcard button.wide { width: 100%; justify-content: center; margin-bottom: 8px; }
 .pull-amount { display: flex; gap: 6px; }

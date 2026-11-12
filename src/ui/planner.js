@@ -133,10 +133,21 @@ async function init() {
   // Opened by the background script after a Canvas visit (?sync=1): always sync.
   const forced = new URLSearchParams(location.search).has('sync');
   if (forced) history.replaceState(null, '', location.pathname + location.hash);
-  if (!app.state.canvas.host) return; // the welcome card asks for your school first
-  const last = app.state.meta.lastSyncAt ? Date.parse(app.state.meta.lastSyncAt) : 0;
-  if (forced || Date.now() - last > app.state.settings.autoSyncMinutes * 60_000) await sync();
+  if (forced) await sync();
+  else await syncIfStale();
 }
+
+/** Sync when the last one is older than the auto-sync interval. */
+async function syncIfStale() {
+  if (!app.state?.canvas.host || app.syncing) return; // no school yet: the welcome card asks first
+  const last = app.state.meta.lastSyncAt ? Date.parse(app.state.meta.lastSyncAt) : 0;
+  if (Date.now() - last > app.state.settings.autoSyncMinutes * 60_000) await sync();
+}
+
+// A planner tab left open: catch up with Canvas when you come back to it.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') syncIfStale().catch(() => {});
+});
 
 document.getElementById('scrim').addEventListener('click', () => setNavOpen(false));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && app.navOpen) setNavOpen(false); });

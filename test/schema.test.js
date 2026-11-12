@@ -7,7 +7,7 @@ import { DEFAULT_SETTINGS } from '../src/storage/defaults.js';
 test('empty or garbage storage gives defaults', () => {
   for (const raw of [undefined, null, 42, [], {}]) {
     const s = migrate(raw);
-    assert.equal(s.schemaVersion, 4);
+    assert.equal(s.schemaVersion, 5);
     assert.deepEqual(s.settings, validateSettings(DEFAULT_SETTINGS));
     assert.equal(s.settings.estimateRules.length, 12);
     assert.deepEqual(s.items, {});
@@ -218,4 +218,11 @@ test('school: chosen host kept; stores from before 1.3 with data are BYU-Idaho; 
   const items = validateItems({ 1: { courseId: '9', url: 'https://uofu.instructure.com/courses/9/assignments/1' }, 2: { courseId: '9', url: 'https://evil.com/x' } });
   assert.equal(items['1'].url, 'https://uofu.instructure.com/courses/9/assignments/1');
   assert.equal(items['2'].url, null);
+});
+
+test('v4 -> v5: auto-sync 60 (the old default) becomes 30; other choices stay', () => {
+  assert.equal(migrate({ schemaVersion: 4, settings: { autoSyncMinutes: 60 } }).settings.autoSyncMinutes, 30);
+  assert.equal(migrate({ schemaVersion: 4, settings: { autoSyncMinutes: 120 } }).settings.autoSyncMinutes, 120);
+  assert.equal(migrate({ schemaVersion: 5, settings: { autoSyncMinutes: 60 } }).settings.autoSyncMinutes, 60);
+  assert.equal(migrate({}).settings.autoSyncMinutes, 30);
 });

@@ -12,12 +12,13 @@ export const schoolOrigins = (host) => ({ origins: [`${canvasBase(host)}/*`] });
 export const hasCanvasAccess = (host) => browser.permissions.contains(schoolOrigins(host)).catch(() => true);
 
 /** Returns { ok, error }. On any failure nothing but meta.lastError changes. */
-export async function runSync() {
+/** onProgress(done, total): classes fetched so far, for a progress bar. */
+export async function runSync({ onProgress } = {}) {
   let result;
   const { canvas } = await loadState();
   if (!canvas.host) return { ok: false, error: SCHOOL_MESSAGE };
   try {
-    result = await fetchCanvas({ fetchImpl: (url, opts) => fetch(url, opts), sleep, base: canvasBase(canvas.host) });
+    result = await fetchCanvas({ fetchImpl: (url, opts) => fetch(url, opts), sleep, base: canvasBase(canvas.host), onProgress });
   } catch (e) {
     // Without host access the request is refused or sent without the login, so say that instead.
     const error = (await hasCanvasAccess(canvas.host)) ? e.message : ACCESS_MESSAGE;

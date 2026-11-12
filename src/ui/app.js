@@ -15,6 +15,7 @@ export const BROWSER = IS_FIREFOX ? 'Firefox' : 'Chrome';
 export const app = {
   state: null, // validated stored state (settings, items, meta, weekState, courses)
   syncing: false,
+  syncProgress: null, // { done, total } classes while syncing
   syncMessage: null,
   editingDay: null, // date whose capacity is being edited
   pullAmount: 60, // minutes picked in the "pull about …" control
@@ -117,9 +118,12 @@ export async function sync() {
   }
   app.syncing = true;
   app.syncMessage = null;
+  app.syncProgress = null;
   app.render();
-  const result = await runSync().catch((e) => ({ ok: false, error: `Sync failed: ${e.message}` }));
+  const onProgress = (done, total) => { app.syncProgress = { done, total }; app.render(); };
+  const result = await runSync({ onProgress }).catch((e) => ({ ok: false, error: `Sync failed: ${e.message}` }));
   app.syncing = false;
+  app.syncProgress = null;
   app.syncMessage = result.ok ? null : result.error;
   app.state = await loadState();
   app.render();

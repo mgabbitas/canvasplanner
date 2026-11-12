@@ -243,7 +243,9 @@ independent of the plan. Highlight days over that weekday's capacity.
   No due date, with a title and type filter and "Set all shown to" (auto, in class, or
   minutes) with Undo.
 - Respects `prefers-color-scheme`. Keyboard-reachable controls.
-- Auto-sync when the page opens if data is older than the `autoSyncMinutes` setting.
+- Auto-sync when the page opens, or when you come back to an open planner tab, if data is
+  older than the `autoSyncMinutes` setting. While syncing, the sidebar shows "Syncing class
+  3 of 7" with a bar.
 
 ## 8. Settings (editable in a GUI)
 A Settings view in the planner page (gear). `options_ui` opens the same page in a tab.
@@ -261,7 +263,7 @@ below are guesses, not measurements: I'll edit them.
 | Estimate rules (add, delete, reorder), see below | report, essay, paper, project, exam, midterm, final: L. evaluation, feedback, survey: XS. quiz, reading: S |
 | Stated-time scale (instructor-stated minutes x this %) | 100% |
 | Per-course: include toggle, display name | all included, Canvas name |
-| Auto-sync interval, minutes | 60 (min 15) |
+| Auto-sync interval, minutes | 30 (min 15; was 60 before 1.5.0, and 60 moves to 30) |
 | Gate pull-next-week on completion | on |
 | Most unfinished pulled work allowed (minutes) | 180 |
 | Forecast strip open (remembered from the strip's toggle) | on |
