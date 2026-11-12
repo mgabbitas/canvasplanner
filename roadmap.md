@@ -8,6 +8,9 @@
 
 - Invite people to leave a review, without being annoying. Only ask once, ever: whether they click the link, dismiss it, or ignore it, it never comes back. A small note inside the planner page, not a browser notification (no new permissions). Show it after a good moment, like finishing an item, and only once they've used the planner for a while (maybe 2+ weeks and 10+ items done). Link to the AMO or Chrome Web Store page depending on the browser.
 
+- Today past its hours because of work you moved there yourself (1.5.0 screenshot: "4h 16m / 4h", 1 item left, plain grey). Not red (your choice) and not gold (not finished), so the number looks unexplained. Idea: show it like the gold day, "4h + 16m you added", or count moved work in its own lighter part of the bar. Keep it short; no new legend.
+- Forecast bars look flat in grey (dark themes especially). Grey was picked so amber "too much" days stand out in every theme. Ideas: a soft tint of the theme accent at low strength (check it doesn't blend with amber in Fall/Halloween), or slightly brighter grey in dark mode. A tweak, not a redesign.
+
 **Bugs (fix first, users are hitting these)**
 
 - Overdue items disappearing. Cause found: an item Canvas marks `graded` counts as done, even with no submission. A teacher grading a missing item 0 (fixture: "L03 Prepare: Checkpoint", `missing: true`, score 0) makes it vanish from Overdue. Fix: `missing: true` (nothing submitted, not excused, score 0) stays overdue, with a "missing" chip, until submitted or dismissed. Other graded-without-submission items stay done: they're surveys, paper check-ins and 0-point evaluations. **Done 2026-11-11** (see SPEC sections 3, 4, 6). Missing items Canvas has closed (lock date passed, can't submit anymore): greyed out in their own small "Closed" box for a day or so, then they drop off. Still restorable from Dismissed.
