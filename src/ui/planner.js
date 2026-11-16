@@ -4,7 +4,7 @@
 import '../browser.js';
 import { plan, planNextWeek } from '../planner/plan.js';
 import { loadState, save } from '../storage/store.js';
-import { syncSeries } from '../planner/tasks.js';
+import { syncSeries, syncStudyTasks } from '../planner/tasks.js';
 import { toLocalDate } from '../planner/dates.js';
 import { el } from './dom.js';
 import { renderSettings, resetSettingsDraft } from './settings.js';
@@ -14,7 +14,8 @@ import { applyTheme } from './theme.js';
 import { app, view, settingsTab, classId, saveState, sync, courseName, recordDay, firstRun } from './app.js';
 import { finishDay, openLog, panel } from './items.js';
 import { setNavOpen, renderSidebar, renderHeader, renderWelcome } from './shell.js';
-import { renderBanners, renderPullCard, renderForecast, renderDayLayout, renderExams } from './week.js';
+import { renderBanners, renderPullCard, renderForecast, renderDayLayout } from './week.js';
+import { renderExams } from './exams.js';
 import { renderThemeOffer } from './offers.js';
 import { renderLateNight, renderWhatsNew, settleOnboarding, celebrateAhead, maybeStartTour } from './notes.js';
 import { updateDecorations } from './decor.js';
@@ -55,6 +56,13 @@ function render() {
       app.state.items = items;
       save({ items }).catch(() => {});
     }
+  }
+
+  // Study tasks follow their exam (a new day, or gone with it).
+  const studied = syncStudyTasks(app.state.items, today);
+  if (studied !== app.state.items) {
+    app.state.items = studied;
+    save({ items: studied }).catch(() => {});
   }
 
   const args = { items: app.state.items, settings: app.state.settings, weekState: app.state.weekState, now: Date.now() };

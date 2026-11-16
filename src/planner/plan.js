@@ -105,7 +105,11 @@ function isActive(item, settings) {
 }
 
 function toEntry(item, settings, today) {
-  const { minutes, source, inClass } = estimate(item, settings);
+  const est = estimate(item, settings);
+  // An exam you can't submit in Canvas (on paper, no submission) is taken in class: no
+  // homework time, like in-class activities. Minutes you set on it still win.
+  const { minutes, source, inClass } = isExam(item) && item.nonSubmittable && est.source !== 'manual'
+    ? { minutes: 0, source: est.source, inClass: true } : est;
   const unlockDate = item.unlockAt ? toLocalDate(item.unlockAt) : null;
   const dueDay = item.dueAt ? toLocalDate(item.dueAt) : null; // calendar day it's due
   // Last day to work on it. Due before 5 PM means the day before, except that

@@ -543,6 +543,32 @@ async function checkTasks() {
   const toDay = partMove?.getAttribute('data-key').slice(-10);
   partMove?.click(); await wait(250);
   check('part moved', !!toDay && window.__store.items[added.id]?.splitDays?.includes(toDay), `${toDay} ${JSON.stringify(window.__store.items[added.id]?.splitDays)}`);
+
+  // Exam card: pick the day you'll take it, then add study time the day before.
+  await go('');
+  const dayBtns = $$('.exams [data-key^="exam-day-"]');
+  check('exam asks which day', dayBtns.length >= 2, `${dayBtns.length} day buttons`);
+  check('no study question before a day is picked', !document.querySelector('.exams [data-key^="study-add-"]'));
+  const [, examId, ...rest] = dayBtns[1].getAttribute('data-key').replace('exam-day-', 'x-').split('-');
+  const examDay = rest.join('-');
+  dayBtns[1].click(); await wait(250);
+  check('exam day saved', window.__store.items[examId]?.plannedOn === examDay, `${examId} ${window.__store.items[examId]?.plannedOn} vs ${examDay}`);
+  check('exam day shows picked', document.querySelector(`[data-key="exam-day-${examId}-${examDay}"]`)?.getAttribute('aria-pressed') === 'true');
+  document.querySelector(`[data-key="study-add-${examId}"]`)?.click(); await wait(100);
+  document.querySelector(`[data-key="study-min-${examId}-60"]`)?.click(); await wait(300);
+  const study = window.__store.items[`tx${examId}`];
+  const studyDay = study?.dueAt ? new Date(study.dueAt).toLocaleDateString('en-CA') : null;
+  const before = new Date(`${examDay}T12:00`); before.setDate(before.getDate() - 1);
+  const today = new Date().toLocaleDateString('en-CA');
+  const expected = [before.toLocaleDateString('en-CA'), today].sort()[1];
+  check('study task added the day before', study?.minutesOverride === 60 && study?.pinned && studyDay === expected && window.__store.items[examId]?.studyChoice === 'yes',
+    `${studyDay} vs ${expected}`);
+  check('study shows on its day', !!document.querySelector(`[data-key="done-tx${examId}"]`));
+  check('exam card shows the study plan', /Study: 1h/.test(document.querySelector('.exams').textContent));
+  document.querySelector(`[data-key="study-remove-${examId}"]`)?.click(); await wait(250);
+  check('study removed', !window.__store.items[`tx${examId}`] && !!document.querySelector(`[data-key="study-add-${examId}"]`));
+  document.querySelector(`[data-key="study-no-${examId}"]`)?.click(); await wait(250);
+  check('no thanks is remembered', window.__store.items[examId]?.studyChoice === 'no' && !document.querySelector(`[data-key="study-add-${examId}"]`));
 }
 
 run().catch((e) => report.errors.push(`harness: ${e.stack}`)).finally(() => {

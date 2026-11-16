@@ -60,7 +60,9 @@ way. Your settings and history are kept.
   Dismissed on the right).
 - **Done for today?** A button offers to start the next item from tomorrow.
 - **Exams** due this week are listed on the right (next week's on Next week). They're
-  found by title; use ⋮ → **Not an exam** on anything that isn't one.
+  found by title; use ⋮ → **Not an exam** on anything that isn't one. For an exam that's
+  open for a few days, pick the day you'll take it. Then add study time the day before
+  if you like (or spread it out), or say No thanks.
 - **Click a class** in the sidebar to see everything left in it. Filter by title (e.g.
   "Teach") and set all the shown items' minutes, or mark them in class, in one go.
 - **Change an estimate** with the minutes button on any item (or pick **In class** for

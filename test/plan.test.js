@@ -575,6 +575,21 @@ test('split item: some parts chosen, the rest placed by the planner on other day
   assert.equal(dateOf(r, `${big.id}#1`), '2026-09-28');
 });
 
+test('an exam you take in class (no online submission) takes no homework time', () => {
+  const paper = mk({ title: 'Midterm Exam', due: '2026-10-01 10:00', nonSubmittable: true, minutesOverride: null });
+  const online = mk({ title: 'Exam 02', due: '2026-10-01 23:59', type: 'quiz', minutesOverride: null });
+  const p = run([paper, online]);
+  const entry = (id) => p.days.flatMap((d) => d.items).find((e) => e.id === id);
+  assert.equal(entry(paper.id).inClass, true);
+  assert.equal(entry(paper.id).minutes, 0);
+  assert.equal(entry(online.id).inClass, false);
+  assert.ok(entry(online.id).minutes > 0);
+  assert.deepEqual(p.exams.map((e) => e.id), [paper.id, online.id]);
+  // Minutes you set on it still count.
+  const q = run([{ ...paper, minutesOverride: 50 }]);
+  assert.equal(q.days.flatMap((d) => d.items).find((e) => e.id === paper.id).minutes, 50);
+});
+
 test('checking off a split item adds a part; the last part finishes it', async () => {
   const { checkOffPatch } = await import('../src/planner/plan.js');
   assert.deepEqual(checkOffPatch({ splitParts: null }, '2026-09-28'), { manualDone: true, doneOn: '2026-09-28' });

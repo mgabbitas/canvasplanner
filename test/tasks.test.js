@@ -1,7 +1,7 @@
 process.env.TZ = 'America/Denver';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { taskItem, syncSeries, dropFutureCopies, endOfDay } from '../src/planner/tasks.js';
+import { taskItem, syncSeries, dropFutureCopies, endOfDay, studyTask, syncStudyTasks, studyTaskId } from '../src/planner/tasks.js';
 import { plan, planNextWeek } from '../src/planner/plan.js';
 import { weekStreak } from '../src/planner/streaks.js';
 import { atNoon } from '../src/planner/dates.js';
@@ -20,7 +20,7 @@ const series = (over = {}) => ({ id: 'sab', courseId: '7', title: 'Review', minu
 test('task items validate and keep their task fields; Canvas sync leaves them alone', () => {
   const s = migrate({ items: { t1: task({ dueDate: '2026-10-08', notes: 'ch. 4' }), tbad_: task(), 9: { courseId: '7', title: 'Canvas' } } });
   assert.deepEqual(Object.keys(s.items).sort(), ['9', 't1']);
-  assert.deepEqual(s.items.t1.task, { notes: 'ch. 4', floating: false, seriesId: null });
+  assert.deepEqual(s.items.t1.task, { notes: 'ch. 4', floating: false, seriesId: null, examId: null });
   assert.equal(s.items.t1.dueAt, endOfDay('2026-10-08'));
   assert.equal(s.items['9'].task, null);
   assert.equal(migrate({ items: { t2: task({ id: 't2' }) } }).items.t2.task.floating, true);
@@ -147,4 +147,53 @@ test('school change clears everything tied to the old school; import refuses ano
   assert.equal(applyImport(migrate({}), JSON.parse(JSON.stringify(file))).canvas.host, 'uofu.instructure.com');
   // A task never keeps a link (a doctored file can't point it elsewhere).
   assert.equal(migrate({ items: { t1: { ...task(), url: 'https://evil.instructure.com/x' } } }).items.t1.url, null);
+});
+
+// --- study time for exams ---
+const exam = (over = {}) => ({
+  id: '500', courseId: '7', title: 'Exam 03', dueAt: endOfDay('2026-10-09'), unlockAt: null, plannedOn: null,
+  dismissed: false, hidden: false, notExam: false, manualDone: false, canvasDone: false, ...over,
+});
+
+test('study task: pinned to the day before you take the exam (or today if that has passed)', () => {
+  const e = exam({ plannedOn: '2026-10-08' });
+  const t = studyTask(e, 60, '2026-10-05');
+  assert.equal(t.id, studyTaskId('500'));
+  assert.equal(t.task.examId, '500');
+  assert.equal(t.title, 'Study: Exam 03');
+  assert.equal(t.minutesOverride, 60);
+  assert.equal(t.dueAt, endOfDay('2026-10-07'));
+  assert.equal(t.pinned, true);
+  // No day picked: the day before it's due. Exam tomorrow-ish already: today.
+  assert.equal(studyTask(exam(), 30, '2026-10-05').dueAt, endOfDay('2026-10-08'));
+  assert.equal(studyTask(exam({ plannedOn: '2026-10-05' }), 30, '2026-10-05').dueAt, endOfDay('2026-10-05'));
+  // Planned like any task: on its day.
+  const p = plan({ items: byId([t]), settings: S, now: now('2026-10-05') });
+  assert.equal(dateOf(p, t.id), '2026-10-07');
+});
+
+test('study task follows the exam and goes away with it', () => {
+  const e = exam({ plannedOn: '2026-10-08' });
+  const t = studyTask(e, 60, '2026-10-05');
+  const items = { 500: e, [t.id]: t };
+  assert.equal(syncStudyTasks(items, '2026-10-05'), items); // nothing to change
+  // You moved the exam to Friday: study moves to Thursday.
+  const moved = syncStudyTasks({ ...items, 500: { ...e, plannedOn: '2026-10-09' } }, '2026-10-05');
+  assert.equal(moved[t.id].dueAt, endOfDay('2026-10-08'));
+  // Dismissed, not an exam, done or gone: the study task goes.
+  for (const change of [{ dismissed: true }, { notExam: true }, { canvasDone: true }]) {
+    assert.equal(syncStudyTasks({ ...items, 500: { ...e, ...change } }, '2026-10-05')[t.id], undefined, JSON.stringify(change));
+  }
+  assert.equal(syncStudyTasks({ [t.id]: t }, '2026-10-05')[t.id], undefined);
+  // ...unless you already studied (checked off or logged).
+  const studied = { ...t, manualDone: true, doneOn: '2026-10-06' };
+  assert.equal(syncStudyTasks({ 500: { ...e, dismissed: true }, [t.id]: studied }, '2026-10-06')[t.id], studied);
+});
+
+test('study task fields survive storage', () => {
+  const t = studyTask(exam(), 45, '2026-10-05');
+  const s = migrate({ items: { [t.id]: t, 500: { ...exam(), studyChoice: 'yes' }, 501: { ...exam({ id: '501' }), studyChoice: 'maybe' } } });
+  assert.equal(s.items[t.id].task.examId, '500');
+  assert.equal(s.items['500'].studyChoice, 'yes');
+  assert.equal(s.items['501'].studyChoice, null);
 });

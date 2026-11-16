@@ -528,6 +528,12 @@ ul.suggestions li:first-child { border-top: none; }
 .exam-title { font-weight: 600; overflow-wrap: anywhere; }
 .exam-list .muted { font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
 .exams .hint { font-size: 12px; margin: 10px 0 0; }
+.exam-row { margin-top: 8px; font-size: 13px; display: grid; gap: 4px; }
+.exam-q { color: var(--muted); }
+.exam-days, .exam-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.exam-day { padding: 3px 9px; font-size: 13px; }
+.exam-day.picked { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 600; }
+.exam-actions button:not(.link), .exam-actions select { padding: 3px 9px; font-size: 13px; }
 
 /* ---------- 10. Your own tasks ---------- */
 .title-row .add-task { margin-left: auto; }

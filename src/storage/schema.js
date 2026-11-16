@@ -146,6 +146,7 @@ function validateItem(id, raw) {
     doneOn: dateOrNull(raw.doneOn),
     plannedOn: dateOrNull(raw.plannedOn),
     notExam: raw.notExam === true,
+    studyChoice: raw.studyChoice === 'yes' || raw.studyChoice === 'no' ? raw.studyChoice : null,
     ...validateSplit(raw),
   };
 }
@@ -166,7 +167,8 @@ function validateSplit(raw) {
 function validateTaskFields(raw, dueAt) {
   const t = isObj(raw) ? raw : {};
   const seriesId = typeof t.seriesId === 'string' && TASK_ID.test(t.seriesId) ? t.seriesId : null;
-  return { notes: str(t.notes, 2000) ?? '', floating: !isoOrNull(dueAt) && !seriesId, seriesId };
+  const examId = typeof t.examId === 'string' && ID.test(t.examId) ? t.examId : null; // study time for this exam
+  return { notes: str(t.notes, 2000) ?? '', floating: !isoOrNull(dueAt) && !seriesId, seriesId, examId };
 }
 
 const MAX_SERIES = 100;

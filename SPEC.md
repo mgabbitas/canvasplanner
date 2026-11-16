@@ -193,6 +193,19 @@ week, earliest first. A user field `notExam` removes a false match. Shown in the
 column ("Exams this week", and "Exams next week" on the Next week view), hidden when
 there are none.
 
+Exam day and study time (1.6, decided 2026-11-16). An exam you take online keeps its
+estimate (it still costs an evening, even at a testing center). If it's open for more
+than one day, the card asks "When will you take it?" with a button per day (up to 8);
+the answer is the item's `plannedOn`, so the exam goes on that day. Days only, no clock
+times. An exam that can't be submitted in Canvas (`nonSubmittable`: on paper, no
+submission) is taken in class: 0 minutes, like in-class items, unless you set minutes.
+Once the exam has a day (fixed, or the one you picked), the card asks once whether to
+plan study time; No thanks is stored as `studyChoice: 'no'` and never asked again.
+Study time is a task (`tx<examId>`, `task.examId`) pinned to the day before the exam
+day (today if that's past); "Spread it out" opens the split picker. On each redraw
+`syncStudyTasks` moves it with the exam and removes it (unless done or logged) when the
+exam is done, dismissed, gone or not an exam.
+
 Done today: count of homework items finished today and their minutes (logged time if
 any, else the estimate), shown in the header.
 

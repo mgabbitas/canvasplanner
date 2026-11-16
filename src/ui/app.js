@@ -26,6 +26,7 @@ export const app = {
   navOpen: false, // sidebar open on narrow screens
   classFilter: { keyword: '', type: '', setTo: '' }, // class view filters
   panelOpen: {}, // panels you opened or closed this visit, by title (kept across redraws)
+  studyOpen: null, // exam id whose "how long to study?" choices are showing
   render: () => {}, // set by planner.js
 };
 
