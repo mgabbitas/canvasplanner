@@ -30,6 +30,8 @@
 - Auto-sync default 60 → 30 min. Sync only runs when you open the planner or visit Canvas (no timer in the background), so the cost is a few more requests to Canvas, only then. Existing users on 60 move to 30 too (60 was the default, so almost nobody chose it). **Done 2026-11-11.**
 - Sync when you come back to an open planner tab (2026-11-11). A user said "I don't think it updates with Canvas": they left the tab open, came back, and items they'd submitted weren't checked off. The page only syncs when it first loads. Fix: also sync when the tab becomes visible again and the last sync is older than the interval. No new permission. Maybe the toolbar popup too. A true background timer needs the `alarms` permission; only if this isn't enough. **Done 2026-11-11.**
 
+- Logging time on a done item resets the page (2026-11-16): the logged-items card closes and the page jumps back to the top. It should stay where you were: card still open, same scroll position. Probably a full re-render after the save; keep the open card and scroll position across it.
+
 **Cheers and streaks**
 
 - Celebrate getting ahead and finishing on time. Users rarely see the "N days ahead" cheer: it needs all of tomorrow's work done too, and the planner never moves tomorrow's work into today on its own, so it almost never fires. Add small, quiet cheers for things that do happen: finishing an item early ("Done 2 days early"), clearing today's list, finishing the week by the target day. Short toasts, respect the Celebrations setting, don't repeat the same one over and over. **Done 2026-11-11.**
@@ -63,6 +65,9 @@
 - Sync progress bar: "Syncing class 3 of 7" with a bar. Sync already goes one class at a time, so this is cheap. **Done 2026-11-11.**
 - Day cards smaller. Options: (a) just shrink them; (b) week summary card above them; (c) make them meters like the forecast. Leaning (a): the forecast already uses bars, and a third style for "hours per day" could confuse.
 - "Open Canvas" link (in the sidebar, under Settings). No other quick links (decided 2026-11-11: the planner replacing the new tab page is partly about cutting distractions). **Done 2026-11-11.**
+
+- More time today, from the home page (2026-11-16). A quick "+30m / +1h" on today's hours, right where today's list is, for when you have a free evening. The planner can already change one day's hours (per-date override, `plan.js` ~line 171); this is just a shortcut to it, not a new setting. Only for today (other days stay in the week view). Watch it doesn't crowd the top row.
+- New tab page on/off (2026-11-16). Taking over the new tab stays the default, but say so in setup ("The planner is your new tab page. Keep it?") and add a switch in Settings → General, so nobody has to go to browser settings or disable the add-on. Catch: the override is fixed in `manifest.json` and neither browser lets an add-on turn it off itself. So "off" would mean the page steps aside: a blank page, or forward to a page the user picks. Check first what each browser allows (Firefox may refuse to open `about:newtab`/`about:home` from an add-on; Chrome may not let it open its own new tab page), and whether that needs a new permission (it shouldn't). If "off" can only be a blank page, say so plainly in the setting.
 
 **Grades** (WIP idea)
 
