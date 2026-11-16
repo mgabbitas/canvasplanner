@@ -108,6 +108,21 @@ async function run() {
   document.querySelector('.log-form').requestSubmit(); await wait(250);
   check('log saved', window.__store.items[id]?.log?.minutes === 30 && window.__store.items[id]?.log?.difficulty === 4, JSON.stringify(window.__store.items[id]?.log));
   check('check-off records the day', /^\d{4}-\d{2}-\d{2}$/.test(window.__store.items[id]?.doneOn ?? ''));
+  // Logging from the open "Done this week" panel keeps it open and the page where it was.
+  const donePanel = () => $$('details.panel').find((d) => /^Done this week/.test(d.querySelector('summary').textContent));
+  donePanel().open = true; await wait(50);
+  const logBtn = donePanel().querySelector('[data-key^="log-"]');
+  const logId = logBtn.getAttribute('data-key').replace('log-', '');
+  logBtn.scrollIntoView({ block: 'center' }); await wait(50);
+  const rowTop = () => document.querySelector(`[data-key="log-${logId}"]`).getBoundingClientRect().top;
+  const topBefore = rowTop();
+  logBtn.click(); await wait(100);
+  document.querySelector('.log-minutes').value = '45';
+  document.querySelector('.log-form').requestSubmit(); await wait(250);
+  check('log from Done panel saved', window.__store.items[logId]?.log?.minutes === 45, JSON.stringify(window.__store.items[logId]?.log));
+  check('Done panel stays open after logging', donePanel()?.open === true);
+  // A few px of drift is fine: the row's button changes size, and at the page bottom the browser has to scroll up by that much.
+  check('logged row stays in place on screen', Math.abs(rowTop() - topBefore) < 25, `${topBefore} -> ${rowTop()}`);
   check('header shows done today', /✓ \d+ done/.test(document.querySelector('[data-key="done-today"]')?.textContent ?? ''), document.querySelector('[data-key="done-today"]')?.textContent);
 
   // Minutes dropdown, in-class.

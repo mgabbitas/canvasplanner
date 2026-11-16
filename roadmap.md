@@ -34,7 +34,7 @@ In this order: logging-time bug, exam study time, holiday icons and bars, foreca
 - Auto-sync default 60 → 30 min. Sync only runs when you open the planner or visit Canvas (no timer in the background), so the cost is a few more requests to Canvas, only then. Existing users on 60 move to 30 too (60 was the default, so almost nobody chose it). **Done 2026-11-11.**
 - Sync when you come back to an open planner tab (2026-11-11). A user said "I don't think it updates with Canvas": they left the tab open, came back, and items they'd submitted weren't checked off. The page only syncs when it first loads. Fix: also sync when the tab becomes visible again and the last sync is older than the interval. No new permission. Maybe the toolbar popup too. A true background timer needs the `alarms` permission; only if this isn't enough. **Done 2026-11-11.**
 
-- Logging time on a done item resets the page (2026-11-16): the logged-items card closes and the page jumps back to the top. It should stay where you were: card still open, same scroll position. Probably a full re-render after the save; keep the open card and scroll position across it.
+- Logging time on a done item resets the page (2026-11-16): the logged-items card closes and the page jumps back to the top. It should stay where you were: card still open, same scroll position. Probably a full re-render after the save; keep the open card and scroll position across it. **Done 2026-11-16:** panels now remember open/closed across redraws (Dismissed, Extra credit, etc. had the same problem).
 
 **Cheers and streaks**
 

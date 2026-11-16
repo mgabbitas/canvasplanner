@@ -24,6 +24,7 @@ export const app = {
   selectedDay: null, // day tab shown ('week', a date, or null = first day)
   navOpen: false, // sidebar open on narrow screens
   classFilter: { keyword: '', type: '', setTo: '' }, // class view filters
+  panelOpen: {}, // panels you opened or closed this visit, by title (kept across redraws)
   render: () => {}, // set by planner.js
 };
 
