@@ -44,7 +44,7 @@ async function setDone(entry, done) {
   else checked.delete(entry.id);
   render();
 }
-const pickUser = (old) => ({ manualDone: old.manualDone, doneOn: old.doneOn, partsDone: old.partsDone });
+const pickUser = (old) => ({ manualDone: old.manualDone, doneOn: old.doneOn, partsDone: old.partsDone, splitDays: old.splitDays });
 
 function openPlanner() {
   browser.tabs.create({ url: browser.runtime.getURL('src/ui/planner.html') });

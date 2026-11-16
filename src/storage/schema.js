@@ -150,11 +150,16 @@ function validateItem(id, raw) {
   };
 }
 
-/** Split parts: 2-8, with the days parts were done (never more than the parts). */
+/**
+ * Split parts: 2-8, with the days parts were done (never more than the parts) and the
+ * days you chose for the parts still to do (sorted; never more than are left).
+ */
 function validateSplit(raw) {
   const splitParts = raw.splitParts == null ? null : int(raw.splitParts, 2, 8, null);
-  const done = splitParts && Array.isArray(raw.partsDone) ? raw.partsDone.filter((d) => typeof d === 'string' && DATE.test(d)) : [];
-  return { splitParts, partsDone: done.length ? done.slice(0, splitParts) : null };
+  const dates = (v) => (splitParts && Array.isArray(v) ? v.filter((d) => typeof d === 'string' && DATE.test(d)) : []);
+  const done = dates(raw.partsDone).slice(0, splitParts);
+  const chosen = dates(raw.splitDays).sort().slice(0, splitParts ? splitParts - done.length : 0);
+  return { splitParts, partsDone: done.length ? done : null, splitDays: chosen.length ? chosen : null };
 }
 
 /** A task's own fields. A task with no due date floats; a repeat copy never does. */

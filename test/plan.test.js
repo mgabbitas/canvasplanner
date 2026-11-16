@@ -537,12 +537,56 @@ test('split item: parts on different days in order, sharing a day only when need
   assert.deepEqual(q.doneToday, { count: 1, minutes: 30 });
 });
 
+test('split item on days you chose: each part on its day, renumbered by date', () => {
+  // 3 x 40m on Wed, Mon, Fri (unsorted on purpose; Fri is past the Wed target but before the due day).
+  const big = mk({ due: '2026-10-03 23:59', minutesOverride: 120, splitParts: 3, splitDays: ['2026-09-30', '2026-09-28', '2026-10-02'] });
+  const p = run([big]);
+  const parts = p.days.flatMap((d) => d.items.map((e) => [e.id, d.date, e.minutes]));
+  assert.deepEqual(parts, [
+    [`${big.id}#1`, '2026-09-28', 40], [`${big.id}#2`, '2026-09-30', 40], [`${big.id}#3`, '2026-10-02', 40],
+  ]);
+});
+
+test('split item: a chosen day that passed or left the window goes back to the planner', () => {
+  // Chose Sun 09-27 (past) and Tue 09-29; the planner places the other part, avoiding Tue.
+  const big = mk({ due: '2026-10-03 23:59', minutesOverride: 60, splitParts: 2, splitDays: ['2026-09-27', '2026-09-29'] });
+  const p = run([big]);
+  assert.deepEqual(p.days.flatMap((d) => d.items.map((e) => [e.id, d.date])), [
+    [`${big.id}#1`, '2026-09-28'], [`${big.id}#2`, '2026-09-29'],
+  ]);
+  // Due date moved earlier (Tue): a chosen Thursday no longer fits, so that part is placed by the planner.
+  const moved = mk({ due: '2026-09-29 23:59', minutesOverride: 60, splitParts: 2, splitDays: ['2026-09-28', '2026-10-01'] });
+  const q = run([moved]);
+  assert.deepEqual(q.days.flatMap((d) => d.items.map((e) => [e.id, d.date])), [
+    [`${moved.id}#1`, '2026-09-28'], [`${moved.id}#2`, '2026-09-29'],
+  ]);
+});
+
+test('split item: some parts chosen, the rest placed by the planner on other days', () => {
+  // 3 parts, only Monday chosen: the free parts skip Monday even though it has room.
+  const big = mk({ due: '2026-10-03 23:59', minutesOverride: 60, splitParts: 3, splitDays: ['2026-09-28'] });
+  const p = run([big]);
+  assert.deepEqual(p.days.flatMap((d) => d.items.map((e) => [e.id, d.date])), [
+    [`${big.id}#1`, '2026-09-28'], [`${big.id}#2`, '2026-09-29'], [`${big.id}#3`, '2026-09-30'],
+  ]);
+  // A chosen day can go over the day's hours, like moving any item there (and doesn't flag it over).
+  const tiny = { ...S.capacity, 1: 30 };
+  const r = run([big], { settings: { capacity: tiny } });
+  assert.equal(dateOf(r, `${big.id}#1`), '2026-09-28');
+});
+
 test('checking off a split item adds a part; the last part finishes it', async () => {
   const { checkOffPatch } = await import('../src/planner/plan.js');
   assert.deepEqual(checkOffPatch({ splitParts: null }, '2026-09-28'), { manualDone: true, doneOn: '2026-09-28' });
   assert.deepEqual(checkOffPatch({ splitParts: 3, partsDone: null }, '2026-09-28'), { partsDone: ['2026-09-28'] });
   assert.deepEqual(checkOffPatch({ splitParts: 2, partsDone: ['2026-09-27'] }, '2026-09-28'),
     { partsDone: ['2026-09-27', '2026-09-28'], manualDone: true, doneOn: '2026-09-28' });
+  // A part on a day you chose frees that day; checking off a part placed elsewhere frees none.
+  const chosen = { splitParts: 3, partsDone: null, splitDays: ['2026-09-28', '2026-09-30'] };
+  assert.deepEqual(checkOffPatch(chosen, '2026-09-28', '2026-09-30'), { partsDone: ['2026-09-28'], splitDays: ['2026-09-28'] });
+  assert.deepEqual(checkOffPatch(chosen, '2026-09-28', '2026-09-29'), { partsDone: ['2026-09-28'], splitDays: chosen.splitDays });
+  assert.deepEqual(checkOffPatch({ splitParts: 2, partsDone: ['2026-09-27'], splitDays: ['2026-09-28'] }, '2026-09-28'),
+    { partsDone: ['2026-09-27', '2026-09-28'], splitDays: null, manualDone: true, doneOn: '2026-09-28' });
 });
 
 test('day streak counts a split part done that day', async () => {

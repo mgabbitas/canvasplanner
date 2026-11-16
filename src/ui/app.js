@@ -21,6 +21,7 @@ export const app = {
   editingDay: null, // date whose capacity is being edited
   pullAmount: 60, // minutes picked in the "pull about …" control
   thisWeekPlan: null, // latest plan for this week (pull gate, pull candidates)
+  shownPlan: null, // the plan on screen (this week or next)
   selectedDay: null, // day tab shown ('week', a date, or null = first day)
   navOpen: false, // sidebar open on narrow screens
   classFilter: { keyword: '', type: '', setTo: '' }, // class view filters

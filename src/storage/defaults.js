@@ -63,4 +63,5 @@ export const USER_FIELD_DEFAULTS = Object.freeze({
   notExam: false, // you said a title that looks like an exam isn't one
   splitParts: null, // split into this many parts (2-8), planned on different days
   partsDone: null, // ['YYYY-MM-DD', …]: the day each finished part was checked off, in order
+  splitDays: null, // ['YYYY-MM-DD', …]: days you chose for the parts still to do (the rest the planner places)
 });

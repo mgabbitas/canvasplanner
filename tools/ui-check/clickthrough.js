@@ -512,8 +512,21 @@ async function checkTasks() {
   // Split the task (1h) into 3 parts: three rows on different days, checked off one at a time.
   document.querySelector('[data-key="daytab-week"]').click(); await wait(150);
   document.querySelector(`[data-key="menu-${added.id}"]`)?.click(); await wait(50);
-  document.querySelector(`[data-key="split-${added.id}-3"]`)?.click(); await wait(250);
-  check('split saved', window.__store.items[added.id]?.splitParts === 3);
+  document.querySelector(`[data-key="split-${added.id}"]`)?.click(); await wait(100);
+  const picker = () => document.querySelector('dialog.split-dialog');
+  check('split picker opens', !!picker());
+  const dayBoxes = $$('dialog.split-dialog input[type=checkbox]');
+  check('picker shows free time', $$('dialog.split-dialog .dt-load').some((n) => /free|full|day off/.test(n.textContent)));
+  for (const b of dayBoxes) if (b.checked) { b.checked = false; fire(b, 'change'); }
+  picker().querySelector('[data-key="split-save"]').click(); await wait(50);
+  check('picker needs 2 days', !!picker() && /2 days/.test(picker().querySelector('[role="alert"]').textContent));
+  const open = dayBoxes.filter((b) => !b.disabled).slice(0, 3);
+  for (const b of open) { b.checked = true; fire(b, 'change'); }
+  check('picker summary', /3 parts · 20m each/.test(picker().querySelector('[data-key="split-summary"]').textContent), picker().querySelector('[data-key="split-summary"]').textContent);
+  picker().querySelector('[data-key="split-save"]').click(); await wait(250);
+  const chosenDays = open.map((b) => b.value);
+  check('split saved', window.__store.items[added.id]?.splitParts === 3 && JSON.stringify(window.__store.items[added.id]?.splitDays) === JSON.stringify(chosenDays),
+    JSON.stringify(window.__store.items[added.id]?.splitDays));
   const partRows = $$(`[data-key^="done-${added.id}#"]`);
   const partDays = partRows.map((b) => b.closest('.day')?.getAttribute('data-date') ?? b.closest('section')?.textContent.slice(0, 12));
   check('three part rows', partRows.length === 3 && /part 1 of 3/.test(partRows[0].closest('.item').textContent), `${partRows.length} rows`);
@@ -521,7 +534,15 @@ async function checkTasks() {
   check('part checked off', window.__store.items[added.id]?.partsDone?.length === 1 && !window.__store.items[added.id]?.manualDone);
   check('two parts left', $$(`[data-key^="done-${added.id}#"]`).length === 2, partDays.join(' | '));
   document.querySelector('[data-key="toast-Undo"]')?.click(); await wait(250);
-  check('part undo', !window.__store.items[added.id]?.partsDone);
+  check('part undo', !window.__store.items[added.id]?.partsDone && window.__store.items[added.id]?.splitDays?.length === 3);
+
+  // A part moves like any item: its menu -> another day.
+  const partMenu = document.querySelector(`[data-key="menu-${added.id}#3"]`);
+  partMenu?.click(); await wait(50);
+  const partMove = partMenu?.closest('details').querySelector('[data-key^="move-"]:not(:disabled)');
+  const toDay = partMove?.getAttribute('data-key').slice(-10);
+  partMove?.click(); await wait(250);
+  check('part moved', !!toDay && window.__store.items[added.id]?.splitDays?.includes(toDay), `${toDay} ${JSON.stringify(window.__store.items[added.id]?.splitDays)}`);
 }
 
 run().catch((e) => report.errors.push(`harness: ${e.stack}`)).finally(() => {

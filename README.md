@@ -18,7 +18,8 @@ Wednesday instead of piling up on Saturday.
   doesn't fit is reported, never quietly pushed past its due date.
 - **Takes your own tasks.** Add things Canvas doesn't track (study for a midterm, a
   group meeting) to a class, with or without a due date, or repeating on set weekdays.
-- **Splits big work.** Break a long assignment into parts that land on different days.
+- **Splits big work.** Break a long assignment into parts on the days you pick, and move
+  any part like any other item.
 - **Bends to your day.** Move any item to another day, start tomorrow's work early
   when you're done, and watch the "done today" count go up as you work.
 - **Keeps a streak.** Two counters in the header: weeks in a row you finished

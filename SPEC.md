@@ -462,7 +462,10 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
   items do (hours, streaks, stats, days ahead), show a small "task" tag, open an edit
   form instead of Canvas, and are kept in history, export/import and the calendar
   export. **Splitting** works on any item: "Split across days" in the item menu breaks
-  it into chunks the planner spreads before the due date.
+  it into chunks the planner spreads before the due date. Since 1.6 (2026-11-16) it
+  opens a day picker (mini day cards with free time; the days you pick are the parts,
+  stored as `splitDays`), and each part has the normal Move to / Let the planner decide.
+  A chosen day that has passed or left the item's window goes back to the planner.
 - **M10. Themes.** Preset themes and color combinations plus a full color picker
   (accent and background tint, with a contrast warning); 4–5 more accents. Seasonal
   themes Fall and Christmas, each with light and dark versions, offered by a banner

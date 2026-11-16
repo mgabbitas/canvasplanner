@@ -1,6 +1,6 @@
 // Item rows and what you can do to an item: check off (with undo), log time,
 // change minutes, the ⋮ menu (move to a day, pin, dismiss), pull, send back, restore.
-import { canPullItem, doneDay, looksLikeExam, checkOffPatch, MAX_PARTS } from '../planner/plan.js';
+import { canPullItem, doneDay, looksLikeExam, checkOffPatch, withoutDay } from '../planner/plan.js';
 import { estimate } from '../planner/estimate.js';
 import { daysEarly } from '../planner/ahead.js';
 import { toLocalDate, addDays, dateRange, minDate } from '../planner/dates.js';
@@ -10,6 +10,7 @@ import { showToast, logForm, celebrate } from './toast.js';
 import { courseColor } from './theme.js';
 import { app, courseName, SOURCE_LABEL, updateItem, plural } from './app.js';
 import { openTaskForm } from './taskform.js';
+import { openSplitPicker } from './splitpicker.js';
 
 // --- done, undo, and time logging -------------------------------------------------
 
@@ -36,9 +37,10 @@ export function openLog(item, toast = null) {
 }
 
 /** Check an item (or the next part of a split item) off, with a toast offering Undo and Log time. */
-export function markDone(item) {
-  const before = { manualDone: item.manualDone, log: item.log, doneOn: item.doneOn, partsDone: item.partsDone };
-  const patch = checkOffPatch(item, toLocalDate(Date.now()));
+export function markDone(item, partDay) {
+  const before = { manualDone: item.manualDone, log: item.log, doneOn: item.doneOn, partsDone: item.partsDone, splitDays: item.splitDays };
+  const today = toLocalDate(Date.now());
+  const patch = checkOffPatch(item, today, partDay ?? today);
   updateItem(item.id, patch);
   const finished = Boolean(patch.manualDone);
   const t = showToast({
@@ -58,28 +60,36 @@ const uncheck = (item) => updateItem(item.id, {
   ...(item.splitParts ? { partsDone: item.partsDone?.slice(0, -1).length ? item.partsDone.slice(0, -1) : null } : {}),
 });
 
-/** "Split across days": 2-4 parts (up to 8 for long items), or back to one piece. */
-function splitMenu(entry) {
+/** "Split across days…" (opens the day picker). */
+function splitMenu(entry, kind) {
   const { item } = entry;
   const total = estimate(item, app.state.settings).minutes;
-  if (entry.inClass) return [];
-  // New splits only for upcoming work worth splitting; "Don't split" stays reachable.
-  const canSplit = !entry.overdue && total >= 10;
-  const canUnsplit = item.splitParts && !item.partsDone?.length;
-  if (!canSplit && !canUnsplit) return [];
-  const most = canSplit ? Math.min(MAX_PARTS, Math.max(4, Math.floor(total / 30))) : 1;
-  const out = [el('div', { className: 'menu-label' }, 'Split across days')];
-  for (let n = 2; n <= most; n++) {
-    out.push(el('button', {
-      role: 'menuitem', disabled: item.splitParts === n || (item.partsDone?.length ?? 0) >= n, 'data-key': `split-${item.id}-${n}`,
-      onclick: () => updateItem(item.id, { splitParts: n, plannedOn: null, pinned: false }),
-    }, `${n} parts · ${minutesLabel(Math.ceil(total / n))} each`, item.splitParts === n ? el('span', { className: 'muted' }, ' · now') : null));
-  }
-  if (canUnsplit) {
-    out.push(el('button', { role: 'menuitem', 'data-key': `unsplit-${item.id}`, onclick: () => updateItem(item.id, { splitParts: null }) }, "Don't split"));
-  }
-  out.push(el('hr'));
-  return out;
+  // Upcoming work worth splitting, not started on yet (finished parts keep their split).
+  if (entry.inClass || entry.overdue || total < 10 || item.partsDone?.length) return [];
+  return [
+    el('button', {
+      role: 'menuitem', 'data-key': `split-${item.id}`, onclick: () => openSplitPicker(entry, kind),
+    }, item.splitParts ? 'Change split days…' : 'Split across days…'),
+    el('hr'),
+  ];
+}
+
+/** The days a split item's remaining parts are planned on now (this week's plan). */
+function currentPartDays(itemId) {
+  return (app.thisWeekPlan?.days ?? []).flatMap((d) => d.items
+    .filter((e) => e.part && e.item.id === itemId && !e.overdue).map(() => d.date));
+}
+
+/**
+ * Move one part of a split item to a day. Its other parts stay where they are now, so
+ * nothing jumps around; null hands this part back to the planner.
+ */
+export function movePart(entry, day) {
+  const { item } = entry;
+  const days = entry.movedTo ? item.splitDays ?? [] : currentPartDays(item.id);
+  const rest = withoutDay(days, entry.date) ?? [];
+  const splitDays = (day ? [...rest, day] : rest).sort();
+  return updateItem(item.id, { splitDays: splitDays.length ? splitDays : null });
 }
 
 // --- item rows ---------------------------------------------------------------------
@@ -132,7 +142,7 @@ export function relativeDay(date) {
 /** Days this item can be moved to: from when it opens to its last work day, within this week. */
 function moveDays(entry) {
   const week = app.thisWeekPlan?.week;
-  if (!week || !entry.lastDay || entry.overdue || entry.inClass || entry.part) return [];
+  if (!week || !entry.lastDay || entry.overdue || entry.inClass) return [];
   return dateRange(entry.firstDay, minDate(entry.lastDay, week.end));
 }
 
@@ -152,18 +162,18 @@ function itemMenu(entry, kind) {
     for (const d of days) {
       const here = d === entry.date;
       entries.push(el('button', {
-        role: 'menuitem', disabled: here, 'data-key': `move-${item.id}-${d}`,
-        onclick: () => choose({ plannedOn: d, pinned: false }),
+        role: 'menuitem', disabled: here, 'data-key': `move-${entry.id}-${d}`,
+        onclick: () => (entry.part ? movePart(entry, d) : choose({ plannedOn: d, pinned: false })),
       }, relativeDay(d), here ? el('span', { className: 'muted' }, ' · planned') : null));
     }
     if (entry.movedTo) {
       entries.push(el('button', {
-        role: 'menuitem', 'data-key': `unmove-${item.id}`, onclick: () => choose({ plannedOn: null }),
+        role: 'menuitem', 'data-key': `unmove-${entry.id}`, onclick: () => (entry.part ? movePart(entry, null) : choose({ plannedOn: null })),
       }, 'Let the planner decide'));
     }
     entries.push(el('hr'));
   }
-  if (kind === 'plan' || kind === 'next') entries.push(...splitMenu(entry));
+  if (kind === 'plan' || kind === 'next') entries.push(...splitMenu(entry, kind));
   if (editable(kind) && entry.lastDay && !entry.overdue && !entry.inClass && !entry.part) {
     entries.push(el('button', {
       role: 'menuitem', 'data-key': `pin-${item.id}`,
@@ -203,7 +213,7 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     'aria-label': `Mark "${item.title}" ${done ? 'not done' : 'done'}`,
     title: done && !entry.canUncheck ? 'Submitted in Canvas' : kind === 'closed' ? 'Closed in Canvas' : '',
     'data-key': `done-${entry.part ? entry.id : item.id}`,
-    onchange: (e) => (e.target.checked ? markDone(item) : uncheck(item)),
+    onchange: (e) => (e.target.checked ? markDone(item, entry.part ? entry.date : null) : uncheck(item)),
   });
   const canEditTask = item.task && (!item.task.seriesId || app.state.taskSeries?.[item.task.seriesId]);
   const title = item.url

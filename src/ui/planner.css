@@ -556,6 +556,17 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
 .day-pick { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: pointer; }
 .day-pick input { margin: 0; accent-color: var(--accent); }
 .day-pick:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+/* Split picker: mini day cards, like the day tabs */
+.split-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; margin: 12px 0 8px; }
+.split-day {
+  position: relative; display: flex; flex-direction: column; gap: 2px; padding: 7px 9px; font-size: 13px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer;
+}
+.split-day input { position: absolute; opacity: 0; pointer-events: none; }
+.split-day:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.split-day:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.split-day.disabled { opacity: 0.5; cursor: default; }
+.split-summary { font-size: 14px; font-weight: 500; margin: 4px 0; }
 .form-buttons { display: flex; gap: 8px; margin-top: 16px; }
 .form-buttons .spacer { flex: 1; }
 @media (max-width: 560px) {

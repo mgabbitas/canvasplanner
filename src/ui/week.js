@@ -7,7 +7,7 @@ import { PULL_AMOUNTS } from '../planner/plan.js';
 import {
   app, courseName, sumMinutes, plural, updateItems, changeExtraDays, setDayCapacity, saveState, homework, required, itemCount,
 } from './app.js';
-import { itemRow, pullBlockedText, relativeDay } from './items.js';
+import { itemRow, pullBlockedText, relativeDay, movePart } from './items.js';
 
 export function renderBanners(p) {
   const out = [];
@@ -232,8 +232,7 @@ function getAhead(p) {
   if (!today || required(today.items).length) return null;
   for (const day of p.days) {
     if (day.date <= p.today) continue;
-    // A split part can't be moved on its own (the planner places parts), so skip those.
-    const entry = required(day.items).find((e) => e.firstDay === p.today && !e.movedTo && !e.part);
+    const entry = required(day.items).find((e) => e.firstDay === p.today && !e.movedTo);
     if (entry) return { entry, date: day.date, today: p.today, finished: p.doneToday.count > 0 };
   }
   return null;
@@ -247,7 +246,7 @@ function aheadCard({ entry, date, today, finished }) {
     el('button', {
       'data-key': 'ahead',
       title: `${entry.item.title}\nMoves it to today. Use ⋮ on the item to undo.`,
-      onclick: () => updateItems([entry.id], { plannedOn: today, pinned: false }),
+      onclick: () => (entry.part ? movePart(entry, today) : updateItems([entry.id], { plannedOn: today, pinned: false })),
     }, el('span', { className: 'nowrap' }, `Start one from ${from}:`),
     el('span', { className: 'ahead-title' }, entry.item.title),
     el('span', { className: 'muted nowrap' }, minutesLabel(entry.minutes))),

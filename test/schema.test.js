@@ -185,6 +185,17 @@ test('split parts validate; day log keeps part ids', () => {
   assert.deepEqual(migrate({ dayLog: { '2026-10-01': { left: ['5#2', '5', 'x#2', '5#22'] } } }).dayLog['2026-10-01'].left, ['5#2', '5']);
 });
 
+test('split days: real dates only, sorted, never more than the parts left', () => {
+  const items = validateItems({
+    1: { courseId: '9', splitParts: 3, partsDone: ['2026-10-01'], splitDays: ['2026-10-05', 'junk', 7, '2026-10-03', '2026-10-04'] },
+    2: { courseId: '9', splitParts: null, splitDays: ['2026-10-03'] },
+    3: { courseId: '9', splitParts: 2, splitDays: 'nope' },
+  });
+  assert.deepEqual(items['1'].splitDays, ['2026-10-03', '2026-10-04']); // 2 parts left
+  assert.equal(items['2'].splitDays, null); // not split
+  assert.equal(items['3'].splitDays, null);
+});
+
 test('onboarding validates', () => {
   assert.deepEqual(migrate({}).onboarding, { seenVersion: null, toured: null });
   assert.deepEqual(migrate({ onboarding: { seenVersion: '1.2.0', toured: true } }).onboarding, { seenVersion: '1.2.0', toured: true });

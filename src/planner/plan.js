@@ -18,22 +18,51 @@ export const MAX_PARTS = 8;
  * The change that checks an item off today. A split item gets one more part done,
  * and is done once every part is.
  */
-export function checkOffPatch(item, today) {
+export function checkOffPatch(item, today, partDay = today) {
   if (!item.splitParts) return { manualDone: true, doneOn: today };
   const partsDone = [...(item.partsDone ?? []), today];
-  return partsDone.length >= item.splitParts ? { partsDone, manualDone: true, doneOn: today } : { partsDone };
+  // The part you checked off frees the day you chose for it (if you chose one).
+  const splitDays = withoutDay(item.splitDays, partDay);
+  const patch = item.splitDays ? { partsDone, splitDays } : { partsDone };
+  return partsDone.length >= item.splitParts ? { ...patch, manualDone: true, doneOn: today } : patch;
 }
 
-/** Split parts still to do: entries for parts n..of, each with an even share of the time. */
+/** A list of days with one copy of `day` taken out (null when nothing is left). */
+export function withoutDay(days, day) {
+  if (!days) return null;
+  const i = days.indexOf(day);
+  const out = i < 0 ? days : [...days.slice(0, i), ...days.slice(i + 1)];
+  return out.length ? out : null;
+}
+
+/**
+ * Split parts still to do: entries for parts n..of, each with an even share of the time.
+ * Days you chose for parts (splitDays, still inside the item's window) go to the first
+ * parts; the rest are the planner's to place. Parts are renumbered by day afterwards.
+ */
 function splitEntries(e) {
   const of = e.item.splitParts;
   if (!of || e.inClass) return [e];
   const per = Math.max(1, Math.ceil(e.minutes / of));
+  const first = (e.item.partsDone?.length ?? 0) + 1;
+  const chosen = (e.item.splitDays ?? []).filter((d) => e.lastDay && d >= e.firstDay && d <= e.lastDay).sort();
   const out = [];
-  for (let n = (e.item.partsDone?.length ?? 0) + 1; n <= of; n++) {
-    out.push({ ...e, id: `${e.id}#${n}`, part: { n, of }, minutes: per, movedTo: null, pinned: false });
+  for (let n = first; n <= of; n++) {
+    const movedTo = chosen[n - first] ?? null;
+    out.push({ ...e, id: `${e.id}#${n}`, part: { n, of }, minutes: per, movedTo, pinned: false });
   }
   return out;
+}
+
+/** Number each item's remaining parts in day order (unplaced last), so part 1 comes first. */
+function renumberParts(entries) {
+  const byItem = new Map();
+  for (const e of entries) if (e.part) (byItem.get(e.item.id) ?? byItem.set(e.item.id, []).get(e.item.id)).push(e);
+  for (const parts of byItem.values()) {
+    const ns = parts.map((e) => e.part.n).sort((a, b) => a - b);
+    parts.sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999') || a.part.n - b.part.n);
+    parts.forEach((e, i) => { e.part = { ...e.part, n: ns[i] }; e.id = `${e.item.id}#${ns[i]}`; });
+  }
 }
 
 /** Minutes of one part of a split item. */
@@ -240,6 +269,9 @@ export function plan({ items, settings, weekState = {}, now }) {
   // Parts of a split item go on different days in order when they can (part 2 the day
   // after part 1 at the earliest), and share a day only when nothing else fits.
   const partDay = new Map(); // item id -> day of its last placed part
+  // Days you chose for some of an item's parts: its other parts go elsewhere when they can.
+  const chosenPartDays = new Map();
+  for (const e of moved) if (e.part) (chosenPartDays.get(e.item.id) ?? chosenPartDays.set(e.item.id, new Set()).get(e.item.id)).add(e.movedTo);
   for (const e of rest) {
     const prev = e.part ? partDay.get(e.item.id) : null;
     const start = maxDate(maxDate(today, e.unlockDate ?? today), prev ? addDays(prev, 1) : today);
@@ -247,7 +279,8 @@ export function plan({ items, settings, weekState = {}, now }) {
     const end = behind || opensLate ? e.lastDay : minDate(e.lastDay, week.cutoff);
     // An empty day takes anything.
     const fits = (d) => usable(d) && ((load.get(d) ?? 0) === 0 || (load.get(d) ?? 0) + e.minutes <= capacity(d));
-    const day = dateRange(start, end).find(fits);
+    const taken = e.part ? chosenPartDays.get(e.item.id) : null;
+    const day = dateRange(start, end).find((d) => fits(d) && !taken?.has(d)) ?? dateRange(start, end).find(fits);
     const sameDay = !day && prev && prev <= end && fits(prev) ? prev : null;
     if (day || sameDay) {
       place(e, day ?? sameDay);
@@ -285,6 +318,8 @@ export function plan({ items, settings, weekState = {}, now }) {
       if (e.part) partDay.set(e.item.id, day);
     } else extraCredit.push(e);
   }
+
+  renumberParts([...onDay.values()].flat().concat(overflow, atRisk.filter((e) => !e.date), extraCredit));
 
   const lastPlaced = [...onDay.keys()].reduce(maxDate, week.cutoff);
   const days = dateRange(today, maxDate(today, lastPlaced)).map((date) => {

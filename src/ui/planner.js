@@ -62,6 +62,7 @@ function render() {
   if (app.state.meta.lastSyncAt) recordDay(app.thisWeekPlan);
   const v = view();
   const p = v === 'next' ? planNextWeek(args) : app.thisWeekPlan;
+  app.shownPlan = p;
   if (v === 'this' && app.state.meta.lastSyncAt) celebrateAhead(app.thisWeekPlan);
 
   const $ = (id) => document.getElementById(id);
