@@ -78,7 +78,10 @@ function render() {
   app.preview = new URLSearchParams(location.search).get('preview');
   app.look = applyTheme(app.state.settings, today, app.preview);
   app.holiday = HOLIDAYS[app.preview] ? app.preview : activeHoliday(app.state.settings, today);
-  updateDecorations(app.look, app.state.settings);
+  // Holiday-only decorations key off this (e.g. Christmas Day vs the Christmas theme).
+  if (app.holiday) document.documentElement.dataset.holiday = app.holiday;
+  else delete document.documentElement.dataset.holiday;
+  updateDecorations(app.look, app.state.settings, app.holiday);
   $('sidebar').replaceChildren(...renderSidebar().filter(Boolean));
   $('header').replaceChildren(...renderHeader(p).filter(Boolean));
   const fill = (id, nodes) => $(id).replaceChildren(...nodes.filter(Boolean));

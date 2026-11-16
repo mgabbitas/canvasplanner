@@ -11,9 +11,12 @@ const between = (a, b) => a + Math.random() * (b - a);
 
 let shown = null; // "kind-count" currently on screen
 
-export function updateDecorations(look, settings) {
+// Christmas Day: more snow than the rest of December (still off when Effects is Off).
+const HOLIDAY_EXTRA = { christmasday: 1.7 };
+
+export function updateDecorations(look, settings, holiday = null) {
   const kind = reducedMotion() ? null : KINDS[look] ?? null;
-  const count = kind ? COUNT[kind][settings.effects] ?? 0 : 0;
+  const count = kind ? Math.round((COUNT[kind][settings.effects] ?? 0) * (HOLIDAY_EXTRA[holiday] ?? 1)) : 0;
   const key = count ? `${kind}-${count}` : null;
   if (key === shown) return;
   shown = key;

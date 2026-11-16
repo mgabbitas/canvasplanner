@@ -4,7 +4,6 @@ import { icon, logo, lookIcon } from './icons.js';
 import { courseColor } from './theme.js';
 import { openTaskForm } from './taskform.js';
 import { aheadText } from './notes.js';
-import { toLocalDate } from '../planner/dates.js';
 import { ACCESS_MESSAGE, isLoginError } from '../sync/canvas.js';
 import { canvasBase, normalizeHost } from '../sync/school.js';
 import { app, IS_FIREFOX, BROWSER, view, classId, timeAgo, courseName, sync, allowCanvasAccess, setSchool, changeExtraDays, homework, itemCount, streaks, plural, firstRun, required, sumMinutes } from './app.js';
@@ -57,7 +56,7 @@ export function renderSidebar() {
     el('div', { className: 'brand' },
       logo(),
       el('span', {}, 'Planner for Canvas'),
-      lookIcon(app.look, toLocalDate(Date.now())),
+      lookIcon(app.look, app.holiday),
       el('button', { className: 'icon-btn close-nav', 'aria-label': 'Close menu', onclick: () => setNavOpen(false) }, icon('close')),
     ),
     SPLASH[app.holiday] ? el('p', { className: 'splash', 'data-key': 'splash' }, SPLASH[app.holiday]) : null,

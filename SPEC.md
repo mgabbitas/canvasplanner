@@ -485,10 +485,17 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
   when the season starts (Yes / Not now / Don't ask again), never switched
   automatically. Holiday days (Halloween, Thanksgiving, Christmas Day, 4th of July):
   one opt-in setting, asked once; the look applies that day only. Decorations: colors,
-  a small icon by the logo (Fall: a pumpkin through Oct 31, then a leaf), themed load
+  a small icon by the logo, themed load
   bars, a light background pattern, and falling snow (Christmas) and occasional
   falling leaves (Fall), behind the panels, with an Effects slider (Off / Light /
   Normal / Lots); CSS and small inline SVGs only, off under `prefers-reduced-motion`.
+  Since 1.6 (2026-11-16), plain looks plain and holidays festive: the icon (filled, in
+  the logo's style) shows on the holidays (Halloween pumpkin, Thanksgiving leaf,
+  Christmas Day tree, July 4 star) and on the Christmas theme (snowflake), not on Fall
+  or Patriotic. Striped bars on the holidays and the Christmas theme; Christmas Day adds
+  gold to the stripes and more snow. Fall has plain bars. Patriotic gives each day's bar
+  a turn as red-and-white stripes, white, or blue (by date; red is never solid, since
+  solid red means over).
   Preset scenes (decided 2026-10-29): Ocean a horizon, Sunset a gradient, Forest a
   thick leaf pattern, Lavender sprigs, Patriotic (also the 4th of July look) faint red,
   white and blue stars. Load bars (revised 2026-10-29): neutral grey track, planned time

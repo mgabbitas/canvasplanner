@@ -11,20 +11,50 @@ const ICONS = {
   close: ['M6 6l12 12', 'M18 6L6 18'],
   external: ['M14 4h6v6', 'M20 4l-9 9', 'M18 14v6H4V6h6'],
   flame: ['M12 22c-4.4 0-7.5-3-7.5-7 0-3 1.6-5.2 3.4-7.2.3 1.6 1 2.8 2.1 3.6C10 7.6 11.6 4.4 14.6 2c-.2 3.2 1.4 5.2 3 7.2 1.3 1.6 1.9 3.3 1.9 5.3 0 4.3-3.1 7.5-7.5 7.5z'],
-  // Theme decorations, shown next to the name.
-  leaf: ['M5 19C5 10 11 4 20 4c0 9-6 15-15 15z', 'M5 19l8-8'],
-  snowflake: ['M12 3v18', 'M4.2 7.5l15.6 9', 'M4.2 16.5l15.6-9', 'M10 4.5l2 1.5 2-1.5', 'M10 19.5l2-1.5 2 1.5'],
-  pumpkin: ['M12 8c-5 0-8 2.5-8 6s3 6 8 6 8-2.5 8-6-3-6-8-6z', 'M12 8v12', 'M12 8c0-2 1-3.5 3-4'],
-  star: ['M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5l-5.3 2.9 1.2-6-4.5-4.1 6-.7z'],
 };
 
-const LOOK_ICONS = { fall: 'leaf', thanksgiving: 'leaf', christmas: 'snowflake', halloween: 'pumpkin', patriotic: 'star' };
+// Theme marks next to the name, in the logo's style: a filled shape in the theme color,
+// with details cut out in the background color at the logo's line weight.
+// fill: solid shape; cut: detail line in the background color; line: line in the theme color.
+const MARKS = {
+  leaf: [{ fill: 'M4 20C4 10.5 10.5 4 20 4c0 9.5-6.5 16-16 16z' }, { cut: 'M8 16l7.5-7.5' }, { line: 'M3 21l3-3' }],
+  pumpkin: [
+    { fill: 'M12 7.6c-1.5-1-3.6-1.2-5.4-.5C4.2 8.1 3 10.6 3 13.8 3 17.9 5.5 21 9 21c1.2 0 2.2-.3 3-.8.8.5 1.8.8 3 .8 3.5 0 6-3.1 6-7.2 0-3.2-1.2-5.7-3.6-6.7-1.8-.7-3.9-.5-5.4.5z' },
+    { cut: 'M12 9.5v10' }, { cut: 'M8.3 9.5c-1.2 2.6-1.2 7 .2 10' }, { cut: 'M15.7 9.5c1.2 2.6 1.2 7-.2 10' },
+    { line: 'M12 7.5c0-2 .8-3.5 2.6-4.5' },
+  ],
+  snowflake: [
+    { line: 'M12 2.5v19' }, { line: 'M3.8 7.25l16.4 9.5' }, { line: 'M3.8 16.75l16.4-9.5' },
+    { line: 'M9.5 4l2.5 2 2.5-2' }, { line: 'M9.5 20l2.5-2 2.5 2' },
+  ],
+  star: [{ fill: 'M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17.1l-5.9 3.2 1.3-6.5L2.5 9.3l6.6-.8z' }],
+  tree: [
+    { fill: 'M12 2l5.2 6.3h-2.4l4.2 5.2h-2.5l4.5 5.6H3l4.5-5.6H5l4.2-5.2H6.8z' },
+    { fill: 'M10.4 19h3.2v3h-3.2z' },
+  ],
+};
 
-/** The little seasonal mark next to the name (Fall: a pumpkin through Halloween, then a leaf). */
-export function lookIcon(look, date) {
-  if (!LOOK_ICONS[look]) return null;
-  const svg = icon(look === 'fall' && date.slice(5) <= '10-31' ? 'pumpkin' : LOOK_ICONS[look]);
-  svg.classList.add('look-icon');
+// Holidays always get their mark; of the everyday looks only Christmas has one.
+// (Plain Fall and Patriotic stay plain: festive is for the holiday itself.)
+const HOLIDAY_MARKS = { halloween: 'pumpkin', thanksgiving: 'leaf', christmasday: 'tree', july4: 'star' };
+const LOOK_MARKS = { christmas: 'snowflake' };
+
+/** The little mark next to the name for today's look, or null. */
+export function lookIcon(look, holiday) {
+  const name = HOLIDAY_MARKS[holiday] ?? LOOK_MARKS[look];
+  if (!name) return null;
+  const svg = document.createElementNS(SVG, 'svg');
+  for (const [k, v] of Object.entries({
+    viewBox: '0 0 24 24', width: 22, height: 22, 'aria-hidden': 'true', class: 'look-icon', 'data-mark': name,
+    'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+  })) svg.setAttribute(k, v);
+  for (const part of MARKS[name]) {
+    const node = document.createElementNS(SVG, 'path');
+    const [kind, d] = Object.entries(part)[0];
+    node.setAttribute('d', d);
+    node.setAttribute('class', `mark-${kind}`);
+    svg.append(node);
+  }
   return svg;
 }
 

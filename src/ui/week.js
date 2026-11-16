@@ -8,6 +8,12 @@ import {
 } from './app.js';
 import { itemRow, pullBlockedText, relativeDay, movePart } from './items.js';
 
+/** 0, 1 or 2 by date, so a day keeps its color in the tabs and its card (Patriotic bars). */
+export const hueOf = (date) => {
+  const [y, m, d] = date.split('-').map(Number);
+  return String(Math.round(Date.UTC(y, m - 1, d) / 86_400_000) % 3);
+};
+
 export function renderBanners(p) {
   const out = [];
   const target = dayLabel(p.week.cutoff, { weekday: 'long' });
@@ -149,6 +155,7 @@ export function renderDayLayout(p, kind) {
     const pct = (m) => (capacity ? Math.min(100, (m / capacity) * 100) : 0);
     return el('button', {
       role: 'tab', 'aria-selected': String(active), tabIndex: active ? 0 : -1, 'data-key': `daytab-${id}`,
+      'data-hue': id === 'week' ? null : hueOf(id),
       className: `day-tab${active ? ' active' : ''}${over ? ' over' : ''}${bonus && !over ? ' bonus' : ''}${blocked ? ' blocked' : ''}${id === 'week' ? ' week' : ''}`,
       'aria-label': `${name}, ${date}: ${itemCount(items)}, ${minutesLabel(load)} planned of ${minutesLabel(capacity)}${done ? `, ${minutesLabel(done)} done` : ''}`,
       onclick: () => pick(id),
@@ -246,7 +253,7 @@ function renderDay(day, today, kind, { upNext = false, ahead = null } = {}) {
   const pctOf = (m) => (day.capacity ? Math.min(100, (m / day.capacity) * 100) : 0);
   const done = day.doneMinutes ?? 0;
   const heading = dayLabel(day.date) + (day.date === today && kind === 'plan' ? ' · Today' : '');
-  return el('section', { className: `day${day.over ? ' over' : ''}${day.bonus && !day.over ? ' bonus' : ''}${day.blocked ? ' blocked' : ''}` },
+  return el('section', { className: `day${day.over ? ' over' : ''}${day.bonus && !day.over ? ' bonus' : ''}${day.blocked ? ' blocked' : ''}`, 'data-hue': hueOf(day.date) },
     el('div', { className: 'day-head' },
       el('h2', {}, heading),
       el('span', { className: 'load' },

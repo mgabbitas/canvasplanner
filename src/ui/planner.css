@@ -596,19 +596,35 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
 
 /* Theme decorations: the mark by the name, a pattern for finished time in the load bars
    (seasonal and holiday looks only), a faint background, falling snow/leaves. */
-.brand .look-icon { color: var(--accent); margin-left: -4px; }
-:root:is([data-look="fall"], [data-look="thanksgiving"]) :is(.bar, .dt-bar) > .done {
+.brand .look-icon { flex: none; margin-left: -4px; }
+.look-icon .mark-fill { fill: var(--accent); }
+.look-icon .mark-cut { fill: none; stroke: var(--surface); stroke-width: 1.5; }
+.look-icon .mark-line { fill: none; stroke: var(--accent); stroke-width: 2.2; }
+/* Fancy bars on holidays and the Christmas theme; plain Fall and Patriotic stay plain. */
+:root[data-look="thanksgiving"] :is(.bar, .dt-bar) > .done {
   background: repeating-linear-gradient(-45deg, #f59e0b 0 6px, #c2410c 6px 12px);
 }
 :root[data-look="christmas"] :is(.bar, .dt-bar) > .done {
   background: repeating-linear-gradient(-45deg, #dc2626 0 6px, #f8fafc 6px 12px);
 }
+:root[data-holiday="christmasday"] :is(.bar, .dt-bar) > .done {
+  background: repeating-linear-gradient(-45deg, #dc2626 0 5px, #f8fafc 5px 10px, #eab308 10px 15px, #f8fafc 15px 20px);
+}
 :root[data-look="halloween"] :is(.bar, .dt-bar) > .done {
   background: repeating-linear-gradient(90deg, #facc15 0 10px, #f97316 10px 20px, #f8fafc 20px 26px);
 }
-:root[data-look="patriotic"] :is(.bar, .dt-bar) > .done {
+:root[data-holiday="july4"] :is(.bar, .dt-bar) > .done {
   background: repeating-linear-gradient(-45deg, #dc2626 0 5px, #f8fafc 5px 10px, #2563eb 10px 15px);
 }
+/* Patriotic (not July 4): each day's bar takes a turn as red and white, white, or blue.
+   The red day is striped, never solid, because solid red means over your hours. */
+:root[data-look="patriotic"]:not([data-holiday]) [data-hue="0"] :is(.bar, .dt-bar) > .done {
+  background: repeating-linear-gradient(-45deg, #dc2626 0 5px, #f8fafc 5px 10px);
+}
+:root[data-look="patriotic"]:not([data-holiday]) [data-hue="1"] :is(.bar, .dt-bar) > .done {
+  background: #f8fafc; box-shadow: inset 0 0 0 1px #94a3b8;
+}
+:root[data-look="patriotic"]:not([data-holiday]) :is([data-hue="2"], .day-tab.week) :is(.bar, .dt-bar) > .done { background: #2563eb; }
 :root:is([data-look="fall"], [data-look="thanksgiving"]) body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='%23d97706' fill-opacity='0.08'%3E%3Cpath d='M20 50c0-12 8-20 20-20 0 12-8 20-20 20z'/%3E%3Cpath d='M110 130c0-10 7-17 17-17 0 10-7 17-17 17z'/%3E%3Cpath d='M120 40c0-7 5-12 12-12 0 7-5 12-12 12z'/%3E%3C/g%3E%3C/svg%3E");
 }
