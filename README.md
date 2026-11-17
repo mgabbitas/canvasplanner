@@ -117,6 +117,14 @@ Requirements and design decisions are in [SPEC.md](SPEC.md). MIT licensed (see
 
 ## Changelog
 
+- **1.6.0**: Exams: pick the day you'll take one, and add study time the day before
+  (or spread it out); exams taken in class take no homework time. "Split across days"
+  lets you pick the days, and each part moves like any item. Assignments worth 5% or
+  more show their share of the grade, Catch up lists those first, and **Show grades**
+  puts class scores in the sidebar. +30m / +1h adds time to today. Holiday looks are
+  festive only on the day (Christmas keeps its stripes; Christmas Day adds more snow),
+  a Thanksgiving background, a tinted forecast, and animations pause when you're idle.
+  Fixes: logging a time no longer closes the Done panel.
 - **1.5.0**: Overdue work sits in a Catch up list at the top of today; missing items
   stay there until done, and closed ones move to a "Closed in Canvas" box. Work that
   can't fit is placed on the least-full day and flagged instead of vanishing. Extra
