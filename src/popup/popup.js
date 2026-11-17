@@ -23,7 +23,7 @@ function dueText(e, today) {
   if (e.overdue) return `overdue (${weekday})`;
   return `due ${day === today ? 'today' : weekday} ${time(e.item.dueAt)}`;
 }
-const summary = () => todaySummary({ items: state.items, settings: state.settings, weekState: state.weekState, now: Date.now() });
+const summary = () => todaySummary({ items: state.items, settings: state.settings, weekState: state.weekState, now: Date.now(), courses: state.courses });
 
 const before = new Map(); // entry id -> the item as it was before you checked it here (unsplit items)
 

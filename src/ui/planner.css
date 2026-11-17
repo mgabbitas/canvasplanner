@@ -204,9 +204,9 @@ input[type=number], input[type=text], input[type=search], select {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 14px 16px; margin-bottom: 14px; box-shadow: var(--shadow);
 }
-.day-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.day-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 8px; }
 .day-head h2 { font-size: 16px; }
-.load { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
+.load { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); white-space: nowrap; }
 .day.over .load { color: var(--bad-text); font-weight: 600; }
 .day.blocked { opacity: 0.65; }
 /* Load bars: neutral track; planned time in a tint of the accent, finished time in solid
@@ -544,7 +544,8 @@ ul.suggestions li:first-child { border-top: none; }
 .chip.task { color: var(--accent); border-color: var(--accent); }
 .chip.grade { color: var(--text); font-weight: 600; }
 .more-time { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
-.more-time-btn { padding: 1px 7px; font-size: 12px; border-radius: 999px; color: var(--accent); }
+.more-time-btn { padding: 1px 7px; font-size: 12px; border-radius: 999px; color: var(--muted); }
+.more-time-btn:hover { color: var(--text); }
 .side-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .grades-toggle { font-size: 12px; }
 .legend-grade { margin-left: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -605,7 +606,13 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
 
 /* Theme decorations: the mark by the name, a pattern for finished time in the load bars
    (seasonal and holiday looks only), a faint background, falling snow/leaves. */
-.brand .look-icon { flex: none; margin-left: -4px; }
+.brand { position: relative; }
+.brand > span { white-space: nowrap; }
+/* The holiday mark sits on the logo's corner as a small badge: it takes no room in the row. */
+.brand .look-icon {
+  position: absolute; left: 24px; top: -6px; width: 18px; height: 18px; padding: 1px;
+  background: var(--surface); border-radius: 50%; box-shadow: 0 0 0 1px var(--border);
+}
 .look-icon .mark-fill { fill: var(--accent); }
 .look-icon .mark-cut { fill: none; stroke: var(--surface); stroke-width: 1.5; }
 .look-icon .mark-line { fill: none; stroke: var(--accent); stroke-width: 2.2; }

@@ -1,5 +1,6 @@
 // What's left today, for the toolbar popup and badge. Pure: same plan as the page.
 import { plan } from './plan.js';
+import { gradeShares } from './grades.js';
 
 const dueTime = (e) => (e.item.dueAt ? Date.parse(e.item.dueAt) : Infinity);
 
@@ -7,12 +8,15 @@ const dueTime = (e) => (e.item.dueAt ? Date.parse(e.item.dueAt) : Infinity);
  * { date, remaining, doneCount }: today's planned homework that isn't done (in-class
  * activities left out), overdue first, then by due time; and how many were finished today.
  */
-export function todaySummary({ items, settings, weekState = {}, now }) {
-  const p = plan({ items, settings, weekState, now });
+export function todaySummary({ items, settings, weekState = {}, now, courses = {} }) {
+  const p = plan({ items, settings, weekState, now, shares: gradeShares(items, courses) });
   const day = p.days.find((d) => d.date === p.today);
   const remaining = (day?.items ?? [])
     .filter((e) => !e.inClass)
-    .sort((a, b) => Number(b.overdue) - Number(a.overdue) || dueTime(a) - dueTime(b) || a.id.localeCompare(b.id));
+    // Catch up (overdue) first, biggest share of the grade first, as on the page.
+    .sort((a, b) => Number(b.overdue) - Number(a.overdue)
+      || (a.overdue ? (b.gradeShare ?? 0) - (a.gradeShare ?? 0) : 0)
+      || dueTime(a) - dueTime(b) || a.id.localeCompare(b.id));
   return { date: p.today, remaining, doneCount: p.doneToday.count };
 }
 

@@ -226,7 +226,9 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
   // The Next week projection plans as if it were already next week, so its flags are
   // relative to that day; urgency chips always use the real date.
   const realToday = toLocalDate(Date.now());
-  const urgency = kind === 'next'
+  // Study time for an exam is your own review block, not a deadline: no urgency flags.
+  const study = Boolean(item.task?.examId);
+  const urgency = study ? {} : kind === 'next'
     ? { dueToday: entry.dueDay === realToday, dueTomorrow: entry.dueDay === addDays(realToday, 1) }
     : entry;
   const chips = [];
@@ -235,7 +237,7 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     chips.push(el('span', { className: 'chip grade', title: 'Share of your class grade, from Canvas points and group weights' }, `${shareLabel(entry.gradeShare)} of grade`));
   }
   if (entry.part) chips.push(el('span', { className: 'chip task', title: 'Split across days. Use ⋮ to change.' }, `part ${entry.part.n} of ${entry.part.of}`));
-  if (item.task) {
+  if (item.task && !study) {
     chips.push(el('span', { className: 'chip task', title: 'Your own task' }, item.task.seriesId ? 'repeats' : 'task'));
     if (entry.floating && kind !== 'done') chips.push(el('span', { className: 'chip', title: 'No due date: any time this week' }, 'this week'));
   }
@@ -253,7 +255,7 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
   if (item.prevDueAt) chips.push(el('span', { className: 'chip warn', title: `Was due ${dueLabel(item.prevDueAt)}` }, 'due date changed'));
   if (entry.pulledIn && kind === 'plan') chips.push(el('span', { className: 'chip' }, 'pulled in'));
   if (entry.movedTo && kind === 'plan') chips.push(el('span', { className: 'chip', title: 'You moved this here. Use ⋮ to change it.' }, 'moved'));
-  else if (item.pinned && entry.lastDay && editable(kind)) chips.push(el('span', { className: 'chip', title: 'Pinned to its due day. Use ⋮ to unpin.' }, 'pinned'));
+  else if (item.pinned && !study && entry.lastDay && editable(kind)) chips.push(el('span', { className: 'chip', title: 'Pinned to its due day. Use ⋮ to unpin.' }, 'pinned'));
 
   const pull = app.thisWeekPlan?.pull;
   const actions = [];

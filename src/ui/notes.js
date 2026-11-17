@@ -10,6 +10,11 @@ import { app, plural } from './app.js';
 // What's new, by feature version ("1.2" covers 1.2.0, 1.2.1, …). Shown once after
 // updating into that version, so bug-fix releases don't hide it.
 export const WHATS_NEW = {
+  '1.6': [
+    'Exams: pick the day you\'ll take it, and add study time the day before if you like.',
+    'Split across days lets you pick the days, and each part moves like any item. +30m / +1h adds time to today.',
+    'Big assignments show how much of your grade they\'re worth, and Catch up puts those first. Show grades is in the sidebar.',
+  ],
   '1.5': [
     'Overdue work now sits in a Catch up list at the top of today, and missing items stay on it until done.',
     'Extra credit only fills spare time, finished-extra days turn gold, and there are cheers for finishing early.',

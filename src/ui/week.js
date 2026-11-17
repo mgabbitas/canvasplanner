@@ -3,6 +3,7 @@
 import { el, select, dayLabel, minutesLabel, readInt } from './dom.js';
 import { courseColor } from './theme.js';
 import { PULL_AMOUNTS } from '../planner/plan.js';
+import { toLocalDate } from '../planner/dates.js';
 import {
   app, courseName, sumMinutes, plural, updateItems, changeExtraDays, setDayCapacity, saveState, homework, required, itemCount,
 } from './app.js';
@@ -106,7 +107,7 @@ export function renderForecast(p) {
 /** Exams still ahead in the shown week. Nothing when there are none. */
 // --- days and panels ---------------------------------------------------------------
 
-function capacityControl(day) {
+function capacityControl(day, withMoreTime = false) {
   if (app.editingDay === day.date) {
     const input = el('input', {
       type: 'number', min: 0, max: 1440, step: 5, value: day.capacity, className: 'cap-input',
@@ -130,7 +131,8 @@ function capacityControl(day) {
       title: `Minutes available on this day (default ${minutesLabel(day.defaultCapacity)}). Click to change for this date only.`,
       onclick: () => { app.editingDay = day.date; app.render(); },
     }, day.capacity === 0 ? 'day off' : minutesLabel(day.capacity)),
-    day.capacityOverridden
+    // Today's +30m/+1h sit here instead; click the hours to change them back.
+    day.capacityOverridden && !(withMoreTime && day.date === toLocalDate(Date.now()))
       ? el('button', {
         className: 'link', 'data-key': `cap-reset-${day.date}`,
         title: `Back to the ${minutesLabel(day.defaultCapacity)} default`,
@@ -146,7 +148,7 @@ function moreTimeButtons(day) {
   return el('span', { className: 'more-time', role: 'group', 'aria-label': 'Add time to today' },
     MORE_TIME.map((m) => el('button', {
       className: 'more-time-btn', 'data-key': `more-time-${m}`,
-      title: `Add ${minutesLabel(m)} to today's hours. Click the hours to change or reset them.`,
+      title: `Add ${minutesLabel(m)} to today's hours. Click the hours to change them.`,
       // A blocked day shows its weekday default but has no time: start from nothing.
       onclick: () => setDayCapacity(day.date, (day.blocked ? 0 : day.capacity) + m),
     }, `+${minutesLabel(m)}`)));
@@ -272,7 +274,7 @@ function renderDay(day, today, kind, { upNext = false, ahead = null } = {}) {
         // Same "planned / hours" as the day tab. What you finished is in the header.
         ...(day.bonus && !day.over
           ? [...capacityControl(day), ` + ${minutesLabel(done - day.capacity)} extra`]
-          : [day.blocked && day.capacity > 0 ? 'blocked · ' : `${minutesLabel(day.load)} / `, ...capacityControl(day)]),
+          : [day.blocked && day.capacity > 0 ? 'blocked · ' : `${minutesLabel(day.load)} / `, ...capacityControl(day, day.date === today && kind === 'plan')]),
         day.date === today && kind === 'plan' && app.editingDay !== day.date ? moreTimeButtons(day) : null),
     ),
     day.blocked ? null : el('div', { className: 'bar' },

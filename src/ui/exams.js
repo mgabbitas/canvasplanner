@@ -6,7 +6,7 @@ import { el, select, dayLabel, dueLabel, minutesLabel } from './dom.js';
 import { courseColor } from './theme.js';
 import { app, courseName, saveState, updateItem } from './app.js';
 import { relativeDay, MINUTE_CHOICES } from './items.js';
-import { openSplitPicker } from './splitpicker.js';
+import { openSplitPicker, pickerDays } from './splitpicker.js';
 
 const MAX_DAY_BUTTONS = 8;
 const STUDY_PRESETS = [30, 60, 120];
@@ -61,7 +61,7 @@ function studyRow(e) {
     return el('div', { className: 'exam-row' },
       el('span', {}, done ? `Studied ✓` : `Study: ${minutesLabel(task.minutesOverride)}, ${task.splitParts ? `in ${task.splitParts} parts` : relativeDay(toLocalDate(task.dueAt))}`),
       done ? null : el('div', { className: 'exam-actions' },
-        where && !task.partsDone?.length ? el('button', { type: 'button', className: 'link', 'data-key': `study-spread-${exam.id}`, onclick: () => openSplitPicker(where.entry, where.kind) },
+        where && !task.partsDone?.length && (task.splitParts || pickerDays(where.entry, where.kind).filter((o) => !o.disabled).length >= 2) ? el('button', { type: 'button', className: 'link', 'data-key': `study-spread-${exam.id}`, onclick: () => openSplitPicker(where.entry, where.kind) },
           task.splitParts ? 'Change days' : 'Spread it out') : null,
         el('button', { type: 'button', className: 'link', 'data-key': `study-remove-${exam.id}`, onclick: () => removeStudy(exam) }, 'Remove')));
   }

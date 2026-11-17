@@ -557,8 +557,13 @@ async function checkTasks() {
   document.querySelector('[data-key="more-time-30"]')?.click(); await wait(250);
   check('more time today: +30m', todayCap() != null && (capBefore == null || todayCap() === capBefore + 30) && document.querySelector('.day .cap')?.textContent !== shownBefore,
     `${capBefore} -> ${todayCap()}, ${shownBefore} -> ${document.querySelector('.day .cap')?.textContent}`);
-  document.querySelector('[data-key^="cap-reset-"]')?.click(); await wait(250);
-  check('more time today: reset', todayCap() == null);
+  check('no "reset" link next to +30m on today', !document.querySelector('.day [data-key^="cap-reset-"]'));
+  // Undo by clicking the hours and typing them back.
+  document.querySelector('.day .cap')?.click(); await wait(100);
+  const capIn = document.querySelector('.day .cap-input');
+  capIn.value = String(todayCap() - 30); capIn.blur(); await wait(250);
+  check('more time today: back by editing the hours', document.querySelector('.day .cap')?.textContent === shownBefore,
+    `${document.querySelector('.day .cap')?.textContent} vs ${shownBefore}`);
 
   // Grades: chip on items worth 5%+, class grades hidden until you ask.
   await go('');

@@ -60,7 +60,7 @@ async function updateBadge() {
   // Count today's repeat copies even if no page has created them yet (not saved here).
   const items = syncSeries(state.items, state.taskSeries, toLocalDate(Date.now()), state.settings);
   const text = state.meta.lastSyncAt
-    ? badgeText(todaySummary({ items, settings: state.settings, weekState: state.weekState, now: Date.now() }))
+    ? badgeText(todaySummary({ items, settings: state.settings, weekState: state.weekState, now: Date.now(), courses: state.courses }))
     : '';
   await browser.action.setBadgeText({ text });
 }
