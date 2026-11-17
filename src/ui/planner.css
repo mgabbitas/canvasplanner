@@ -311,7 +311,10 @@ ol.fc { list-style: none; margin: 0; padding: 0; display: grid; grid-template-co
 ol.fc li { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: var(--muted); }
 ol.fc li.today .fc-date { color: var(--text); font-weight: 700; }
 .fc-bar { width: 100%; height: 44px; display: flex; align-items: flex-end; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
-.fc-bar > div { width: 100%; background: var(--muted); opacity: 0.45; } /* neutral: amber is the only color in the chart */
+/* A grey with a hint of the theme's planning color: alive, but far duller than the
+   amber "too much" days, which stay the only strong color in the chart. */
+.fc-bar > div { width: 100%; background: color-mix(in srgb, var(--plan, var(--accent)) 30%, #a7b0bd); }
+:root[data-mode="dark"] .fc-bar > div { background: color-mix(in srgb, var(--plan, var(--accent)) 30%, #4f5866); }
 /* A heavy day: more due than that day's hours. Amber, not red: a lot due on one day is normal. */
 ol.fc li.over .fc-bar > div { background: var(--heavy); opacity: 1; }
 .fc-note { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
