@@ -580,7 +580,8 @@ async function checkTasks() {
   await go('');
   const dayBtns = $$('.exams [data-key^="exam-day-"]');
   check('exam asks which day', dayBtns.length >= 2, `${dayBtns.length} day buttons`);
-  check('no study question before a day is picked', !document.querySelector('.exams [data-key^="study-add-"]'));
+  check('study question shows before a day is picked', !!document.querySelector('.exams [data-key^="study-add-"]'));
+  check("planner's pick is marked on its day", $$('.exams .exam-day.suggested').length === 1 && !$$('.exams .exam-day.picked').length);
   const [, examId, ...rest] = dayBtns[1].getAttribute('data-key').replace('exam-day-', 'x-').split('-');
   const examDay = rest.join('-');
   dayBtns[1].click(); await wait(250);
@@ -599,6 +600,14 @@ async function checkTasks() {
   check('exam card shows the study plan', /Study: 1h/.test(document.querySelector('.exams').textContent));
   document.querySelector(`[data-key="study-remove-${examId}"]`)?.click(); await wait(250);
   check('study removed', !window.__store.items[`tx${examId}`] && !!document.querySelector(`[data-key="study-add-${examId}"]`));
+  // Adding study without picking a day keeps the planner's pick as the exam day.
+  dayBtns.length && document.querySelector(`[data-key="exam-day-${examId}-${examDay}"]`)?.click(); await wait(250); // unpick
+  const suggested = document.querySelector('.exams .exam-day.suggested')?.getAttribute('data-key').slice(-10);
+  document.querySelector(`[data-key="study-add-${examId}"]`)?.click(); await wait(100);
+  document.querySelector(`[data-key="study-min-${examId}-30"]`)?.click(); await wait(300);
+  check('study without a pick fixes the planner\'s day', !!suggested && window.__store.items[examId]?.plannedOn === suggested && !!window.__store.items[`tx${examId}`],
+    `${suggested} ${window.__store.items[examId]?.plannedOn}`);
+  document.querySelector(`[data-key="study-remove-${examId}"]`)?.click(); await wait(250);
   document.querySelector(`[data-key="study-no-${examId}"]`)?.click(); await wait(250);
   check('no thanks is remembered', window.__store.items[examId]?.studyChoice === 'no' && !document.querySelector(`[data-key="study-add-${examId}"]`));
 }

@@ -27,10 +27,15 @@ function studyEntry(id) {
   return null;
 }
 
-function addStudy(exam, minutes) {
+/**
+ * Add study time. With no day picked yet, the planner's pick becomes your day, so the
+ * study block can't end up after the day the exam is planned on.
+ */
+function addStudy(exam, minutes, pickDay) {
   app.studyOpen = null;
-  const task = studyTask(exam, minutes, toLocalDate(Date.now()));
-  saveState({ items: { ...app.state.items, [task.id]: task, [exam.id]: { ...exam, studyChoice: 'yes' } } });
+  const fixed = { ...exam, studyChoice: 'yes', ...(pickDay ? { plannedOn: pickDay, pinned: false } : {}) };
+  const task = studyTask(fixed, minutes, toLocalDate(Date.now()));
+  saveState({ items: { ...app.state.items, [task.id]: task, [exam.id]: fixed } });
 }
 
 function removeStudy(exam) {
@@ -44,15 +49,17 @@ function dayRow(e, days) {
   return el('div', { className: 'exam-row' },
     el('span', { className: 'exam-q' }, 'When will you take it?'),
     el('div', { className: 'exam-days', role: 'group', 'aria-label': `Day to take ${item.title}` }, days.map((d) => el('button', {
-      type: 'button', className: `exam-day${e.movedTo === d ? ' picked' : ''}`, 'aria-pressed': String(e.movedTo === d),
-      title: e.movedTo === d ? 'Click again to let the planner pick' : dayLabel(d),
+      type: 'button', 'aria-pressed': String(e.movedTo === d),
+      // Your day: solid. The planner's pick, until you choose: dashed.
+      className: `exam-day${e.movedTo === d ? ' picked' : !e.movedTo && e.date === d ? ' suggested' : ''}`,
+      title: e.movedTo === d ? 'Your day. Click again to let the planner pick.'
+        : !e.movedTo && e.date === d ? `Planner's pick (${dayLabel(d)}). Click to choose it.` : dayLabel(d),
       'data-key': `exam-day-${item.id}-${d}`,
       onclick: () => updateItem(item.id, { plannedOn: e.movedTo === d ? null : d, pinned: false }),
-    }, relativeDay(d) === 'Today' || relativeDay(d) === 'Tomorrow' ? relativeDay(d) : dayLabel(d, { weekday: 'short' })))),
-    !e.movedTo && e.date ? el('small', { className: 'muted' }, `Planner's pick: ${relativeDay(e.date)}`) : null);
+    }, relativeDay(d) === 'Today' || relativeDay(d) === 'Tomorrow' ? relativeDay(d) : dayLabel(d, { weekday: 'short' })))));
 }
 
-function studyRow(e) {
+function studyRow(e, pickDay) {
   const exam = e.item;
   const task = app.state.items[studyTaskId(exam.id)];
   if (task) {
@@ -69,12 +76,12 @@ function studyRow(e) {
   if (app.studyOpen === exam.id) {
     const other = select([['', 'Other…'], ...MINUTE_CHOICES.filter((m) => m >= 15).map((m) => [String(m), minutesLabel(m)])], '', {
       'aria-label': 'Other study time', 'data-key': `study-other-${exam.id}`,
-      onchange: (ev) => ev.target.value && addStudy(exam, Number(ev.target.value)),
+      onchange: (ev) => ev.target.value && addStudy(exam, Number(ev.target.value), pickDay),
     });
     return el('div', { className: 'exam-row' },
       el('span', { className: 'exam-q' }, 'How long do you want to study?'),
       el('div', { className: 'exam-actions' },
-        STUDY_PRESETS.map((m) => el('button', { type: 'button', 'data-key': `study-min-${exam.id}-${m}`, onclick: () => addStudy(exam, m) }, minutesLabel(m))),
+        STUDY_PRESETS.map((m) => el('button', { type: 'button', 'data-key': `study-min-${exam.id}-${m}`, onclick: () => addStudy(exam, m, pickDay) }, minutesLabel(m))),
         other,
         el('button', { type: 'button', className: 'link', onclick: () => { app.studyOpen = null; app.render(); } }, 'Cancel')));
   }
@@ -94,8 +101,8 @@ export function renderExams(p, which) {
     el('ul', { className: 'exam-list' }, p.exams.map((e) => {
       const { item } = e;
       const days = takeDays(e);
-      // Study is asked once there's a day to plan it before: a fixed day, or the one you picked.
-      const ready = !days.length || e.movedTo || app.state.items[studyTaskId(item.id)];
+      // Not picked yet: adding study time keeps the planner's pick as the exam day.
+      const pickDay = days.length && !e.movedTo && days.includes(e.date) ? e.date : null;
       return el('li', { style: `--course:${courseColor(item.courseId, app.state.settings, app.state.courses)}` },
         el('span', { className: 'dot', 'aria-hidden': 'true' }),
         el('div', {},
@@ -107,7 +114,7 @@ export function renderExams(p, which) {
             e.dueDay === today ? el('span', { className: 'chip bad' }, 'today')
               : e.dueDay === addDays(today, 1) ? el('span', { className: 'chip warn' }, 'tomorrow') : null),
           days.length ? dayRow(e, days) : null,
-          ready ? studyRow(e) : null,
+          studyRow(e, pickDay),
         ),
       );
     })),

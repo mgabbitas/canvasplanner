@@ -535,6 +535,7 @@ ul.suggestions li:first-child { border-top: none; }
 .exam-q { color: var(--muted); }
 .exam-days, .exam-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .exam-day { padding: 3px 9px; font-size: 13px; }
+.exam-day.suggested { border-style: dashed; border-color: var(--accent); }
 .exam-day.picked { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 600; }
 .exam-actions button:not(.link), .exam-actions select { padding: 3px 9px; font-size: 13px; }
 

@@ -24,6 +24,13 @@ In this order: logging-time bug, split picker, exam day and study time, holiday 
   2. Agree on a short list of principles (e.g. one place for today's numbers, one card style, consistent spacing and top edges) before changing anything.
   3. Change in small steps, with screenshots after each and a design review every round, until it's simple. Bug hunt before release as usual.
   Watch for bloat: a redesign that adds panels or settings has missed the point.
+  From the 1.6 design review (2026-11-16), for this pass:
+  - Below 1220px the side column (exam card) drops under the whole day list, 3000+ px down. Smallest fix: a "pick a day" chip on the exam's item that jumps to the card.
+  - A day you chose yourself (picked exam day, moved items) can go over its hours without turning red, while the "goes over" banner's numbers disagree. Flag the day or soften the banner.
+  - Up to three banners can stack above the plan (theme offer, won't fit, goes over).
+  - With grades shown, long class names are cut off; use the full name as the link's tooltip.
+  - Red-accent themes (Christmas, Patriotic) put red on things that aren't problems (exam link, Show grades, Today border).
+  - Exam card hint is wordy ("Not an exam? Use ⋮ on it."); one name for split ("Spread it out" / "Split across days").
 
 **Bugs (fix first, users are hitting these)**
 
