@@ -6,6 +6,13 @@
 
 **1.6 plan** (decided 2026-11-16, target end of week, before Thanksgiving 2026-11-26)
 
+**Status 2026-11-16: built, not released.** Everything below is done, tested (172 unit tests, 168 click-through checks, lint clean), bug-hunted, design-reviewed and checked in Chromium. Version 1.6.0, zip in `web-ext-artifacts/planner_for_canvas-1.6.0.zip`. Nothing pushed yet. Tomorrow:
+1. Upload the zip to AMO (listed, "On this site") and the Chrome Web Store.
+2. Paste the updated `PRIVACY.md` into both listings (now mentions class scores and group weights).
+3. Download the signed `.xpi` from AMO into the project folder.
+4. Ask Claude to push and publish GitHub Release `v1.6.0` with the file as `canvas-planner.xpi`.
+Watch after release: whether chips look right in weighted classes (the course list's `apply_assignment_group_weights` comes from the first real sync), and how people use +30m / +1h (input for the layout pass).
+
 In this order: logging-time bug, split picker, exam day and study time, holiday icons and bars, forecast grey, idle pause, Grades step 1, more time today, Thanksgiving background (% of grade chip, Catch up ordered by grade impact, class grade in sidebar behind "Show grades"). Grades needs real `assignment_groups` and `total_scores` data in `test/fixtures/` first. Cutoff: if Grades isn't done and checked by about 2026-11-22, ship the rest as 1.6 and Grades as 1.7.
 
 **Next update**
