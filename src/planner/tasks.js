@@ -1,7 +1,7 @@
 // Your own tasks: items you add for a class (no Canvas link). One-off tasks are items
 // with a `task` field; repeating tasks are a series that creates one item per chosen
 // weekday as the days come up. Pure: today comes in as an argument.
-import { addDays, dateRange, planningWeek, weekday, toLocalDate as toLocalDateOf } from './dates.js';
+import { addDays, dateRange, planningWeek, weekday, workDueDate } from './dates.js';
 
 /** Task item ids: t<letters/digits>; repeat copies are <seriesId>-YYYYMMDD. */
 export const TASK_ID = /^[ts][a-z0-9]{1,24}(-\d{8})?$/;
@@ -37,8 +37,19 @@ export function taskItem({ id, courseId, title, minutes, dueDate = null, notes =
 /** The study task for an exam has a fixed id, so an exam never gets two. */
 export const studyTaskId = (examId) => `tx${examId}`;
 
-/** The day you'll take an exam: the day you picked, else the day it's due. */
-export const examDayOf = (exam) => exam.plannedOn ?? (exam.dueAt ? toLocalDateOf(exam.dueAt) : null);
+/** The day you'll take an exam: the day you picked, else its last work day (due 10 AM Thu: Wed). */
+export const examDayOf = (exam) => exam.plannedOn ?? (exam.dueAt ? workDueDate(exam.dueAt) : null);
+
+/**
+ * A study task whose exam is done, dismissed or hidden isn't planned (plan.js skips
+ * it), but it isn't deleted either, so Undo or Restore on the exam brings it back.
+ */
+export function studyOff(item, lookup) {
+  const examId = item.task?.examId;
+  if (!examId) return false;
+  const exam = lookup[examId];
+  return !exam || exam.dismissed || exam.hidden || isDone(exam);
+}
 
 /** Study goes on the day before the exam (or today, if that's already past). */
 export const studyDayFor = (examDay, today) => (addDays(examDay, -1) < today ? today : addDays(examDay, -1));
@@ -54,7 +65,8 @@ export function studyTask(exam, minutes, today) {
 
 /**
  * Keep study tasks in step with their exams: follow the exam to its new day, and go
- * away (unless done or logged) when the exam is done, dismissed, gone or not an exam.
+ * away (unless done or logged) once the exam is gone, not an exam, or its day has
+ * passed. (Done or dismissed exams just hide it: see studyOff.)
  * Returns the same object when nothing changed.
  */
 export function syncStudyTasks(items, today) {
@@ -64,13 +76,13 @@ export function syncStudyTasks(items, today) {
     const examId = item.task?.examId;
     if (!examId || isDone(item) || item.log) continue;
     const exam = items[examId];
-    if (!exam || exam.dismissed || exam.hidden || exam.notExam || isDone(exam) || !examDayOf(exam)) {
+    if (!exam || exam.notExam || !examDayOf(exam) || examDayOf(exam) < today) {
       change();
       delete out[id];
       continue;
     }
     const dueAt = endOfDay(studyDayFor(examDayOf(exam), today));
-    if (dueAt !== item.dueAt) {
+    if (dueAt !== item.dueAt && !isDone(exam) && !exam.dismissed) {
       change();
       out[id] = { ...item, dueAt, plannedOn: null };
     }

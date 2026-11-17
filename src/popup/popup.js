@@ -35,7 +35,10 @@ async function setDone(entry, done) {
   if (!item) return;
   if (done) before.set(entry.id, item);
   const next = done ? { ...item, ...checkOffPatch(item, toLocalDate(Date.now())) }
-    : item.splitParts ? { ...item, manualDone: false, doneOn: null, partsDone: item.partsDone?.slice(0, -1).length ? item.partsDone.slice(0, -1) : null }
+    : item.splitParts ? {
+      ...item, manualDone: false, doneOn: null, partsDone: item.partsDone?.slice(0, -1).length ? item.partsDone.slice(0, -1) : null,
+      splitDays: before.has(entry.id) ? before.get(entry.id).splitDays : item.splitDays,
+    }
       : { ...item, ...pickUser(before.get(entry.id)) };
   const items = { ...state.items, [id]: next };
   state.items = items;

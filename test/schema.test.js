@@ -191,7 +191,7 @@ test('split days: real dates only, sorted, never more than the parts left', () =
     2: { courseId: '9', splitParts: null, splitDays: ['2026-10-03'] },
     3: { courseId: '9', splitParts: 2, splitDays: 'nope' },
   });
-  assert.deepEqual(items['1'].splitDays, ['2026-10-03', '2026-10-04']); // 2 parts left
+  assert.deepEqual(items['1'].splitDays, ['2026-10-04', '2026-10-05']); // 2 parts left: the latest days stay
   assert.equal(items['2'].splitDays, null); // not split
   assert.equal(items['3'].splitDays, null);
 });

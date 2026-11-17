@@ -61,7 +61,7 @@ function studyRow(e) {
     return el('div', { className: 'exam-row' },
       el('span', {}, done ? `Studied ✓` : `Study: ${minutesLabel(task.minutesOverride)}, ${task.splitParts ? `in ${task.splitParts} parts` : relativeDay(toLocalDate(task.dueAt))}`),
       done ? null : el('div', { className: 'exam-actions' },
-        where ? el('button', { type: 'button', className: 'link', 'data-key': `study-spread-${exam.id}`, onclick: () => openSplitPicker(where.entry, where.kind) },
+        where && !task.partsDone?.length ? el('button', { type: 'button', className: 'link', 'data-key': `study-spread-${exam.id}`, onclick: () => openSplitPicker(where.entry, where.kind) },
           task.splitParts ? 'Change days' : 'Spread it out') : null,
         el('button', { type: 'button', className: 'link', 'data-key': `study-remove-${exam.id}`, onclick: () => removeStudy(exam) }, 'Remove')));
   }
@@ -95,7 +95,7 @@ export function renderExams(p, which) {
       const { item } = e;
       const days = takeDays(e);
       // Study is asked once there's a day to plan it before: a fixed day, or the one you picked.
-      const ready = !days.length || e.movedTo;
+      const ready = !days.length || e.movedTo || app.state.items[studyTaskId(item.id)];
       return el('li', { style: `--course:${courseColor(item.courseId, app.state.settings, app.state.courses)}` },
         el('span', { className: 'dot', 'aria-hidden': 'true' }),
         el('div', {},

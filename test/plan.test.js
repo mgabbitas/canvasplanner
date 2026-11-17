@@ -600,6 +600,9 @@ test('checking off a split item adds a part; the last part finishes it', async (
   const chosen = { splitParts: 3, partsDone: null, splitDays: ['2026-09-28', '2026-09-30'] };
   assert.deepEqual(checkOffPatch(chosen, '2026-09-28', '2026-09-30'), { partsDone: ['2026-09-28'], splitDays: ['2026-09-28'] });
   assert.deepEqual(checkOffPatch(chosen, '2026-09-28', '2026-09-29'), { partsDone: ['2026-09-28'], splitDays: chosen.splitDays });
+  // Chosen days that have passed drop off too (they'd crowd out later ones).
+  assert.deepEqual(checkOffPatch({ splitParts: 3, partsDone: null, splitDays: ['2026-09-26', '2026-09-30'] }, '2026-09-28', '2026-09-28'),
+    { partsDone: ['2026-09-28'], splitDays: ['2026-09-30'] });
   assert.deepEqual(checkOffPatch({ splitParts: 2, partsDone: ['2026-09-27'], splitDays: ['2026-09-28'] }, '2026-09-28'),
     { partsDone: ['2026-09-27', '2026-09-28'], splitDays: null, manualDone: true, doneOn: '2026-09-28' });
 });

@@ -4,7 +4,7 @@ import {
   toLocalDate, addDays, weekday, dateRange, minDate, maxDate, workDueDate, planningWeek, atNoon,
 } from './dates.js';
 import { estimate } from './estimate.js';
-import { isMissedRepeat } from './tasks.js';
+import { isMissedRepeat, studyOff } from './tasks.js';
 
 const FORECAST_DAYS = 14;
 /** "Pull about …" choices, in minutes. */
@@ -21,8 +21,10 @@ export const MAX_PARTS = 8;
 export function checkOffPatch(item, today, partDay = today) {
   if (!item.splitParts) return { manualDone: true, doneOn: today };
   const partsDone = [...(item.partsDone ?? []), today];
-  // The part you checked off frees the day you chose for it (if you chose one).
-  const splitDays = withoutDay(item.splitDays, partDay);
+  // The part you checked off frees the day you chose for it (if you chose one), and
+  // chosen days that have passed go (their parts are the planner's again anyway).
+  const left = withoutDay(item.splitDays, partDay)?.filter((d) => d >= today) ?? [];
+  const splitDays = left.length ? left : null;
   const patch = item.splitDays ? { partsDone, splitDays } : { partsDone };
   return partsDone.length >= item.splitParts ? { ...patch, manualDone: true, doneOn: today } : patch;
 }
@@ -165,7 +167,7 @@ const byDueThenSizeAsc = (a, b) =>
  * @param {object} args.weekState       { [weekStartDate]: { extraDays } }
  * @param {Date|number|string} args.now
  */
-export function plan({ items, settings, weekState = {}, now, shares = {} }) {
+export function plan({ items, settings, weekState = {}, now, shares = {}, lookup = null }) {
   const today = toLocalDate(now);
   const sum = (list) => list.reduce((s, e) => s + e.minutes, 0);
   const weekStart = planningWeek(today, settings).start;
@@ -178,7 +180,9 @@ export function plan({ items, settings, weekState = {}, now, shares = {} }) {
     .filter((i) => isActive(i, settings) && isClosed(i, nowMs) && closedShown(i))
     .map((i) => toEntry(i, settings, today, shares));
   // A missed repeat of one of your tasks just drops off (it isn't work to catch up on).
-  const entries = all.filter((i) => isActive(i, settings) && !isMissedRepeat(i, today) && !isClosed(i, nowMs))
+  // Items by id, to find a study task's exam (planNextWeek passes the full set).
+  const byId = lookup ?? Object.fromEntries(all.map((i) => [i.id, i]));
+  const entries = all.filter((i) => isActive(i, settings) && !isMissedRepeat(i, today) && !isClosed(i, nowMs) && !studyOff(i, byId))
     .map((i) => toEntry(i, settings, today, shares));
   // Floating tasks (no due date) are due by this week's target day, or by the end of the
   // week once that has passed. Recomputed each week, so they carry over and never go overdue.
@@ -460,7 +464,8 @@ export function planNextWeek({ items, settings, weekState = {}, now, shares = {}
   const start = addDays(thisWeek.start, 7);
   const list = (Array.isArray(items) ? items : Object.values(items ?? {}))
     .filter((i) => !i.pulledIn && !i.task?.floating && !(i.dueAt && workDueDate(i.dueAt) <= thisWeek.end));
-  return plan({ items: list, settings, weekState, now: atNoon(start), shares });
+  const lookup = Array.isArray(items) ? Object.fromEntries(items.map((i) => [i.id, i])) : items;
+  return plan({ items: list, settings, weekState, now: atNoon(start), shares, lookup });
 }
 
 /** Can a single item of this many minutes be pulled right now? */

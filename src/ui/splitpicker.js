@@ -47,6 +47,7 @@ export function suggestedDays(options, total) {
 
 export function openSplitPicker(entry, kind) {
   const { item } = entry;
+  if (item.partsDone?.length) return; // finished parts keep their split
   const total = estimate(item, app.state.settings).minutes;
   const options = pickerDays(entry, kind);
   const picked = new Set(suggestedDays(options, total));

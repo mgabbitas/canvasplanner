@@ -42,7 +42,8 @@ of 8 classes weighted, several 0% groups, one class drops the lowest in two grou
 `src/planner/grades.js` gives each counting item (points > 0, not omitted, not a task)
 its share of the class grade: weighted, points over the group's points times the
 group's weight over the weights of groups that have items; unweighted, points over all
-points. Drop rules are ignored. A class with no synced groups gets no shares. Items
+points. Drop rules are ignored. A class with no synced groups gets no shares, nor does
+an unweighted class with no current score (likely not graded, e.g. an advising shell). Items
 worth 5% or more show a "N% of grade" chip; Catch up is ordered by share (largest
 first), Up next stays today's own work. Class scores show in the sidebar only after
 **Show grades** (setting `showGrades`, off by default).
@@ -217,9 +218,11 @@ submission) is taken in class: 0 minutes, like in-class items, unless you set mi
 Once the exam has a day (fixed, or the one you picked), the card asks once whether to
 plan study time; No thanks is stored as `studyChoice: 'no'` and never asked again.
 Study time is a task (`tx<examId>`, `task.examId`) pinned to the day before the exam
-day (today if that's past); "Spread it out" opens the split picker. On each redraw
-`syncStudyTasks` moves it with the exam and removes it (unless done or logged) when the
-exam is done, dismissed, gone or not an exam.
+day (today if that's past); the exam day is the one you picked, else its last work day.
+"Spread it out" opens the split picker. On each redraw `syncStudyTasks` moves it with the
+exam and removes it (unless done or logged) once the exam is gone, not an exam, or its
+day has passed. While the exam is done or dismissed the study task is kept but not
+planned, so Undo or Restore brings it back.
 
 Done today: count of homework items finished today and their minutes (logged time if
 any, else the estimate), shown in the header.

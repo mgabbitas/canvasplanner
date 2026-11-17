@@ -168,8 +168,26 @@ test('study task: pinned to the day before you take the exam (or today if that h
   assert.equal(studyTask(exam(), 30, '2026-10-05').dueAt, endOfDay('2026-10-08'));
   assert.equal(studyTask(exam({ plannedOn: '2026-10-05' }), 30, '2026-10-05').dueAt, endOfDay('2026-10-05'));
   // Planned like any task: on its day.
-  const p = plan({ items: byId([t]), settings: S, now: now('2026-10-05') });
+  const p = plan({ items: byId([t, e]), settings: S, now: now('2026-10-05') });
   assert.equal(dateOf(p, t.id), '2026-10-07');
+  // Exam due 10 AM Thursday: its last work day is Wednesday, so study goes Tuesday.
+  const morning = exam({ dueAt: new Date(2026, 9, 8, 10, 0).toISOString() });
+  assert.equal(studyTask(morning, 30, '2026-10-05').dueAt, endOfDay('2026-10-06'));
+});
+
+test('study task of a done or dismissed exam is kept but not planned, so Undo brings it back', () => {
+  const e = exam({ plannedOn: '2026-10-08' });
+  const t = studyTask(e, 60, '2026-10-05');
+  for (const change of [{ dismissed: true }, { canvasDone: true }, { manualDone: true }]) {
+    const items = { 500: { ...e, ...change }, [t.id]: t };
+    assert.equal(syncStudyTasks(items, '2026-10-05'), items, JSON.stringify(change)); // not deleted
+    assert.equal(dateOf(plan({ items, settings: S, now: now('2026-10-05') }), t.id), null, JSON.stringify(change));
+  }
+  // Next week's view still finds the exam (it isn't in the filtered list there).
+  const nextWeekExam = exam({ dueAt: endOfDay('2026-10-14'), plannedOn: '2026-10-14' });
+  const nt = studyTask(nextWeekExam, 60, '2026-10-05');
+  const q = planNextWeek({ items: byId([nt, nextWeekExam]), settings: S, now: now('2026-10-05') });
+  assert.equal(dateOf(q, nt.id), '2026-10-13');
 });
 
 test('study task follows the exam and goes away with it', () => {
@@ -180,14 +198,14 @@ test('study task follows the exam and goes away with it', () => {
   // You moved the exam to Friday: study moves to Thursday.
   const moved = syncStudyTasks({ ...items, 500: { ...e, plannedOn: '2026-10-09' } }, '2026-10-05');
   assert.equal(moved[t.id].dueAt, endOfDay('2026-10-08'));
-  // Dismissed, not an exam, done or gone: the study task goes.
-  for (const change of [{ dismissed: true }, { notExam: true }, { canvasDone: true }]) {
-    assert.equal(syncStudyTasks({ ...items, 500: { ...e, ...change } }, '2026-10-05')[t.id], undefined, JSON.stringify(change));
-  }
+  // Not an exam, gone, or its day has passed (e.g. an in-class exam you never check
+  // off): the study task goes instead of coming back on Today every day.
+  assert.equal(syncStudyTasks({ ...items, 500: { ...e, notExam: true } }, '2026-10-05')[t.id], undefined);
   assert.equal(syncStudyTasks({ [t.id]: t }, '2026-10-05')[t.id], undefined);
+  assert.equal(syncStudyTasks(items, '2026-10-09')[t.id], undefined);
   // ...unless you already studied (checked off or logged).
   const studied = { ...t, manualDone: true, doneOn: '2026-10-06' };
-  assert.equal(syncStudyTasks({ 500: { ...e, dismissed: true }, [t.id]: studied }, '2026-10-06')[t.id], studied);
+  assert.equal(syncStudyTasks({ 500: e, [t.id]: studied }, '2026-10-12')[t.id], studied);
 });
 
 test('study task fields survive storage', () => {

@@ -147,7 +147,8 @@ function moreTimeButtons(day) {
     MORE_TIME.map((m) => el('button', {
       className: 'more-time-btn', 'data-key': `more-time-${m}`,
       title: `Add ${minutesLabel(m)} to today's hours. Click the hours to change or reset them.`,
-      onclick: () => setDayCapacity(day.date, day.capacity + m),
+      // A blocked day shows its weekday default but has no time: start from nothing.
+      onclick: () => setDayCapacity(day.date, (day.blocked ? 0 : day.capacity) + m),
     }, `+${minutesLabel(m)}`)));
 }
 

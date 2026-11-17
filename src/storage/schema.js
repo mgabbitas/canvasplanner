@@ -162,7 +162,9 @@ function validateSplit(raw) {
   const splitParts = raw.splitParts == null ? null : int(raw.splitParts, 2, 8, null);
   const dates = (v) => (splitParts && Array.isArray(v) ? v.filter((d) => typeof d === 'string' && DATE.test(d)) : []);
   const done = dates(raw.partsDone).slice(0, splitParts);
-  const chosen = dates(raw.splitDays).sort().slice(0, splitParts ? splitParts - done.length : 0);
+  // Too many? Keep the latest: earlier ones are the likeliest to have passed.
+  const room = splitParts ? splitParts - done.length : 0;
+  const chosen = room > 0 ? dates(raw.splitDays).sort().slice(-room) : [];
   return { splitParts, partsDone: done.length ? done : null, splitDays: chosen.length ? chosen : null };
 }
 

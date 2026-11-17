@@ -316,8 +316,8 @@ export function panel(title, entries, kind, open = false, note = '') {
   if (!entries.length) return null;
   // A redraw (e.g. after logging a time) rebuilds the panel: keep it as you left it.
   return el('details', {
-    className: 'panel', open: app.panelOpen[title] ?? open,
-    ontoggle: (e) => { app.panelOpen[title] = e.target.open; },
+    className: 'panel', open: app.panelOpen[`${kind}|${title}`] ?? open,
+    ontoggle: (e) => { app.panelOpen[`${kind}|${title}`] = e.target.open; },
   },
     el('summary', {}, `${title} (${entries.length})`, note ? el('span', { className: 'summary-note' }, note) : null),
     el('ul', { className: 'items' }, entries.map((e) => itemRow(e, kind))),

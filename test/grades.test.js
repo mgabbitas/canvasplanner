@@ -34,6 +34,8 @@ test('unweighted class: points over all points; no course info means no shares',
   // No groups synced yet (e.g. right after updating), or no score (not graded here): no guesses.
   assert.deepEqual(gradeShares(items, { 1: { weighted: false, score: 90, groups: {} } }), {});
   assert.deepEqual(gradeShares(items, { 1: { weighted: false, score: null, groups: { a: 0 } } }), {});
+  // A weighted class before its first grade (no score yet) still gets shares.
+  assert.deepEqual(round(gradeShares(items, { 1: { weighted: true, score: null, groups: { a: 50, b: 50 } } })), { 1: 0.5, 2: 0.5 });
 });
 
 test('labels: one decimal only when needed', () => {
