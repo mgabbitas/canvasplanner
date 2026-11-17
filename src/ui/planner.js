@@ -18,7 +18,7 @@ import { renderBanners, renderPullCard, renderForecast, renderDayLayout } from '
 import { renderExams } from './exams.js';
 import { renderThemeOffer } from './offers.js';
 import { renderLateNight, renderWhatsNew, settleOnboarding, celebrateAhead, maybeStartTour } from './notes.js';
-import { updateDecorations } from './decor.js';
+import { updateDecorations, watchIdle } from './decor.js';
 import { activeHoliday, HOLIDAYS } from '../planner/seasons.js';
 
 // --- settings view hooks ---------------------------------------------------------
@@ -146,6 +146,7 @@ function render() {
 // --- startup -----------------------------------------------------------------------
 
 async function init() {
+  watchIdle();
   app.state = await loadState();
   await settleOnboarding();
   render();

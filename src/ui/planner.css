@@ -665,6 +665,8 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
 }
 @keyframes spin { to { rotate: 1turn; } }
 @media (prefers-reduced-motion: reduce) { .decor { display: none; } }
+/* Idle (no input for a minute, or a hidden tab): freeze in place. See decor.js. */
+:root[data-idle] :is(.decor span, .splash) { animation-play-state: paused; }
 
 .splash {
   margin: -10px 0 -4px 30px; color: var(--accent); font-weight: 700; font-size: 13px; line-height: 1.25;

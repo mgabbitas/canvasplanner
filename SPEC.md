@@ -488,7 +488,8 @@ Two releases. **Next update:** M7–M9. **The one after:** M10–M12. Then Chrom
   a small icon by the logo, themed load
   bars, a light background pattern, and falling snow (Christmas) and occasional
   falling leaves (Fall), behind the panels, with an Effects slider (Off / Light /
-  Normal / Lots); CSS and small inline SVGs only, off under `prefers-reduced-motion`.
+  Normal / Lots); CSS and small inline SVGs only, off under `prefers-reduced-motion`,
+  and paused after a minute with no input or while the tab is hidden (1.6).
   Since 1.6 (2026-11-16), plain looks plain and holidays festive: the icon (filled, in
   the logo's style) shows on the holidays (Halloween pumpkin, Thanksgiving leaf,
   Christmas Day tree, July 4 star) and on the Christmas theme (snowflake), not on Fall

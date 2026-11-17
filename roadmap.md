@@ -101,6 +101,7 @@ In this order: logging-time bug, split picker, exam day and study time, holiday 
 - Overall: the themes are great as they are. After living with them and hearing what users think, do a round of tweaks. Workshop it: screenshots of each theme in light and dark, design review, pick changes together. Collect people's reactions in the meantime.
 - Plain looks plain, holidays festive (see the icon and bar notes under Next update).
 - Fall: keep the falling leaves.
+- Pause animations when idle (2026-11-16): falling shapes and the holiday splash freeze after a minute with no mouse, keyboard or scrolling, or while the tab is hidden; any input resumes. **Done 2026-11-16.**
 - Halloween only: swap the falling leaves for pumpkins, bats and ghosts that fly around (an animation update, not just a new shape falling). Must respect reduced motion (no movement when the system asks for less) and stay light on CPU.
 - Backgrounds, subtle: Halloween gets a slightly Halloween-y background; Thanksgiving gets one too (cornucopias, pilgrim hats or turkeys, something small and faint). Same faintness as today's leaf background so text stays easy to read.
 

@@ -11,6 +11,49 @@ const between = (a, b) => a + Math.random() * (b - a);
 
 let shown = null; // "kind-count" currently on screen
 
+// --- pause when idle -----------------------------------------------------------------
+// A planner tab left open shouldn't keep animating: after a minute with no mouse,
+// keyboard or scrolling (or while the tab is hidden) the page gets data-idle, which
+// pauses the falling shapes and the holiday splash in CSS. Any input resumes them.
+const IDLE_MS = 60_000;
+let lastActive = 0;
+let idleTimer = null;
+
+function setIdle(idle) {
+  const root = document.documentElement;
+  if (idle) root.dataset.idle = '';
+  else delete root.dataset.idle;
+}
+
+function checkIdle() {
+  idleTimer = null;
+  const left = lastActive + IDLE_MS - Date.now();
+  if (left > 0) idleTimer = setTimeout(checkIdle, left); // input since the timer was set
+  else setIdle(true);
+}
+
+function active() {
+  lastActive = Date.now(); // cheap: mousemove only stores the time
+  if (idleTimer) return;
+  setIdle(false);
+  idleTimer = setTimeout(checkIdle, IDLE_MS);
+}
+
+/** Start watching for idle (once, at startup). */
+export function watchIdle() {
+  for (const type of ['pointermove', 'pointerdown', 'keydown', 'wheel', 'scroll', 'focus']) {
+    addEventListener(type, active, { passive: true, capture: true });
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      clearTimeout(idleTimer);
+      idleTimer = null;
+      setIdle(true);
+    } else active();
+  });
+  active();
+}
+
 // Christmas Day: more snow than the rest of December (still off when Effects is Off).
 const HOLIDAY_EXTRA = { christmasday: 1.7 };
 
