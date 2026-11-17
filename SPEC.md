@@ -25,12 +25,27 @@ estimates without me applying it. Keep estimates explainable by `estimate.source
 Sync uses my existing logged-in browser session. No access token (student tokens are
 disabled at my school).
 
-- `GET /api/v1/courses?enrollment_state=active&per_page=50`. Skip courses that come
-  back restricted or without a name.
+- `GET /api/v1/courses?enrollment_state=active&include[]=total_scores&per_page=50`.
+  Skip courses that come back restricted or without a name. `total_scores` adds your
+  student enrollment's `computed_current_score`; `apply_assignment_group_weights` says
+  whether groups are weighted (1.6).
 - `GET /api/v1/courses/:id/assignments?include[]=submission&per_page=100`. Follow the
   `Link` header (`rel="next"`) for pagination. Strip a leading `while(1);` from the
   body if present.
 - Quizzes, discussions, uploads and external tools all appear in this one list.
+- `GET /api/v1/courses/:id/assignment_groups?per_page=100` (1.6): group weights for
+  "% of grade". Optional: if it fails, that class shows no grade info (last sync's
+  groups are kept). Assignments carry `assignment_group_id` and `omit_from_final_grade`.
+
+Grades (1.6, decided 2026-11-16; confirmed from `test/fixtures/canvas-grades.json`: 7
+of 8 classes weighted, several 0% groups, one class drops the lowest in two groups).
+`src/planner/grades.js` gives each counting item (points > 0, not omitted, not a task)
+its share of the class grade: weighted, points over the group's points times the
+group's weight over the weights of groups that have items; unweighted, points over all
+points. Drop rules are ignored. A class with no synced groups gets no shares. Items
+worth 5% or more show a "N% of grade" chip; Catch up is ordered by share (largest
+first), Up next stays today's own work. Class scores show in the sidebar only after
+**Show grades** (setting `showGrades`, off by default).
 
 Confirmed from real data (see `test/fixtures/`):
 - Fields: `id`, `name`, `due_at` (UTC ISO), `unlock_at`, `lock_at`, `points_possible`,

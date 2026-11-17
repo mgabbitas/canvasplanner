@@ -90,6 +90,7 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     gatePullOnCompletion: bool('gatePullOnCompletion'),
     pullCapMinutes: int(s.pullCapMinutes, 15, 2400, d.pullCapMinutes ?? DEFAULT_SETTINGS.pullCapMinutes),
     showForecast: typeof s.showForecast === 'boolean' ? s.showForecast : (d.showForecast ?? true),
+    showGrades: s.showGrades === true,
     theme: ['system', 'light', 'dark'].includes(s.theme) ? s.theme : (d.theme ?? 'system'),
     accent: ACCENT_KEYS.includes(s.accent) ? s.accent : (d.accent ?? 'blue'),
     look: LOOK_KEYS.includes(s.look) ? s.look : (d.look ?? 'plain'),
@@ -133,6 +134,8 @@ function validateItem(id, raw) {
     submittedAt: isoOrNull(raw.submittedAt),
     descriptionText: str(raw.descriptionText, 2000) ?? '',
     url: !TASK_ID.test(id) && isCanvasUrl(url) ? url : null, // your tasks have no Canvas page
+    groupId: typeof raw.groupId === 'string' && ID.test(raw.groupId) ? raw.groupId : null,
+    countsToGrade: raw.countsToGrade !== false,
     task: TASK_ID.test(id) ? validateTaskFields(raw.task, raw.dueAt) : null,
     prevDueAt: isoOrNull(raw.prevDueAt),
     hidden: raw.hidden === true,
@@ -289,11 +292,23 @@ export function validateMeta(raw) {
   return { lastSyncAt: isoOrNull(m.lastSyncAt), lastError: str(m.lastError, 1000) };
 }
 
+const MAX_GROUPS = 100;
+
 export function validateCourses(raw) {
   const out = {};
   if (!isObj(raw)) return out;
   for (const [id, c] of Object.entries(raw)) {
-    if (ID.test(id) && isObj(c)) out[id] = { name: str(c.name, 200) || `Course ${id}` };
+    if (!ID.test(id) || !isObj(c)) continue;
+    const groups = {};
+    for (const [g, w] of Object.entries(isObj(c.groups) ? c.groups : {}).slice(0, MAX_GROUPS)) {
+      if (ID.test(g) && Number.isFinite(w)) groups[g] = Math.min(1000, Math.max(0, w));
+    }
+    out[id] = {
+      name: str(c.name, 200) || `Course ${id}`,
+      weighted: c.weighted === true,
+      score: Number.isFinite(c.score) ? Math.min(1000, Math.max(-1000, c.score)) : null,
+      groups,
+    };
   }
   return out;
 }

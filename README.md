@@ -59,6 +59,9 @@ way. Your settings and history are kept.
   before it's due, **pin** it to its due day, or **dismiss** it (restore it from
   Dismissed on the right).
 - **Done for today?** A button offers to start the next item from tomorrow.
+- **Grades.** Assignments worth 5% or more of a class grade show a "% of grade" chip,
+  worked out from Canvas points and group weights. Overdue work is listed biggest first.
+  **Show grades** in the sidebar shows each class's current score (hidden by default).
 - **Exams** due this week are listed on the right (next week's on Next week). They're
   found by title; use ⋮ → **Not an exam** on anything that isn't one. For an exam that's
   open for a few days, pick the day you'll take it. Then add study time the day before

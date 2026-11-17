@@ -6,7 +6,7 @@ import { openTaskForm } from './taskform.js';
 import { aheadText } from './notes.js';
 import { ACCESS_MESSAGE, isLoginError } from '../sync/canvas.js';
 import { canvasBase, normalizeHost } from '../sync/school.js';
-import { app, IS_FIREFOX, BROWSER, view, classId, timeAgo, courseName, sync, allowCanvasAccess, setSchool, changeExtraDays, homework, itemCount, streaks, plural, firstRun, required, sumMinutes } from './app.js';
+import { app, IS_FIREFOX, BROWSER, view, classId, timeAgo, courseName, sync, allowCanvasAccess, setSchool, changeExtraDays, homework, itemCount, streaks, plural, firstRun, required, sumMinutes, saveState } from './app.js';
 
 const NAV = [
   ['', 'this', 'This week', 'week'],
@@ -51,6 +51,8 @@ export function renderSidebar() {
   const courses = Object.keys(app.state.courses)
     .filter((id) => app.state.settings.courses[id]?.include !== false)
     .sort((a, b) => courseName(a).localeCompare(courseName(b)));
+  const hasGrades = courses.some((id) => Number.isFinite(app.state.courses[id]?.score));
+  const showGrades = hasGrades && app.state.settings.showGrades;
 
   return [
     el('div', { className: 'brand' },
@@ -70,7 +72,12 @@ export function renderSidebar() {
       className: 'nav-link', 'data-key': 'open-canvas', title: `Open ${host()} in a new tab`,
     }, icon('external'), el('span', {}, 'Open Canvas')) : null),
     courses.length ? el('div', { className: 'side-section' },
-      el('h2', {}, 'Classes'),
+      el('div', { className: 'side-head' },
+        el('h2', {}, 'Classes'),
+        hasGrades ? el('button', {
+          className: 'link grades-toggle', 'data-key': 'grades-toggle', 'aria-pressed': String(showGrades),
+          onclick: () => saveState({ settings: { ...app.state.settings, showGrades: !showGrades } }),
+        }, showGrades ? 'Hide grades' : 'Show grades') : null),
       el('ul', { className: 'legend' }, courses.map((id) => el('li', {}, el('a', {
         href: `#class/${id}`, className: `legend-link${classId() === id ? ' active' : ''}`,
         'aria-current': classId() === id ? 'page' : null, 'data-key': `class-${id}`,
@@ -78,7 +85,9 @@ export function renderSidebar() {
         onclick: (e) => { e.preventDefault(); setNavOpen(false); location.hash = `class/${id}`; },
       },
         el('span', { className: 'dot', style: `--course:${courseColor(id, app.state.settings, app.state.courses)}`, 'aria-hidden': 'true' }),
-        el('span', { className: 'legend-name' }, courseName(id))))))) : null,
+        el('span', { className: 'legend-name' }, courseName(id)),
+        showGrades && Number.isFinite(app.state.courses[id]?.score)
+          ? el('span', { className: 'legend-grade', 'data-key': `grade-${id}` }, `${Math.round(app.state.courses[id].score * 10) / 10}%`) : null))))) : null,
     el('div', { className: 'side-sync' },
       el('div', { className: 'sync-status' }, status),
       // Before the first sync the welcome card has the button.

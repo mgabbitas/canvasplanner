@@ -5,6 +5,7 @@ import '../browser.js';
 import { plan, planNextWeek } from '../planner/plan.js';
 import { loadState, save } from '../storage/store.js';
 import { syncSeries, syncStudyTasks } from '../planner/tasks.js';
+import { gradeShares } from '../planner/grades.js';
 import { toLocalDate } from '../planner/dates.js';
 import { el } from './dom.js';
 import { renderSettings, resetSettingsDraft } from './settings.js';
@@ -65,7 +66,9 @@ function render() {
     save({ items: studied }).catch(() => {});
   }
 
-  const args = { items: app.state.items, settings: app.state.settings, weekState: app.state.weekState, now: Date.now() };
+  // Share of the class grade per item, from all items (before any filtering by week).
+  app.shares = gradeShares(app.state.items, app.state.courses);
+  const args = { items: app.state.items, settings: app.state.settings, weekState: app.state.weekState, now: Date.now(), shares: app.shares };
   app.thisWeekPlan = plan(args);
   if (app.state.meta.lastSyncAt) recordDay(app.thisWeekPlan);
   const v = view();

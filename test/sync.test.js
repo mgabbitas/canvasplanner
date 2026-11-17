@@ -49,7 +49,8 @@ test('follows pagination, strips while(1);, sends credentials, skips restricted 
     ],
   });
   const r = await fetchCanvas(fake);
-  assert.deepEqual(r.courses, [{ id: '1', name: 'Physics' }]);
+  assert.deepEqual(r.courses, [{ id: '1', name: 'Physics', weighted: false, score: null }]);
+  assert.equal(r.results[0].groups, null); // no groups route here: grades just don't show
   assert.deepEqual(r.results[0].items.map((i) => i.id), ['10', '11']);
   assert.ok(fake.calls.every((c) => c.opts.credentials === 'include'));
   assert.ok(fake.calls.every((c) => c.url.startsWith(CANVAS + '/api/v1/')));
@@ -110,7 +111,8 @@ test('one course failing keeps its items untouched and reports the error', async
   assert.equal(next.items['30'].hidden, true);
   assert.match(next.meta.lastError, /Physics: Canvas is having trouble \(HTTP 500\)/);
   assert.equal(next.meta.lastSyncAt, '2026-09-30T18:00:00.000Z');
-  assert.deepEqual(next.courses, { 1: { name: 'Physics' }, 2: { name: 'Chem' } });
+  const course = (name) => ({ name, weighted: false, score: null, groups: {} });
+  assert.deepEqual(next.courses, { 1: course('Physics'), 2: course('Chem') });
 });
 
 test('session expiring mid-sync aborts the whole sync', async () => {
@@ -126,6 +128,23 @@ test('network failure and rate limiting give plain-language errors', async () =>
   await assert.rejects(fetchCanvas(offline), /Couldn't reach Canvas/);
   const busy = fakeCanvas({ '/api/v1/courses?': Array.from({ length: 4 }, () => json({}, { status: 429 })) });
   await assert.rejects(fetchCanvas(busy), /Canvas is busy right now/);
+});
+
+test('fetches group weights and the class score for grades', async () => {
+  const fake = fakeCanvas({
+    '/api/v1/courses?': [json([{ id: 1, name: 'Physics', apply_assignment_group_weights: true, enrollments: [{ type: 'student', computed_current_score: 97.5 }] }])],
+    '/api/v1/courses/1/assignments': [json([assignment(10, { assignment_group_id: 7, omit_from_final_grade: true })])],
+    '/api/v1/courses/1/assignment_groups': [json([{ id: 7, name: 'Exams', group_weight: 50 }, { id: 8, name: 'Bad', group_weight: null }])],
+  });
+  const r = await fetchCanvas(fake);
+  assert.ok(fake.calls[0].url.includes('include[]=total_scores'));
+  assert.deepEqual(r.results[0].groups, { 7: 50 });
+  assert.deepEqual([r.results[0].items[0].groupId, r.results[0].items[0].countsToGrade], ['7', false]);
+  const next = applySync({ items: {}, courses: {} }, r, '2026-10-01T00:00:00Z');
+  assert.deepEqual(next.courses['1'], { name: 'Physics', weighted: true, score: 97.5, groups: { 7: 50 } });
+  // Groups failing this time: keep the ones from last sync.
+  const kept = applySync({ items: {}, courses: next.courses }, { ...r, results: [{ ...r.results[0], groups: null }] }, '2026-10-02T00:00:00Z');
+  assert.deepEqual(kept.courses['1'].groups, { 7: 50 });
 });
 
 test('reports progress class by class', async () => {

@@ -22,6 +22,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   gatePullOnCompletion: true,
   pullCapMinutes: 180, // most unfinished pulled-in work allowed in this week
   showForecast: true,
+  showGrades: false, // class grades in the sidebar (hidden by default: anyone can glance at a new tab)
   theme: 'system', // 'system', 'light' or 'dark'
   accent: 'blue',
   look: 'plain', // theme: plain, ocean, forest, sunset, lavender, fall, christmas, patriotic, neon or custom

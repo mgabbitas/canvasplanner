@@ -17,7 +17,7 @@ if (!existsSync(FIXTURE)) {
   process.exit(0);
 }
 
-const { normalizeAssignment, normalizeCourse } = await import(join(REPO, 'src/sync/normalize.js'));
+const { normalizeAssignment, normalizeCourse, normalizeGroups } = await import(join(REPO, 'src/sync/normalize.js'));
 const { mergeCourse } = await import(join(REPO, 'src/storage/merge.js'));
 const { migrate } = await import(join(REPO, 'src/storage/schema.js'));
 
@@ -40,12 +40,19 @@ const shiftDate = (ymd) => shiftIso(`${ymd}T12:00:00`).slice(0, 10);
 // Stored state as a sync would leave it, plus a few logged times for Stats.
 function buildState() {
   const fx = JSON.parse(readFileSync(FIXTURE, 'utf8'));
+  // Grades (scores, group weights) when that fixture is there too.
+  const GRADES = join(REPO, 'test/fixtures/canvas-grades.json');
+  const grades = existsSync(GRADES) ? JSON.parse(readFileSync(GRADES, 'utf8')) : [];
   let items = {};
   const courses = {};
   for (const c of fx) {
     const course = normalizeCourse(c.course);
     if (!course) continue;
-    courses[course.id] = { name: course.name };
+    const g = grades.find((x) => String(x.course.id) === course.id);
+    courses[course.id] = g ? {
+      name: course.name, weighted: g.course.apply_assignment_group_weights === true,
+      score: g.course.enrollments[0]?.computed_current_score ?? null, groups: normalizeGroups(g.assignment_groups),
+    } : { name: course.name };
     items = mergeCourse(items, c.course.id, c.assignments.map((a) => normalizeAssignment(a, c.course.id)));
   }
   for (const item of Object.values(items)) {

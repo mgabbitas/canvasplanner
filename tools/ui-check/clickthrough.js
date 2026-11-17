@@ -56,6 +56,10 @@ async function run() {
   check('week tab first', $$('.day-tab')[0]?.textContent.startsWith('Week'));
   check('page shows no "null", "undefined" or "[object …]"', !/\b(null|undefined)\b|\[object /.test(document.body.innerText),
     document.body.innerText.match(/.{0,40}(\b(null|undefined)\b|\[object ).{0,20}/)?.[0]);
+  // Catch up (on Today, before anything below changes the data): biggest grade share first.
+  const catchUp = $$('[data-key="catch-up"] .item').map((row) => !!row.querySelector('.chip.grade'));
+  const firstPlain = catchUp.indexOf(false);
+  check('catch up: biggest items first', catchUp.length > 0 && catchUp.includes(true) && (firstPlain < 0 || !catchUp.slice(firstPlain).includes(true)), catchUp.map(Number).join(''));
   // An existing user on a new version: What's new, no tour.
   check('What\'s new for an update', !!document.querySelector('[data-key="whats-new"]') && !document.querySelector('[data-key="tour"]'));
   document.querySelector('[data-key="whats-new-ok"]')?.click(); await wait(200);
@@ -543,6 +547,17 @@ async function checkTasks() {
   const toDay = partMove?.getAttribute('data-key').slice(-10);
   partMove?.click(); await wait(250);
   check('part moved', !!toDay && window.__store.items[added.id]?.splitDays?.includes(toDay), `${toDay} ${JSON.stringify(window.__store.items[added.id]?.splitDays)}`);
+
+  // Grades: chip on items worth 5%+, class grades hidden until you ask.
+  await go('');
+  document.querySelector('[data-key="daytab-week"]')?.click(); await wait(150);
+  const gradeChips = $$('.chip.grade');
+  check('grade chips on big items', gradeChips.length > 0 && gradeChips.every((c) => /^\d+(\.\d)?% of grade$/.test(c.textContent)), gradeChips.slice(0, 3).map((c) => c.textContent).join(', '));
+  check('grades hidden by default', !document.querySelector('[data-key^="grade-"]'));
+  document.querySelector('[data-key="grades-toggle"]')?.click(); await wait(250);
+  check('show grades', window.__store.settings.showGrades === true && $$('[data-key^="grade-"]').length >= 5 && $$('[data-key^="grade-"]').every((g) => /^\d+(\.\d)?%$/.test(g.textContent)));
+  document.querySelector('[data-key="grades-toggle"]')?.click(); await wait(250);
+  check('hide grades again', !document.querySelector('[data-key^="grade-"]'));
 
   // Exam card: pick the day you'll take it, then add study time the day before.
   await go('');

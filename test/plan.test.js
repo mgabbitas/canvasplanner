@@ -613,6 +613,18 @@ test('day streak counts a split part done that day', async () => {
   assert.equal(s.best, 1);
 });
 
+test('catch up: what is worth most toward your grade first; Up next stays today\'s own work', () => {
+  const small = mk({ due: '2026-09-24 23:59' });
+  const big = mk({ due: '2026-09-26 23:59' });
+  const unknown = mk({ due: '2026-09-23 23:59' });
+  const todays = mk({ due: '2026-09-28 23:59' });
+  const p = plan({ items: [small, big, unknown, todays], settings: S, now: iso(MON), shares: { [small.id]: 0.01, [big.id]: 0.125 } });
+  assert.deepEqual(p.overdue.map((e) => e.id), [big.id, small.id, unknown.id]);
+  assert.equal(p.overdue[0].gradeShare, 0.125);
+  assert.equal(p.overdue[2].gradeShare, null);
+  assert.equal(dateOf(p, todays.id), '2026-09-28');
+});
+
 test('a missing item graded 0 stays overdue', () => {
   const m = mk({ due: '2026-09-25 23:59', canvasStatus: 'graded', canvasDone: false, canvasMissing: true });
   const p = run([m]);

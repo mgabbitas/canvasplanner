@@ -80,6 +80,8 @@ In this order: logging-time bug, split picker, exam day and study time, holiday 
 
 - Grade per class next to its name in the sidebar (one extra read-only call). Hidden by default (anyone can see a new tab), with a small "Show grades" toggle. Keep it uncluttered.
 - How much an assignment affects your grade: from points and assignment group weights (`/courses/:id/assignment_groups`, read-only). E.g. "Worth 4% of your grade" chip, or "a 0 here drops you from 93% to 89%". Start with the simple "% of grade" chip.
+- **Step 1 done 2026-11-16:** "% of grade" chip on items worth 5%+, Catch up ordered by grade share (Up next stays today's work), class score in the sidebar behind Show grades. Sync adds `include[]=total_scores` and one `assignment_groups` call per class.
+- Per-class grade breakdown on Insights (wanted 2026-11-16): each class's groups and weights, how you're doing in each, with the other stats.
 - Grade analytics on Stats (wanted, 2026-11-11): grade per class, how on-time/early work lines up with grades, and how upcoming assignments could move your grade. Needs a workshop before building: make it usable, helpful, maybe even fun, without turning Stats into a dashboard. Same "Show grades" toggle.
 
 **Modules / things you don't submit**

@@ -542,6 +542,10 @@ ul.suggestions li:first-child { border-top: none; }
 .title-row .add-task { margin-left: auto; }
 .title-row .streaks + .add-task { margin-left: 0; }
 .chip.task { color: var(--accent); border-color: var(--accent); }
+.chip.grade { color: var(--text); font-weight: 600; }
+.side-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.grades-toggle { font-size: 12px; }
+.legend-grade { margin-left: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 button.task-title { border: none; background: none; padding: 0; text-align: left; font: inherit; color: var(--text); cursor: pointer; }
 button.task-title:hover { color: var(--accent); text-decoration: underline; }
 .item .notes { grid-column: 2 / -1; color: var(--muted); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }

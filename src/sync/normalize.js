@@ -76,11 +76,26 @@ export function normalizeAssignment(raw, courseId) {
     submittedAt: isoOrNull(sub.submitted_at),
     descriptionText: htmlToText(raw.description).slice(0, DESCRIPTION_MAX),
     url: canvasUrl(raw.html_url),
+    // For "% of grade": which assignment group it's in, and whether it counts at all.
+    groupId: raw.assignment_group_id == null ? null : String(raw.assignment_group_id),
+    countsToGrade: raw.omit_from_final_grade !== true,
   };
+}
+
+/** Assignment groups: { groupId: weight in % } (weights matter only when the class uses them). */
+export function normalizeGroups(raw) {
+  const out = {};
+  for (const g of Array.isArray(raw) ? raw : []) {
+    if (g?.id != null && Number.isFinite(g.group_weight)) out[String(g.id)] = g.group_weight;
+  }
+  return out;
 }
 
 /** Returns null for courses the spec says to skip (restricted or unnamed). */
 export function normalizeCourse(raw) {
   if (!raw || raw.access_restricted_by_date || !collapseWhitespace(raw.name)) return null;
-  return { id: String(raw.id), name: collapseWhitespace(raw.name) };
+  // Your current score (needs include[]=total_scores) and whether groups are weighted.
+  const student = (Array.isArray(raw.enrollments) ? raw.enrollments : []).find((e) => e?.type === 'student');
+  const score = Number.isFinite(student?.computed_current_score) ? student.computed_current_score : null;
+  return { id: String(raw.id), name: collapseWhitespace(raw.name), weighted: raw.apply_assignment_group_weights === true, score };
 }

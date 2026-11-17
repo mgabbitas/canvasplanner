@@ -2,6 +2,7 @@
 // change minutes, the ⋮ menu (move to a day, pin, dismiss), pull, send back, restore.
 import { canPullItem, doneDay, looksLikeExam, checkOffPatch, withoutDay } from '../planner/plan.js';
 import { estimate } from '../planner/estimate.js';
+import { shareLabel, BIG_SHARE } from '../planner/grades.js';
 import { daysEarly } from '../planner/ahead.js';
 import { toLocalDate, addDays, dateRange, minDate } from '../planner/dates.js';
 import { validateLog } from '../storage/schema.js';
@@ -230,6 +231,9 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     : entry;
   const chips = [];
   if (upNext) chips.push(el('span', { className: 'chip next' }, 'up next'));
+  if (entry.gradeShare >= BIG_SHARE) {
+    chips.push(el('span', { className: 'chip grade', title: 'Share of your class grade, from Canvas points and group weights' }, `${shareLabel(entry.gradeShare)} of grade`));
+  }
   if (entry.part) chips.push(el('span', { className: 'chip task', title: 'Split across days. Use ⋮ to change.' }, `part ${entry.part.n} of ${entry.part.of}`));
   if (item.task) {
     chips.push(el('span', { className: 'chip task', title: 'Your own task' }, item.task.seriesId ? 'repeats' : 'task'));

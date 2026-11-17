@@ -55,7 +55,12 @@ test('untrusted fields are sanitized', () => {
 test('courses: restricted or unnamed are skipped', () => {
   assert.equal(normalizeCourse({ id: 1, access_restricted_by_date: true }), null);
   assert.equal(normalizeCourse({ id: 1, name: '  ' }), null);
-  assert.deepEqual(normalizeCourse({ id: 1, name: 'Physics ' }), { id: '1', name: 'Physics' });
+  assert.deepEqual(normalizeCourse({ id: 1, name: 'Physics ' }), { id: '1', name: 'Physics', weighted: false, score: null });
+  // Score from your student enrollment; weights flag as Canvas sends it.
+  assert.deepEqual(normalizeCourse({
+    id: 2, name: 'Physics', apply_assignment_group_weights: true,
+    enrollments: [{ type: 'observer', computed_current_score: 50 }, { type: 'student', computed_current_score: 92.5 }],
+  }), { id: '2', name: 'Physics', weighted: true, score: 92.5 });
 });
 
 test('scenario 9: merge keeps user fields and flags a moved due date', () => {

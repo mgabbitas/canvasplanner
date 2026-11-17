@@ -1,7 +1,7 @@
 // Canvas API access (GET only) and applying a sync result to stored state.
 // fetch, sleep and the school's base URL ("https://x.instructure.com") are passed in,
 // so this runs under Node tests with a fake Canvas.
-import { normalizeAssignment, normalizeCourse } from './normalize.js';
+import { normalizeAssignment, normalizeCourse, normalizeGroups } from './normalize.js';
 import { mergeCourse } from '../storage/merge.js';
 
 export const LOGIN_MESSAGE = "Canvas didn't recognize your login";
@@ -79,7 +79,7 @@ export async function getAll(path, deps) {
  */
 export async function fetchCanvas({ fetchImpl, sleep, base, delayMs = 300, onProgress = () => {} }) {
   const deps = { fetchImpl, sleep, base };
-  const rawCourses = await getAll('/api/v1/courses?enrollment_state=active&per_page=50', deps);
+  const rawCourses = await getAll('/api/v1/courses?enrollment_state=active&include[]=total_scores&per_page=50', deps);
   const courses = rawCourses.map(normalizeCourse).filter(Boolean);
   const results = [];
   for (const [i, course] of courses.entries()) {
@@ -87,7 +87,10 @@ export async function fetchCanvas({ fetchImpl, sleep, base, delayMs = 300, onPro
     onProgress(i, courses.length);
     try {
       const raw = await getAll(`/api/v1/courses/${course.id}/assignments?include[]=submission&per_page=100`, deps);
-      results.push({ courseId: course.id, items: raw.map((a) => normalizeAssignment(a, course.id)) });
+      // Group weights for "% of grade". Optional: if this fails, grades just don't show.
+      const groups = await getAll(`/api/v1/courses/${course.id}/assignment_groups?per_page=100`, deps)
+        .then(normalizeGroups, (e) => { if (e instanceof AuthError) throw e; return null; });
+      results.push({ courseId: course.id, items: raw.map((a) => normalizeAssignment(a, course.id)), groups });
     } catch (e) {
       if (e instanceof AuthError) throw e; // session expired mid-sync: change nothing
       results.push({ courseId: course.id, error: e.message });
@@ -121,7 +124,10 @@ export function applySync(state, { courses, results }, nowIso) {
     if (item.task ? item.hidden !== hidden : hidden && !item.hidden) items[id] = { ...item, hidden };
   }
   const courseMap = { ...state.courses };
-  for (const c of courses) courseMap[c.id] = { name: c.name };
+  for (const c of courses) {
+    const groups = results.find((r) => r.courseId === c.id)?.groups;
+    courseMap[c.id] = { name: c.name, weighted: c.weighted, score: c.score, groups: groups ?? state.courses?.[c.id]?.groups ?? {} };
+  }
   return {
     items,
     courses: courseMap,

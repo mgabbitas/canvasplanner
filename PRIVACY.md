@@ -1,6 +1,6 @@
 # Planner for Canvas privacy policy
 
-Last updated: October 30, 2026
+Last updated: November 16, 2026
 
 Planner for Canvas is a browser extension that turns your Canvas assignments into a weekly
 plan. It is not made by or affiliated with Instructure, the company behind Canvas.
@@ -8,13 +8,15 @@ plan. It is not made by or affiliated with Instructure, the company behind Canva
 ## What it reads
 
 When you sync, the extension asks your school's Canvas (the `instructure.com` address
-you entered, like `byui.instructure.com`) for your active courses and their
-assignments. It uses the Canvas login already in your browser. It only reads; it never
+you entered, like `byui.instructure.com`) for your active courses, their
+assignments, and their assignment groups. It uses the Canvas login already in your browser. It only reads; it never
 submits, changes or deletes anything in Canvas.
 
 From that, it keeps: course names, assignment titles, due and open dates, assignment
 type, point value, whether you've submitted, a plain-text copy of each assignment's
-description, and the link back to the assignment.
+description, and the link back to the assignment. For "% of grade" it also keeps each
+course's current score, its assignment group weights, and which group each assignment
+is in. Class scores are hidden on the page unless you choose **Show grades**.
 
 On Canvas pages, a small script tells the extension "you're on Canvas" so it can open
 the planner or refresh your data. It does not read anything on the page.

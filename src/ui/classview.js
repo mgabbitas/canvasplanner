@@ -12,7 +12,7 @@ export const emptyClassFilter = () => ({ keyword: '', type: '', setTo: '' });
 
 /** The class's entries after the keyword and type filters. */
 export function shownEntries(courseId) {
-  const all = classEntries({ items: app.state.items, settings: app.state.settings, courseId, now: Date.now() });
+  const all = classEntries({ items: app.state.items, settings: app.state.settings, courseId, now: Date.now(), shares: app.shares ?? {} });
   const kw = app.classFilter.keyword.trim().toLowerCase();
   const type = app.classFilter.type;
   return {

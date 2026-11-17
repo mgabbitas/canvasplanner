@@ -104,7 +104,7 @@ function isActive(item, settings) {
     && (settings.includeNonSubmittable || !item.nonSubmittable);
 }
 
-function toEntry(item, settings, today) {
+function toEntry(item, settings, today, shares = {}) {
   const est = estimate(item, settings);
   // An exam you can't submit in Canvas (on paper, no submission) is taken in class: no
   // homework time, like in-class activities. Minutes you set on it still win.
@@ -136,6 +136,7 @@ function toEntry(item, settings, today) {
     firstDay,
     movedTo,
     notOpenYet: unlockDate != null && unlockDate > today,
+    gradeShare: shares[item.id] ?? null, // share of the class grade (0-1), when known
     optional: isOptional(item),
     pinned: Boolean(item.pinned),
     pulledIn: Boolean(item.pulledIn),
@@ -164,7 +165,7 @@ const byDueThenSizeAsc = (a, b) =>
  * @param {object} args.weekState       { [weekStartDate]: { extraDays } }
  * @param {Date|number|string} args.now
  */
-export function plan({ items, settings, weekState = {}, now }) {
+export function plan({ items, settings, weekState = {}, now, shares = {} }) {
   const today = toLocalDate(now);
   const sum = (list) => list.reduce((s, e) => s + e.minutes, 0);
   const weekStart = planningWeek(today, settings).start;
@@ -175,10 +176,10 @@ export function plan({ items, settings, weekState = {}, now }) {
   const closedShown = (i) => today <= addDays(toLocalDate(i.lockAt), CLOSED_SHOW_DAYS);
   const closed = all
     .filter((i) => isActive(i, settings) && isClosed(i, nowMs) && closedShown(i))
-    .map((i) => toEntry(i, settings, today));
+    .map((i) => toEntry(i, settings, today, shares));
   // A missed repeat of one of your tasks just drops off (it isn't work to catch up on).
   const entries = all.filter((i) => isActive(i, settings) && !isMissedRepeat(i, today) && !isClosed(i, nowMs))
-    .map((i) => toEntry(i, settings, today));
+    .map((i) => toEntry(i, settings, today, shares));
   // Floating tasks (no due date) are due by this week's target day, or by the end of the
   // week once that has passed. Recomputed each week, so they carry over and never go overdue.
   for (const e of entries) {
@@ -226,7 +227,7 @@ export function plan({ items, settings, weekState = {}, now }) {
   // A split item counts the parts done today, not its whole time.
   const finishedToday = all
     .filter((i) => doneDay(i) === today && !i.hidden && courseIncluded(i, settings) && !i.splitParts)
-    .map((i) => toEntry(i, settings, today));
+    .map((i) => toEntry(i, settings, today, shares));
   const partsToday = all
     .filter((i) => i.splitParts && !i.hidden && courseIncluded(i, settings))
     .flatMap((i) => (i.partsDone ?? []).filter((d) => d === today).map(() => partMinutes(i, settings)));
@@ -240,7 +241,9 @@ export function plan({ items, settings, weekState = {}, now }) {
   const doneMinutes = finishedToday.reduce((s, e) => s + spent(e), 0) + partsMinutes;
 
   // Extra credit past its due date just drops off (not work to catch up on).
-  const overdue = work.filter((e) => e.dueDay < today && !e.optional);
+  // Catch up: what's worth most toward your grade first (sort keeps the rest in order).
+  const overdue = work.filter((e) => e.dueDay < today && !e.optional)
+    .sort((a, b) => (b.gradeShare ?? 0) - (a.gradeShare ?? 0));
   const upcoming = work.filter((e) => e.dueDay >= today);
   const moved = upcoming.filter((e) => e.movedTo);
   const pinned = upcoming.filter((e) => !e.movedTo && e.pinned);
@@ -407,14 +410,14 @@ export function plan({ items, settings, weekState = {}, now }) {
   const dismissed = all
     // A closed item past its Closed window would come back nowhere, so it isn't listed.
     .filter((i) => i.dismissed && !isDone(i) && !i.hidden && courseIncluded(i, settings) && !(isClosed(i, nowMs) && !closedShown(i)))
-    .map((i) => toEntry(i, settings, today));
+    .map((i) => toEntry(i, settings, today, shares));
 
   // --- done this week (for the collapsible Done section) ---
   const done = all
     .filter((i) => isDone(i) && !i.hidden && courseIncluded(i, settings) && (i.dueAt
       ? inWeek(toLocalDate(i.dueAt)) || inWeek(workDueDate(i.dueAt)) || i.pulledIn
       : i.task?.floating && inWeek(doneDay(i) ?? ''))) // a floating task: the week you finished it
-    .map((i) => ({ ...toEntry(i, settings, today), canUncheck: !i.canvasDone }));
+    .map((i) => ({ ...toEntry(i, settings, today, shares), canUncheck: !i.canvasDone }));
 
   return {
     today,
@@ -452,12 +455,12 @@ export function plan({ items, settings, weekState = {}, now }) {
  * rest is planned as of next week's first day (its own target day, added days and
  * per-date capacity apply).
  */
-export function planNextWeek({ items, settings, weekState = {}, now }) {
+export function planNextWeek({ items, settings, weekState = {}, now, shares = {} }) {
   const thisWeek = planningWeek(toLocalDate(now), settings);
   const start = addDays(thisWeek.start, 7);
   const list = (Array.isArray(items) ? items : Object.values(items ?? {}))
     .filter((i) => !i.pulledIn && !i.task?.floating && !(i.dueAt && workDueDate(i.dueAt) <= thisWeek.end));
-  return plan({ items: list, settings, weekState, now: atNoon(start) });
+  return plan({ items: list, settings, weekState, now: atNoon(start), shares });
 }
 
 /** Can a single item of this many minutes be pulled right now? */
@@ -469,11 +472,11 @@ export function canPullItem(pull, minutes) {
  * Every unfinished item of one class (not dismissed or hidden), as plan entries:
  * earliest due first, items with no due date last.
  */
-export function classEntries({ items, settings, courseId, now }) {
+export function classEntries({ items, settings, courseId, now, shares = {} }) {
   const today = toLocalDate(now);
   return (Array.isArray(items) ? items : Object.values(items ?? {}))
     .filter((i) => i.courseId === String(courseId) && isActive(i, settings) && !isClosed(i, new Date(now).getTime()))
-    .map((i) => toEntry(i, settings, today))
+    .map((i) => toEntry(i, settings, today, shares))
     .sort((a, b) => {
       const ta = a.item.dueAt ? Date.parse(a.item.dueAt) : Infinity;
       const tb = b.item.dueAt ? Date.parse(b.item.dueAt) : Infinity;
