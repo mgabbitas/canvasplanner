@@ -548,6 +548,18 @@ async function checkTasks() {
   partMove?.click(); await wait(250);
   check('part moved', !!toDay && window.__store.items[added.id]?.splitDays?.includes(toDay), `${toDay} ${JSON.stringify(window.__store.items[added.id]?.splitDays)}`);
 
+  // More time today: +30m raises today's hours for today only.
+  await go('');
+  const todayCap = () => Object.values(window.__store.weekState ?? {}).flatMap((w) => Object.entries(w.capacity ?? {}))
+    .find(([d]) => d === new Date().toLocaleDateString('en-CA'))?.[1];
+  const capBefore = todayCap();
+  const shownBefore = document.querySelector('.day .cap')?.textContent;
+  document.querySelector('[data-key="more-time-30"]')?.click(); await wait(250);
+  check('more time today: +30m', todayCap() != null && (capBefore == null || todayCap() === capBefore + 30) && document.querySelector('.day .cap')?.textContent !== shownBefore,
+    `${capBefore} -> ${todayCap()}, ${shownBefore} -> ${document.querySelector('.day .cap')?.textContent}`);
+  document.querySelector('[data-key^="cap-reset-"]')?.click(); await wait(250);
+  check('more time today: reset', todayCap() == null);
+
   // Grades: chip on items worth 5%+, class grades hidden until you ask.
   await go('');
   document.querySelector('[data-key="daytab-week"]')?.click(); await wait(150);

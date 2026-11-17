@@ -146,7 +146,7 @@ if (process.argv.includes('--screenshot')) {
     ['appearance', 'settings/appearance', '1400,1000'], ['fall', '', '1400,1000', '?look=fall'],
     ['christmas-dark', '', '1400,1000', '?look=christmas&mode=dark'], ['custom-dark', 'settings/appearance', '1400,1000', '?look=custom&mode=dark'],
     ['halloween', '', '1400,1000', '?date=2026-10-31&holiday'], ['july4-dark', '', '1400,1000', '?preview=july4&mode=dark'],
-    ['christmasday', '', '1400,1000', '?preview=christmasday&mode=light'],
+    ['christmasday', '', '1400,1000', '?preview=christmasday&mode=light'], ['thanksgiving', '', '1400,1000', '?preview=thanksgiving&mode=light'],
     ['ocean', '', '1400,1000', '?look=ocean'], ['ocean-dark', '', '1400,1000', '?look=ocean&mode=dark'],
     ['sunset', '', '1400,1000', '?look=sunset'], ['forest', '', '1400,1000', '?look=forest'], ['lavender-dark', '', '1400,1000', '?look=lavender&mode=dark'], ['patriotic', '', '1400,1000', '?look=patriotic&somedone&roomy'], ['christmas-done', '', '1400,1000', '?look=christmas&somedone&roomy'],
     ['sunset-done', '', '1400,1000', '?look=sunset&somedone&roomy'], ['fall-alldone', '', '1400,1000', '?look=fall&mode=dark&alldone'],

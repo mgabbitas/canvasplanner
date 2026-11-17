@@ -23,6 +23,9 @@ export function gradeShares(items, courses) {
     // Every Canvas class has at least one group, so none means grade info isn't synced
     // yet (e.g. right after updating): show nothing rather than guess.
     if (!course || !Object.keys(course.groups ?? {}).length) continue;
+    // No current score means Canvas isn't grading you here (e.g. an advising or
+    // announcements shell), so its points don't make a grade.
+    if (!Number.isFinite(course.score)) continue;
     if (!course.weighted) {
       const total = list.reduce((s, i) => s + i.points, 0);
       for (const i of list) out[i.id] = i.points / total;

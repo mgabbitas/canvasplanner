@@ -140,6 +140,17 @@ function capacityControl(day) {
   ];
 }
 
+/** Free evening? "+30m" / "+1h" on today's hours (the same per-date change as clicking them). */
+const MORE_TIME = [30, 60];
+function moreTimeButtons(day) {
+  return el('span', { className: 'more-time', role: 'group', 'aria-label': 'Add time to today' },
+    MORE_TIME.map((m) => el('button', {
+      className: 'more-time-btn', 'data-key': `more-time-${m}`,
+      title: `Add ${minutesLabel(m)} to today's hours. Click the hours to change or reset them.`,
+      onclick: () => setDayCapacity(day.date, day.capacity + m),
+    }, `+${minutesLabel(m)}`)));
+}
+
 /** Tabs: Week (every day) then one per day, each with its count and load. */
 export function renderDayLayout(p, kind) {
   const days = p.days;
@@ -260,7 +271,8 @@ function renderDay(day, today, kind, { upNext = false, ahead = null } = {}) {
         // Same "planned / hours" as the day tab. What you finished is in the header.
         ...(day.bonus && !day.over
           ? [...capacityControl(day), ` + ${minutesLabel(done - day.capacity)} extra`]
-          : [day.blocked && day.capacity > 0 ? 'blocked · ' : `${minutesLabel(day.load)} / `, ...capacityControl(day)])),
+          : [day.blocked && day.capacity > 0 ? 'blocked · ' : `${minutesLabel(day.load)} / `, ...capacityControl(day)]),
+        day.date === today && kind === 'plan' && app.editingDay !== day.date ? moreTimeButtons(day) : null),
     ),
     day.blocked ? null : el('div', { className: 'bar' },
       done ? el('div', { className: 'done', style: `width:${pctOf(done)}%` }) : null,

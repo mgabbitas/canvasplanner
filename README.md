@@ -20,8 +20,8 @@ Wednesday instead of piling up on Saturday.
   group meeting) to a class, with or without a due date, or repeating on set weekdays.
 - **Splits big work.** Break a long assignment into parts on the days you pick, and move
   any part like any other item.
-- **Bends to your day.** Move any item to another day, start tomorrow's work early
-  when you're done, and watch the "done today" count go up as you work.
+- **Bends to your day.** Move any item to another day, add 30 minutes or an hour to
+  today when you have a free evening, start tomorrow's work early when you're done, and watch the "done today" count go up as you work.
 - **Keeps a streak.** Two counters in the header: weeks in a row you finished
   everything by the target day, and days in a row you finished everything planned.
 - **Learns your pace.** When you check something off you can log how long it took. The
