@@ -792,3 +792,17 @@ test("a day reports the minutes you moved there yourself, so the banner doesn't 
   assert.equal(tue.over, false);
   assert.equal(p.days.find((d) => d.date === '2026-09-28').chosenMinutes, 0);
 });
+
+test('split item due next week: parts you put on days this week show this week, the rest next week', () => {
+  // Opens Fri, due next Tue; split in 2 on Sat (this week) and Mon (next week).
+  const exam = mk({ due: '2026-10-06 23:59', unlock: '2026-10-02 00:00', minutesOverride: 60, splitParts: 2, splitDays: ['2026-10-03', '2026-10-05'] });
+  const now = iso('2026-10-02 08:00');
+  const p = plan({ items: [exam], settings: S, weekState: {}, now });
+  assert.deepEqual(p.days.flatMap((d) => d.items.map((e) => [e.id, d.date, e.part.of])), [[`${exam.id}#1`, '2026-10-03', 2]]);
+  const n = planNextWeek({ items: [exam], settings: S, weekState: {}, now });
+  assert.deepEqual(n.days.flatMap((d) => d.items.map((e) => [e.id, d.date, e.part.n, e.part.of])), [[`${exam.id}#2`, '2026-10-05', 2, 2]]);
+  // Both parts this week: nothing left for next week.
+  const both = { ...exam, splitDays: ['2026-10-02', '2026-10-03'] };
+  assert.equal(plan({ items: [both], settings: S, weekState: {}, now }).days.flatMap((d) => d.items).length, 2);
+  assert.equal(planNextWeek({ items: [both], settings: S, weekState: {}, now }).days.flatMap((d) => d.items).length, 0);
+});

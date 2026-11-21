@@ -205,7 +205,10 @@ export function plan({ items, settings, weekState = {}, now, shares = {}, lookup
   // This week's items (work deadline in this week, e.g. Monday-morning items count as
   // the week before's), carried-over overdue items from earlier weeks, pulled items, and
   // next week's items you put on a day this week (an exam that's already open).
-  const movedIn = (e) => e.movedTo != null && e.movedTo <= week.end;
+  // A split item counts when you put one of its parts on a day this week.
+  const partsIn = (e) => (e.item.splitParts ? e.item.splitDays ?? [] : [])
+    .some((d) => d >= e.firstDay && d <= week.end && e.lastDay && d <= e.lastDay);
+  const movedIn = (e) => (e.movedTo != null && e.movedTo <= week.end) || partsIn(e);
   const scoped = entries.filter((e) => e.dueDay && (e.workDay <= week.end || e.pulledIn || movedIn(e)));
   const noDueDate = entries.filter((e) => !e.dueDay);
 
@@ -229,7 +232,10 @@ export function plan({ items, settings, weekState = {}, now, shares = {}, lookup
   // In-class activities take no homework time: they sit on their class day at 0 min,
   // and past ones simply drop off (they aren't homework to catch up on).
   // A split item is planned as its remaining parts (see splitEntries).
-  const work = scoped.filter((e) => !e.inClass).flatMap(splitEntries);
+  const work = scoped.filter((e) => !e.inClass).flatMap(splitEntries)
+    // Next week's split item: only the parts you put on days this week are this week's
+    // (planNextWeek plans the rest).
+    .filter((e) => !e.part || e.workDay <= week.end || e.pulledIn || (e.movedTo && e.movedTo <= week.end));
   for (const e of scoped) if (e.inClass && e.dueDay >= today) place(e, e.dueDay);
 
   // Work finished today keeps using today's time, so checking items off doesn't pull
@@ -470,14 +476,28 @@ export function plan({ items, settings, weekState = {}, now, shares = {}, lookup
  * per-date capacity apply).
  */
 export function planNextWeek({ items, settings, weekState = {}, now, shares = {} }) {
-  const thisWeek = planningWeek(toLocalDate(now), settings);
+  const today = toLocalDate(now);
+  const thisWeek = planningWeek(today, settings);
   const start = addDays(thisWeek.start, 7);
   const list = (Array.isArray(items) ? items : Object.values(items ?? {}))
     .filter((i) => !i.pulledIn && !i.task?.floating && !(i.dueAt && workDueDate(i.dueAt) <= thisWeek.end)
       // Put on a day this week (an open exam you'll take early): this week's work now.
       && !(i.plannedOn && i.plannedOn >= toLocalDate(now) && i.plannedOn <= thisWeek.end));
   const lookup = Array.isArray(items) ? Object.fromEntries(items.map((i) => [i.id, i])) : items;
-  return plan({ items: list, settings, weekState, now: atNoon(start), shares, lookup });
+  return plan({ items: list.map((i) => withoutThisWeeksParts(i, today, thisWeek.end)).filter(Boolean), settings, weekState, now: atNoon(start), shares, lookup });
+}
+
+/**
+ * A split item with parts you put on days this week (this week's plan shows those): next
+ * week plans only the other parts, numbered after them. null when every part is this week's.
+ */
+function withoutThisWeeksParts(item, today, weekEnd) {
+  if (!item.splitParts || !item.splitDays) return item;
+  const here = item.splitDays.filter((d) => d >= today && d <= weekEnd);
+  if (!here.length) return item;
+  const partsDone = [...(item.partsDone ?? []), ...here];
+  if (partsDone.length >= item.splitParts) return null;
+  return { ...item, partsDone, splitDays: item.splitDays.filter((d) => !here.includes(d)) };
 }
 
 /** Can a single item of this many minutes be pulled right now? */
