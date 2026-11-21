@@ -189,10 +189,14 @@ function renderStreaks() {
   // "Week" on top, a flame and the count under it. The flame lights up once this week /
   // today already counts.
   const counter = (key, n, label, lit, title) => el('span', {
-    className: `streak${n ? '' : ' zero'}${lit ? ' lit' : ''}`, 'data-key': key, title, 'aria-label': `${label} streak: ${n}. ${title}`,
+    className: `streak${n ? '' : ' zero'}${lit ? ' lit' : ''}`, 'data-key': key, title,
   }, el('span', { className: 'streak-label' }, label),
   el('span', { className: 'streak-count' }, icon('flame'), el('strong', {}, String(n))));
-  return el('div', { className: 'streaks', 'aria-label': 'Streaks' },
+  // The whole card opens Stats, where each streak's history is.
+  return el('a', {
+    className: 'streaks', href: '#stats', 'data-key': 'streaks',
+    'aria-label': `Streaks: ${plural(weeks.current, 'week')} on target, ${plural(days.current, 'day')} on plan. Open Stats.`,
+  },
     counter('streak-weeks', weeks.current, 'Week', weeks.thisWeek === 'hit',
       `Weeks in a row with everything done by the target day. Best: ${plural(weeks.best, 'week')}.`),
     counter('streak-days', days.current, 'Day', days.today === 'hit',

@@ -77,6 +77,7 @@ async function run() {
   }
   check('header shows today count', /Today: \d+ items?/.test(document.querySelector('#header')?.textContent ?? ''), document.querySelector('.subtitle')?.textContent);
   check('header streak counters', $$('#header .streak').length === 2, $$('#header .streak').map((x) => x.textContent).join(' | '));
+  check('streak card opens Stats', document.querySelector('#header a.streaks')?.getAttribute('href') === '#stats');
   const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
   check('today recorded for streak', Array.isArray(window.__store.dayLog?.[todayKey]?.left), JSON.stringify(window.__store.dayLog?.[todayKey]));
   check('sidebar nav', $$('.nav-link').length === 5 && !!document.querySelector('[data-key="open-canvas"]'));
@@ -233,6 +234,11 @@ async function run() {
   check('stats: cards', !!document.querySelector('.stat-cards'));
   check('stats: tables', $$('.stat-table').length === 2);
   check('stats: overview first with streaks', $$('.panel.stats h2')[0]?.textContent === 'Overview' && !!document.querySelector('.streak-cards'));
+  check('stats: Week and Day streaks with flames', ['stats-weeks', 'stats-days'].every((k) => !!document.querySelector(`[data-key="${k}"] .streak-big .icon`))
+    && document.querySelector('[data-key="stats-weeks"] .streak-label')?.textContent === 'Week');
+  check('stats: recent weeks and days as dots', $$('[data-key="stats-weeks"] .sdot').length > 0 && $$('[data-key="stats-days"] .sdot').length > 0
+    && $$('.streak-cards .sdot').every((d) => /: (counted|missed|in progress|nothing planned)$/.test(d.getAttribute('aria-label'))),
+    `${$$('[data-key="stats-weeks"] .sdot').length} weeks, ${$$('[data-key="stats-days"] .sdot').length} days`);
   check('stats: class rows colored', $$('.stat-table')[0]?.querySelector('tbody tr[style*="--course"] .dot') != null);
   check('stats: vs estimate in words', $$('.stat-table .vs').every((v) => /faster|slower|about right/.test(v.textContent)));
   check('stats: 7 weekday columns', $$('ol.wk-cols li').length === 7);

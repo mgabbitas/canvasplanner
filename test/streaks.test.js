@@ -1,7 +1,7 @@
 process.env.TZ = 'America/Denver';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dayStreak, weekStreak, plannedToday } from '../src/planner/streaks.js';
+import { dayStreak as dayFull, weekStreak as weekFull, plannedToday } from '../src/planner/streaks.js';
 import { atNoon } from '../src/planner/dates.js';
 import { DEFAULT_SETTINGS as S } from '../src/storage/defaults.js';
 
@@ -14,6 +14,10 @@ const item = (over = {}) => ({
 });
 const done = (doneOn, over = {}) => item({ manualDone: true, doneOn, ...over });
 const now = (date) => atNoon(date).getTime();
+// Most tests check the counts; history has its own test at the end.
+const strip = ({ history, ...rest }) => rest;
+const dayStreak = (a) => strip(dayFull(a));
+const weekStreak = (a) => strip(weekFull(a));
 
 test('weeks on target: done by the target day, added days move it', () => {
   const items = [
@@ -105,4 +109,21 @@ test('extra credit never breaks a streak', () => {
 test('a day with only extra credit planned is not a Day-streak hit', () => {
   const p = { today: '2026-10-24', days: [{ date: '2026-10-24', items: [{ id: 'ec', inClass: false, optional: true }] }] };
   assert.deepEqual(plannedToday(p), []);
+});
+
+test('history: each week and recorded day with how it went, oldest first', () => {
+  const items = [
+    done('2026-10-06'), // week of 10-05: hit
+    done('2026-10-16', { dueAt: '2026-10-16T23:59:00-06:00' }), // week of 10-12: done after Wed 10-14, miss
+    item({ dueAt: '2026-10-23T23:59:00-06:00' }), // week of 10-19: still pending
+  ];
+  assert.deepEqual(weekFull({ items, settings: S, now: now('2026-10-20') }).history, [
+    { date: '2026-10-05', status: 'hit' }, { date: '2026-10-12', status: 'miss' }, { date: '2026-10-19', status: 'pending' },
+  ]);
+  const a = done('2026-10-19', { id: 'a' });
+  const dayLog = { '2026-10-19': { left: ['a'] }, '2026-10-20': { left: ['b'] }, '2026-10-21': { left: [] } };
+  const b = item({ id: 'b' });
+  assert.deepEqual(dayFull({ items: [a, b], settings: S, dayLog, now: now('2026-10-21') }).history, [
+    { date: '2026-10-19', status: 'hit' }, { date: '2026-10-20', status: 'miss' }, { date: '2026-10-21', status: 'none' },
+  ]);
 });

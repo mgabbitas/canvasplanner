@@ -2,9 +2,29 @@
 import { computeStats, suggestRules } from '../planner/stats.js';
 import { el, WEEKDAYS, TYPE_LABELS, minutesLabel, dayLabel } from './dom.js';
 import { courseColor } from './theme.js';
-import { streaks } from './app.js';
+import { streaks, plural } from './app.js';
+import { icon } from './icons.js';
 
 const NEEDS_TIME_DAYS = 30;
+const RECENT_WEEKS = 8;
+const RECENT_DAYS = 14;
+const STREAK_WORDS = { hit: 'counted', miss: 'missed', pending: 'in progress', open: 'in progress', none: 'nothing planned' };
+
+/**
+ * One streak, in the header's look: label, flame and count, best, and a dot for each
+ * recent week or recorded day (oldest first) showing whether it counted.
+ */
+function streakCard({ key, label, s, unit, what, recent, dotLabel }) {
+  return el('div', { className: `stat-card streak-card${s.current ? '' : ' zero'}`, 'data-key': key },
+    el('span', { className: 'streak-label' }, label),
+    el('span', { className: 'streak-big' }, icon('flame'), el('strong', {}, String(s.current))),
+    el('span', {}, `${s.current === 1 ? unit : `${unit}s`} ${what}`),
+    el('small', {}, `Best: ${plural(s.best, unit)}`),
+    recent.length ? el('ol', { className: 'streak-dots', 'aria-label': `Recent ${unit}s` }, recent.map((h) => {
+      const text = `${dotLabel(h.date)}: ${STREAK_WORDS[h.status]}`;
+      return el('li', { className: `sdot ${h.status}`, title: text, 'aria-label': text });
+    })) : null);
+}
 
 function section(title, ...children) {
   return el('section', { className: 'panel stats' }, el('h2', {}, title), ...children);
@@ -103,13 +123,19 @@ export function renderStats(ctx) {
     .sort((a, b) => (b.submittedAt ?? b.dueAt ?? '').localeCompare(a.submittedAt ?? a.dueAt ?? ''));
 
   const { days, weeks } = streaks();
+  const short = { month: 'short', day: 'numeric' };
   const streakCards = el('div', { className: 'stat-cards streak-cards' },
-    card(weeks.current, weeks.current === 1 ? 'week on target' : 'weeks on target', `Best: ${weeks.best}`),
-    card(days.current, days.current === 1 ? 'day on plan' : 'days on plan', `Best: ${days.best}`),
+    streakCard({ key: 'stats-weeks', label: 'Week', s: weeks, unit: 'week', what: 'on target',
+      recent: weeks.history.slice(-RECENT_WEEKS), dotLabel: (d) => `Week of ${dayLabel(d, short)}` }),
+    streakCard({ key: 'stats-days', label: 'Day', s: days, unit: 'day', what: 'on plan',
+      recent: days.history.slice(-RECENT_DAYS), dotLabel: (d) => dayLabel(d, { weekday: 'short', ...short }) }),
   );
   const streakHelp = el('details', { className: 'stat-help' },
     el('summary', {}, 'How streaks work'),
-    el('p', { className: 'hint' }, 'A week is on target when everything due in it was done by the target day. A day is on plan when you finished everything planned for it. Days with nothing planned, and days you didn\'t open the planner, don\'t break a streak.'));
+    el('p', { className: 'hint' }, 'A week is on target when everything due in it was done by the target day. A day is on plan when you finished everything planned for it. Days with nothing planned, and days you didn\'t open the planner, don\'t break a streak. Dismissed items and extra credit never count against you.'),
+    el('p', { className: 'hint streak-key' },
+      el('span', { className: 'sdot hit' }), ' counted ', el('span', { className: 'sdot miss' }), ' missed ',
+      el('span', { className: 'sdot pending' }), ' in progress ', el('span', { className: 'sdot none' }), ' nothing planned'));
 
   return [
     section('Overview', streakCards, streakHelp, summary),

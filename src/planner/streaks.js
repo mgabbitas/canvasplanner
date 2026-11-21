@@ -40,7 +40,8 @@ export function plannedToday(p) {
  * that day the last time the page looked. A day is a hit if all of it was done by the
  * end of that day and something was planned or done; a day with nothing either way,
  * or one never recorded, is skipped. Today only counts once it's a hit.
- * Returns { current, best, today: 'hit' | 'open' | 'none' }.
+ * Returns { current, best, today: 'hit' | 'open' | 'none', history: [{ date, status }] }
+ * (each recorded day: 'hit' | 'miss' | 'open' | 'none', oldest first).
  */
 export function dayStreak({ items, settings, dayLog = {}, now }) {
   const today = toLocalDate(now);
@@ -67,7 +68,10 @@ export function dayStreak({ items, settings, dayLog = {}, now }) {
   const dates = Object.keys(dayLog).filter((d) => d <= today).sort();
   const statuses = dates.map(status);
   const todayStatus = dayLog[today] ? statuses.at(-1) : 'none';
-  return { ...runs(statuses.map((s) => (s === 'hit' ? 'hit' : s === 'miss' ? 'miss' : 'skip'))), today: todayStatus };
+  return {
+    ...runs(statuses.map((s) => (s === 'hit' ? 'hit' : s === 'miss' ? 'miss' : 'skip'))), today: todayStatus,
+    history: dates.map((date, i) => ({ date, status: statuses[i] })),
+  };
 }
 
 /**
@@ -75,7 +79,8 @@ export function dayStreak({ items, settings, dayLog = {}, now }) {
  * the week's target day (plus added days), or by its due day if it opens after that.
  * A week is a miss once any item is late, a hit once all are done in time, and
  * pending otherwise. Weeks with no homework are skipped.
- * Returns { current, best, thisWeek: 'hit' | 'pending' | 'miss' | 'none' }.
+ * Returns { current, best, thisWeek: 'hit' | 'pending' | 'miss' | 'none', history: [{ date, status }] }
+ * (each week with homework, by its start date: 'hit' | 'miss' | 'pending', oldest first).
  */
 export function weekStreak({ items, settings, weekState = {}, now }) {
   const today = toLocalDate(now);
@@ -104,5 +109,8 @@ export function weekStreak({ items, settings, weekState = {}, now }) {
   const starts = [...weeks.keys()].sort();
   const statuses = starts.map((s) => status(s, weeks.get(s)));
   const thisStatus = weeks.has(thisWeek) ? statuses.at(-1) : 'none';
-  return { ...runs(statuses.map((s) => (s === 'pending' ? 'skip' : s))), thisWeek: thisStatus };
+  return {
+    ...runs(statuses.map((s) => (s === 'pending' ? 'skip' : s))), thisWeek: thisStatus,
+    history: starts.map((date, i) => ({ date, status: statuses[i] })),
+  };
 }

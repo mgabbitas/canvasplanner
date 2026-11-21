@@ -24,6 +24,7 @@ Wednesday instead of piling up on Saturday.
   today when you have a free evening, start tomorrow's work early when you're done, and watch the "done today" count go up as you work.
 - **Keeps a streak.** Two counters in the header: weeks in a row you finished
   everything by the target day, and days in a row you finished everything planned.
+  Click them to see your best streaks and which recent weeks and days counted.
 - **Learns your pace.** When you check something off you can log how long it took. The
   Stats page shows your real averages and suggests better time estimates.
 - **Stays private.** It only reads your assignments, using your normal Canvas login.

@@ -235,7 +235,9 @@ any, else the estimate), shown in the header.
 Streaks (decided 2026-10-24): two counters side by side in the This week header, with
 current and best on Stats. Look (2026-11-11): a small label ("Week", "Day") over a flame
 icon and the count; the flame is grey at 0, an orange outline while the streak runs,
-and filled once this week / today already counts. Cheers (2026-11-11), each a short
+and filled once this week / today already counts. The header card links to Stats (1.7),
+which shows each streak in the same look with its best and a dot per recent week (8)
+and recorded day (14): counted, missed, in progress or nothing planned. Cheers (2026-11-11), each a short
 toast line, only on a change seen by the page (so a new tab never repeats one), off with
 the Celebrations setting: "N days early!" when you check off an item before its due day;
 "Today's list is done" when today's last homework is checked off; "N days ahead" as
