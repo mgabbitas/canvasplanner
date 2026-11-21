@@ -28,7 +28,9 @@
   }
   // ?look=fall&mode=dark: start in a theme (for screenshots).
   if (q.get('look') && store.settings) store.settings.look = q.get('look');
-  if (q.get('mode') && store.settings) store.settings.theme = q.get('mode');
+  if (q.get('mode')) (store.settings ??= {}).theme = q.get('mode');
+  // ?newtaboff: "Show the planner on new tabs" switched off (the nearly blank page).
+  if (q.has('newtaboff') && store.settings) store.settings.newTabPlanner = false;
   if (q.has('holiday') && store.settings) store.settings.holidayLooks = true;
   // ?newuser: a fresh install that just synced (gets the tour, not What's new).
   if (q.has('newuser')) store.onboarding = { seenVersion: '1.3.0', toured: false };

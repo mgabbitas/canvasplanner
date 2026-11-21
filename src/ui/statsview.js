@@ -19,7 +19,7 @@ function streakCard({ key, label, s, unit, what, recent, dotLabel }) {
     el('span', { className: 'streak-label' }, label),
     el('span', { className: 'streak-big' }, icon('flame'), el('strong', {}, String(s.current))),
     el('span', {}, `${s.current === 1 ? unit : `${unit}s`} ${what}`),
-    el('small', {}, `Best: ${plural(s.best, unit)}`),
+    s.best > s.current ? el('small', {}, `Best: ${plural(s.best, unit)}`) : null, // nothing to add at 0 or a new best
     recent.length ? el('ol', { className: 'streak-dots', 'aria-label': `Recent ${unit}s` }, recent.map((h) => {
       const text = `${dotLabel(h.date)}: ${STREAK_WORDS[h.status]}`;
       return el('li', { className: `sdot ${h.status}`, title: text, 'aria-label': text });
@@ -134,8 +134,8 @@ export function renderStats(ctx) {
     el('summary', {}, 'How streaks work'),
     el('p', { className: 'hint' }, 'A week is on target when everything due in it was done by the target day. A day is on plan when you finished everything planned for it. Days with nothing planned, and days you didn\'t open the planner, don\'t break a streak. Dismissed items and extra credit never count against you.'),
     el('p', { className: 'hint streak-key' },
-      el('span', { className: 'sdot hit' }), ' counted ', el('span', { className: 'sdot miss' }), ' missed ',
-      el('span', { className: 'sdot pending' }), ' in progress ', el('span', { className: 'sdot none' }), ' nothing planned'));
+      el('span', { className: 'sdot hit' }), ' counted ', el('span', { className: 'sdot pending' }), ' in progress ',
+      el('span', { className: 'sdot miss' }), ' missed ', el('span', { className: 'sdot none' }), ' nothing planned'));
 
   return [
     section('Overview', streakCards, streakHelp, summary),

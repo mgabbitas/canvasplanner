@@ -129,6 +129,6 @@ export function renderExams(p) {
         ),
       );
     })),
-    el('p', { className: 'hint' }, 'Found by title. Not an exam? ', el('span', { className: 'nowrap' }, '⋮ → Not an exam'), '.'),
+    el('p', { className: 'hint' }, 'Not an exam? Use ⋮ on the item.'),
   );
 }

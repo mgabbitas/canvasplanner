@@ -72,8 +72,10 @@ test('review invite: 10+ items done, the first one 14+ days ago', () => {
   assert.equal(reviewInviteDue(ten('2026-11-06'), '2026-11-20'), true); // exactly 14 days
   assert.equal(reviewInviteDue(ten('2026-11-07'), '2026-11-20'), false); // 13 days
   assert.equal(reviewInviteDue(ten('2026-11-06').slice(0, 9), '2026-11-20'), false); // only 9 done
-  // Submitted in Canvas counts too; unfinished items don't.
+  // Only check-offs in the planner count: not work submitted in Canvas (a first sync can
+  // bring in weeks of it), not unfinished items.
   const submitted = { canvasDone: true, submittedAt: '2026-10-01T18:00:00Z' };
-  assert.equal(reviewInviteDue([submitted, ...ten('2026-11-19').slice(1), { manualDone: false }], '2026-11-20'), true);
+  assert.equal(reviewInviteDue([submitted, ...ten('2026-11-19').slice(1), { manualDone: false }], '2026-11-20'), false);
+  assert.equal(reviewInviteDue(Array(12).fill(submitted), '2026-11-20'), false);
   assert.equal(reviewInviteDue([], '2026-11-20'), false);
 });

@@ -262,6 +262,8 @@ button.link.logged { text-decoration: none; color: var(--muted); }
   border-radius: 10px; background: var(--surface); text-align: left;
 }
 .day-tab.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+/* Cranberry-accent looks: a neutral border, so red next to the bar only ever means "over". */
+:root:is([data-look="christmas"], [data-look="patriotic"]) .day-tab.active { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
 .dt-name { font-weight: 600; }
 .dt-date, .dt-load { font-size: 12px; color: var(--muted); }
 .dt-bar { width: 100%; height: 4px; border-radius: 2px; background: var(--track); overflow: hidden; display: flex; }
@@ -445,12 +447,12 @@ button.warn { color: var(--warn-text); border-color: var(--warn-text); backgroun
 .streak-big .icon { width: 26px; height: 26px; color: var(--flame); fill: var(--flame); }
 .streak-card.zero .streak-big .icon { color: var(--muted); fill: none; }
 .streak-card.zero strong { color: var(--muted); }
-/* Recent weeks/days: filled = counted, red ring = missed, grey ring = in progress, small grey = nothing planned. */
+/* Recent weeks/days: filled = counted, faint fill = in progress, grey ring = missed, small grey = nothing planned. */
 .streak-dots { list-style: none; display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0 0; padding: 0; }
 .sdot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; box-sizing: border-box; vertical-align: -1px; }
 .sdot.hit { background: var(--flame); }
-.sdot.miss { border: 2px solid var(--bad-text); }
-.sdot.pending, .sdot.open { border: 2px solid var(--muted); }
+.sdot.miss { border: 2px solid var(--muted); }
+.sdot.pending, .sdot.open { background: color-mix(in srgb, var(--flame) 35%, transparent); }
 .sdot.none { background: var(--border); transform: scale(.6); }
 .streak-key .sdot { margin: 0 2px 0 8px; }
 .streak-key .sdot:first-child { margin-left: 0; }
@@ -755,7 +757,11 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
   margin-top: 8px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--bg) 25%, transparent);
 }
 .toast-review span { flex: 1 1 200px; }
-.toast-review a { color: var(--bg); font-weight: 600; }
+.toast-review a.toast-link {
+  color: var(--bg); font-weight: 600; text-decoration: none;
+  padding: 5px 11px; border: 1px solid transparent; border-radius: 8px;
+}
+.toast-review a.toast-link:hover { border-color: var(--bg); }
 .tour { position: fixed; inset: 0; z-index: 60; }
 .tour-spot {
   position: fixed; border-radius: 10px; pointer-events: none;

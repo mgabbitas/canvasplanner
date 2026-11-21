@@ -93,13 +93,18 @@ async function run() {
   check('arrow key moves tab', document.querySelector('.day-tab.active') !== null && document.querySelector('.day-tab.active') !== $$('.day-tab')[1]);
   document.querySelector('[data-key="daytab-week"]').click(); await wait(150);
 
-  // Check off, undo.
+  // Check off, undo. Ten items already submitted in Canvas were checked off here weeks
+  // ago, so the one-time review invite shows (nothing in the plan changes).
+  {
+    const items = structuredClone(window.__store.items);
+    for (const i of Object.values(items).filter((x) => x.canvasDone).slice(0, 10)) items[i.id] = { ...i, manualDone: true, doneOn: '2026-10-01' };
+    await browser.storage.local.set({ items }); await wait(300);
+  }
   const box = document.querySelector('.day .item input[type=checkbox]:not(:disabled)');
   const id = box?.getAttribute('data-key')?.replace('done-', '');
   box.checked = true; fire(box, 'change'); await wait(200);
   check('check-off toast', !!document.querySelector('.toast'), document.querySelector('.toast-msg')?.textContent);
   check('item marked done', window.__store.items[id]?.manualDone === true);
-  // The fixture has years of finished work, so the one-time review invite shows here.
   const review = document.querySelector('[data-key="review-link"]');
   check('review invite under the check-off', !!review && /^https:\/\/(addons\.mozilla\.org|chromewebstore\.google\.com)\//.test(review.href)
     && review.target === '_blank' && !!document.querySelector('[data-key="toast-Undo"]'), review?.href);

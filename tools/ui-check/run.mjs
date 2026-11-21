@@ -93,10 +93,14 @@ writeFileSync(join(site, 'src/ui/shot-taskform.js'), `const t = setInterval(() =
 const SLOW = '<img src="/slow.gif" alt="" hidden>';
 writeFileSync(join(site, 'src/ui/taskform-shot.html'), page.replace('<script type="module" src="clickthrough.js"></script>', `<script type="module" src="shot-taskform.js"></script>${SLOW}`));
 // For screenshots of the review invite: check off the first item once the page has rendered.
-writeFileSync(join(site, 'src/ui/shot-review.js'), `const t = setInterval(() => {
-  const box = document.querySelector('.day .item input[type=checkbox]:not(:disabled)');
-  if (!box) return;
+writeFileSync(join(site, 'src/ui/shot-review.js'), `const t = setInterval(async () => {
+  if (!document.querySelector('.day .item')) return;
   clearInterval(t);
+  const { items } = await browser.storage.local.get('items');
+  for (const i of Object.values(items).filter((x) => x.canvasDone).slice(0, 10)) items[i.id] = { ...i, manualDone: true, doneOn: '2026-10-01' };
+  await browser.storage.local.set({ items });
+  await new Promise((r) => setTimeout(r, 200));
+  const box = document.querySelector('.day .item input[type=checkbox]:not(:disabled)');
   box.checked = true;
   box.dispatchEvent(new Event('change', { bubbles: true }));
 }, 20);`);
@@ -170,7 +174,9 @@ if (process.argv.includes('--screenshot')) {
     ['sunset-done', '', '1400,1000', '?look=sunset&somedone&roomy'], ['fall-alldone', '', '1400,1000', '?look=fall&mode=dark&alldone'],
     ['whatsnew', '', '1400,1000', ''], ['tour', '', '1400,1000', '?newuser'], ['neon', '', '1400,1000', '?look=neon&mode=light&somedone&roomy'],
     ['neon-appearance', 'settings/appearance', '1400,1000', '?look=neon'], ['welcome', '', '1400,800', '?empty'],
-    ['general', 'settings/general', '1400,1000', '']]) {
+    ['general', 'settings/general', '1400,1000', ''], ['general-dark', 'settings/general', '1400,1000', '?mode=dark'],
+    ['stats-dark', 'stats', '1400,1700', '?mode=dark'], ['welcome-dark', '', '1400,800', '?empty&mode=dark'],
+    ['newtab-off', '', '1400,800', '?newtaboff'], ['newtab-off-dark', '', '1400,800', '?newtaboff&mode=dark']]) {
     const file = join(REPO, 'web-ext-artifacts', `ui-${name}.png`);
     await new Promise((r) => firefox(['--screenshot', file, '--window-size', size, `${base}${query ?? ''}#${hash}`]).on('exit', r));
     console.log(`Screenshot: ${file}`);

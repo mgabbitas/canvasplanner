@@ -17,11 +17,12 @@ export function maybeInviteReview() {
   const s = app.state.settings;
   if (s.reviewAsked || !s.funMessages) return;
   if (!reviewInviteDue(Object.values(app.state.items), toLocalDate(Date.now()))) return;
+  if (document.querySelector('.toast .toast-celebrate')) return; // one good thing at a time: ask next check-off
   const line = el('div', { className: 'toast-review', 'data-key': 'review-invite' },
     el('span', {}, 'Finding the planner useful? A short review helps other students find it.'),
     el('a', {
       href: location.protocol === 'moz-extension:' ? STORE_PAGE.firefox : STORE_PAGE.chrome,
-      target: '_blank', rel: 'noopener noreferrer', 'data-key': 'review-link', onclick: () => line.remove(),
+      target: '_blank', rel: 'noopener noreferrer', className: 'toast-link', 'data-key': 'review-link', onclick: () => line.remove(),
     }, 'Leave a review'),
     el('button', { 'data-key': 'review-no', onclick: () => line.remove() }, 'No thanks'));
   if (!addToToast(line)) return;

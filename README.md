@@ -90,7 +90,7 @@ Everything is in **Settings** (left sidebar). Changes save automatically.
 | **Classes** | Hide classes you don't want planned, give them shorter names, and pick a color for each. |
 | **Appearance** | Light, dark or system mode; a theme (Plain, Ocean, Forest, Sunset, Lavender, Fall, Christmas, Patriotic, Neon, or your own colors); a few holiday surprises, and falling snow and leaves. |
 | **General** | Whether visiting Canvas opens the planner, celebrations and late-night notes, whether new tabs show the planner, the same settings on your other computers (through the browser's own sync), **Take the tour**, and **Report a problem**. |
-| **Data** | Export a backup, import one (for example on a new computer), download your plan as a calendar file (.ics), or reset. |
+| **Data** | Export a backup, import one (for example on a new computer), download your plan as a calendar file (.ics), reset settings, or clear your data on this computer (or on every computer). |
 
 Each tab has a collapsed **Advanced** section for the finer controls (exact minutes per
 day, the instructor-stated time scale, sync interval, pull limits).
