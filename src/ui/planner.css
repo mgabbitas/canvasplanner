@@ -166,8 +166,9 @@ input[type=number], input[type=text], input[type=search], select {
 
 /* ---------- 4. Header ---------- */
 #header { display: grid; gap: 14px; margin-bottom: 18px; }
-.title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.title-row h1 { font-size: 24px; letter-spacing: -0.01em; }
+/* Same height (1.7): the streak card and + Add task line up top and bottom; the title centers. */
+.title-row { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; }
+.title-row h1 { font-size: 24px; letter-spacing: -0.01em; align-self: center; }
 .subtitle { margin: 0; color: var(--muted); }
 .subtitle strong { color: var(--text); }
 .subtitle-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
@@ -560,7 +561,7 @@ ul.suggestions li:first-child { border-top: none; }
 .exam-actions button:not(.link), .exam-actions select { padding: 3px 9px; font-size: 13px; }
 
 /* ---------- 10. Your own tasks ---------- */
-.title-row .add-task { margin-left: auto; }
+.title-row .add-task { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; padding-inline: 14px; }
 .title-row .streaks + .add-task { margin-left: 0; }
 .chip.task { color: var(--accent); border-color: var(--accent); }
 .chip.grade { color: var(--text); font-weight: 600; }
