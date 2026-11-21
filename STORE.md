@@ -101,7 +101,7 @@ Web Store. Text to paste is in "Listing text" at the bottom.
 **Short description** (Chrome reads it from the manifest; already set):
 > Plans self-assigned target dates for your Canvas assignments, so work gets done early.
 
-**Description** (both stores):
+**Description** (both stores), current as of 1.6.0):
 
 > Planner for Canvas turns your Canvas assignments into a weekly plan. Instead of
 > working to the official due dates, every assignment gets an earlier target day, and
@@ -113,20 +113,27 @@ Web Store. Text to paste is in "Listing text" at the bottom.
 >   it should take. Today's most urgent item is marked "up next".
 > • Fits your schedule: set how much homework time you have each day and which day you
 >   want to be done by. Work that doesn't fit is called out, never quietly pushed past
->   its due date.
+>   its due date. Got a free evening? +30m / +1h adds time to today.
+> • Plans around exams: pick the day you'll take an online exam, and add study time
+>   the day before or spread it out.
+> • Splits big assignments: choose the days to work on it, and move each part like any
+>   item.
+> • Shows what matters for your grade: assignments worth 5% or more show their share
+>   of the grade, and overdue work that counts most comes first. Class scores stay
+>   hidden unless you turn on "Show grades".
 > • Flags what's urgent: due today, due tomorrow and overdue work stand out.
 > • Takes your own tasks: add things Canvas doesn't track, one-off or repeating.
 > • Learns your pace: log how long things took, and Stats suggests better estimates.
 > • Streaks for weeks on target and days on plan.
 > • Toolbar button with today's list and a count of what's left.
-> • Themes, dark mode, and a calendar (.ics) export.
+> • Themes, dark mode, holiday looks, and a calendar (.ics) export.
 >
 > Heads up: the planner becomes your new tab page, and the first time you open Canvas
 > in a browser session it opens the planner and syncs (you can turn that off in
 > Settings → General).
 >
-> Private by design: it only reads your courses and assignments from your school's
-> Canvas, using the login already in your browser. Everything stays in your browser.
+> Private by design: it only reads your courses, assignments and scores from your
+> school's Canvas, using the login already in your browser. Everything stays in your browser.
 > No account, no server, no analytics. It never submits or changes anything in Canvas.
 >
 > Works with any school's Canvas at an instructure.com address (like
