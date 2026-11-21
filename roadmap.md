@@ -20,7 +20,7 @@ In this order: logging-time bug, split picker, exam day and study time, holiday 
 1.6.1 (open exams due next week show in the Exams card, commit "Version 1.6.1") is not released on its own: it ships in 1.7.0, and its changelog line merges into 1.7.0's.
 
 In this order:
-1. Fix `npm run check:ui` dates (dev only): run on a fixed weekday so it doesn't fail late in the week (10 split/exam checks fail on Fridays today). First, so every later step has a working check.
+1. Fix `npm run check:ui` dates (dev only): run on a fixed weekday so it doesn't fail late in the week (10 split/exam checks fail on Fridays today). First, so every later step has a working check. **Done 2026-11-20:** the page runs on the Monday after the fixture snapshot; 191/191 pass.
 2. Measured time: from opening an assignment to checking it off, starts "Log time" (details under Rules). Decided 2026-11-17.
 3. Stats catch-up: click the streak card to open Stats; same Week/Day flames; current and best streaks (see Cheers and streaks).
 4. Fixes from the 1.6 design review (list under Next update → layout pass): exam card on narrow screens, a picked day over its hours, stacked banners, red-accent themes, long class names, exam card wording.
