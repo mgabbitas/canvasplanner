@@ -15,10 +15,20 @@ Watch after release: whether chips look right in weighted classes (the course li
 
 In this order: logging-time bug, split picker, exam day and study time, holiday icons and bars, forecast grey, idle pause, Grades step 1, more time today, Thanksgiving background (% of grade chip, Catch up ordered by grade impact, class grade in sidebar behind "Show grades"). Grades needs real `assignment_groups` and `total_scores` data in `test/fixtures/` first. Cutoff: if Grades isn't done and checked by about 2026-11-22, ship the rest as 1.6 and Grades as 1.7.
 
-**1.7 plan** (started 2026-11-17)
+**1.7 plan** (started 2026-11-17, scope decided 2026-11-20)
 
-- Measure the time from opening an assignment to checking it off, and start "Log time" with it (details under Rules). Decided 2026-11-17.
-- Candidates, not decided yet: settings sync (`storage.sync`), the review invite.
+1.6.1 (open exams due next week show in the Exams card, commit "Version 1.6.1") is not released on its own: it ships in 1.7.0, and its changelog line merges into 1.7.0's.
+
+In this order:
+1. Fix `npm run check:ui` dates (dev only): run on a fixed weekday so it doesn't fail late in the week (10 split/exam checks fail on Fridays today). First, so every later step has a working check.
+2. Measured time: from opening an assignment to checking it off, starts "Log time" (details under Rules). Decided 2026-11-17.
+3. Stats catch-up: click the streak card to open Stats; same Week/Day flames; current and best streaks (see Cheers and streaks).
+4. Fixes from the 1.6 design review (list under Next update → layout pass): exam card on narrow screens, a picked day over its hours, stacked banners, red-accent themes, long class names, exam card wording.
+5. Top row alignment: workshop 2-3 options as screenshots with the design-review agent, then pick together.
+6. Settings sync (`storage.sync`): settings, rules, class names and colors only.
+7. New tab on/off: check first what each browser allows; if "off" can only be a blank page, ask before building.
+8. Review invite: once ever, after real use.
+Then bug hunt, design review, release checks.
 
 **Next update**
 - Split picker (2026-11-16): "Split across days…" in the ⋮ menu opens a small form like Add task, with mini day cards (a touch smaller than the top ones) showing each day's free time. Tap the days you want; the number of days is the number of parts, split evenly. The planner's own suggestion starts selected, so one click confirms. Days it can't go on (before it opens, after it's due, days off) are greyed out. Each part goes on its chosen day like a moved item; if that day passes undone, the planner places the part as usual. Old splits (a count, no days) keep working. Each part can be moved like any item (Move to, Let the planner decide, Start one from tomorrow). **Done 2026-11-16.**
