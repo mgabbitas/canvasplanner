@@ -101,12 +101,26 @@ async function run() {
   document.querySelector('[data-key="toast-Undo"]')?.click(); await wait(200);
   check('undo restores', window.__store.items[id]?.manualDone === false && !document.querySelector('.toast'));
 
-  // Check off, log time.
+  // Open it from its title, 32 minutes pass, check off, log time: starts at the measured 30.
+  const titleLink = document.querySelector(`[data-key="done-${id}"]`).closest('.item').querySelector('a.title');
+  const stay = (e) => e.preventDefault(); // don't actually leave for Canvas
+  document.addEventListener('click', stay, { once: true });
+  titleLink?.click(); await wait(200);
+  check('opening an assignment is remembered', !!window.__store.items[id]?.openedAt, String(window.__store.items[id]?.openedAt));
+  const PinnedDate = window.Date;
+  window.Date = class extends PinnedDate {
+    constructor(...a) { super(...(a.length ? a : [PinnedDate.now() + 32 * 60000])); }
+    static now() { return PinnedDate.now() + 32 * 60000; }
+  };
   const box2 = document.querySelector(`[data-key="done-${id}"]`);
   box2.checked = true; fire(box2, 'change'); await wait(200);
+  window.Date = PinnedDate;
+  check('check-off measures the time and clears the open', window.__store.items[id]?.measuredMinutes === 30 && window.__store.items[id]?.openedAt === null,
+    `${window.__store.items[id]?.measuredMinutes} ${window.__store.items[id]?.openedAt}`);
   document.querySelector('[data-key="toast-Log time"]')?.click(); await wait(100);
   const minutes = document.querySelector('.log-minutes');
   check('log form opens', !!minutes);
+  check('log form starts with the measured time', minutes?.value === '30' && !!document.querySelector('[data-key="log-note"]'), minutes?.value);
   minutes.value = '30';
   const slider = document.querySelector('.log-diff'); slider.value = '4'; fire(slider, 'input');
   document.querySelector('.log-form').requestSubmit(); await wait(250);

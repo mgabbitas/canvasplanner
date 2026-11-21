@@ -5,7 +5,7 @@ import { studyTask, studyTaskId } from '../planner/tasks.js';
 import { el, select, dayLabel, dueLabel, minutesLabel } from './dom.js';
 import { courseColor } from './theme.js';
 import { app, courseName, saveState, updateItem } from './app.js';
-import { relativeDay, MINUTE_CHOICES } from './items.js';
+import { relativeDay, MINUTE_CHOICES, noteOpened } from './items.js';
 import { openSplitPicker, pickerDays } from './splitpicker.js';
 
 const MAX_DAY_BUTTONS = 8;
@@ -117,7 +117,7 @@ export function renderExams(p) {
         el('span', { className: 'dot', 'aria-hidden': 'true' }),
         el('div', {},
           item.url
-            ? el('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', className: 'exam-title' }, item.title)
+            ? el('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', className: 'exam-title', onclick: () => noteOpened(item.id) }, item.title)
             : el('span', { className: 'exam-title' }, item.title),
           el('div', { className: 'muted' }, courseName(item.courseId),
             e.inClass ? el('span', { className: 'chip' }, 'in class') : null,

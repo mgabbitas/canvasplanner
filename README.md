@@ -52,7 +52,9 @@ way. Your settings and history are kept.
 ## Using it
 
 - **Check off** an item when you finish it. A message pops up with **Undo** and **Log
-  time**; logging is optional but makes your estimates better over time. Finished work
+  time**; logging is optional but makes your estimates better over time. If you opened
+  the assignment from the planner or the toolbar button earlier that day, Log time starts
+  with how long it's been since (you can change it). Finished work
   still counts toward today, so today's list doesn't refill as you go, and the header
   shows how much you've done today.
 - **The ⋮ menu** on each item lets you **move it** to today, tomorrow or another day
@@ -62,7 +64,8 @@ way. Your settings and history are kept.
 - **Grades.** Assignments worth 5% or more of a class grade show a "% of grade" chip,
   worked out from Canvas points and group weights. Overdue work is listed biggest first.
   **Show grades** in the sidebar shows each class's current score (hidden by default).
-- **Exams** due this week are listed on the right (next week's on Next week). They're
+- **Exams** due this week are listed on the right (next week's on Next week), plus
+  exams due next week that are already open, with when each opens and is due. They're
   found by title; use ⋮ → **Not an exam** on anything that isn't one. For an exam that's
   open for a few days, pick the day you'll take it. Then add study time the day before
   if you like (or spread it out), or say No thanks.

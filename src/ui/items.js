@@ -1,7 +1,7 @@
 // Item rows and what you can do to an item: check off (with undo), log time,
 // change minutes, the ⋮ menu (move to a day, pin, dismiss), pull, send back, restore.
 import { canPullItem, doneDay, looksLikeExam, checkOffPatch, withoutDay } from '../planner/plan.js';
-import { estimate } from '../planner/estimate.js';
+import { estimate, measuredMinutes } from '../planner/estimate.js';
 import { shareLabel, BIG_SHARE } from '../planner/grades.js';
 import { daysEarly } from '../planner/ahead.js';
 import { toLocalDate, addDays, dateRange, minDate } from '../planner/dates.js';
@@ -20,12 +20,22 @@ export function finishDay(item) {
   return item.log?.finishedOn ?? doneDay(item) ?? toLocalDate(Date.now());
 }
 
+/** You opened an assignment from the planner: remember when, to measure the time it takes. */
+export function noteOpened(id) {
+  if (app.state.items[id] && !app.state.items[id].manualDone) updateItem(id, { openedAt: new Date().toISOString() });
+}
+
 export function openLog(item, toast = null) {
   const t = toast ?? showToast({ message: '' });
   const estimateMinutes = estimate(item, app.state.settings).minutes;
+  // Not logged yet: the time measured from opening it, else the estimate. Submitted in
+  // Canvas instead of checked off here? Measure to when Canvas got it.
+  const measured = item.log ? null : item.measuredMinutes
+    ?? (item.canvasDone && item.submittedAt ? measuredMinutes(item.openedAt, Date.parse(item.submittedAt)) : null);
   t.setContent(logForm({
     title: item.title,
-    minutes: item.log?.minutes ?? (estimateMinutes || null),
+    minutes: item.log?.minutes ?? measured ?? (estimateMinutes || null),
+    note: measured ? 'Measured from when you opened it. Change it if that\'s off.' : null,
     difficulty: item.log?.difficulty ?? null,
     onSave: ({ minutes, difficulty }) => {
       const log = validateLog({ minutes, difficulty, finishedOn: finishDay(item) });
@@ -39,9 +49,13 @@ export function openLog(item, toast = null) {
 
 /** Check an item (or the next part of a split item) off, with a toast offering Undo and Log time. */
 export function markDone(item, partDay) {
-  const before = { manualDone: item.manualDone, log: item.log, doneOn: item.doneOn, partsDone: item.partsDone, splitDays: item.splitDays };
-  const today = toLocalDate(Date.now());
-  const patch = checkOffPatch(item, today, partDay ?? today);
+  const before = {
+    manualDone: item.manualDone, log: item.log, doneOn: item.doneOn, partsDone: item.partsDone, splitDays: item.splitDays,
+    openedAt: item.openedAt, measuredMinutes: item.measuredMinutes,
+  };
+  const now = Date.now();
+  const today = toLocalDate(now);
+  const patch = checkOffPatch(item, today, partDay ?? today, now);
   updateItem(item.id, patch);
   const finished = Boolean(patch.manualDone);
   const t = showToast({
@@ -218,7 +232,7 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
   });
   const canEditTask = item.task && (!item.task.seriesId || app.state.taskSeries?.[item.task.seriesId]);
   const title = item.url
-    ? el('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', className: 'title' }, item.title)
+    ? el('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', className: 'title', onclick: () => noteOpened(item.id) }, item.title)
     : canEditTask
       ? el('button', { className: 'title task-title', title: 'Edit this task', 'data-key': `task-${item.id}`, onclick: () => editTask(item) }, item.title)
       : el('span', { className: 'title' }, item.title);

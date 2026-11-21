@@ -2,6 +2,7 @@
 // minutes you set on the item > rules naming a course > instructor-stated time x scale >
 // general rules > type default > 45 minutes.
 import { DEFAULT_MINUTES } from '../storage/defaults.js';
+import { toLocalDate } from './dates.js';
 
 // Only "should take about N minutes/hours". Looser phrases in real descriptions are
 // video lengths or in-class presentation times, not the assignment's length.
@@ -58,4 +59,18 @@ export function estimate(item, settings) {
   const typeMinutes = settings.typeDefaults?.[item.type];
   if (Number.isFinite(typeMinutes)) return { minutes: typeMinutes, source: 'type', inClass: false };
   return { minutes: DEFAULT_MINUTES, source: 'default', inClass: false };
+}
+
+// Measured time (1.7, decided 2026-11-17/20): minutes from the last time you opened an
+// assignment from the planner or popup to finishing it. Only when it's believable: same
+// local day, 2 minutes to 6 hours (opening to peek, or a tab left open overnight, doesn't
+// count). Rounded to 5 minutes, at least 5.
+export const MEASURE_MIN_MINUTES = 2;
+export const MEASURE_MAX_MINUTES = 6 * 60;
+export function measuredMinutes(openedAt, endMs) {
+  const start = openedAt ? Date.parse(openedAt) : NaN;
+  if (!Number.isFinite(start) || !Number.isFinite(endMs) || toLocalDate(start) !== toLocalDate(endMs)) return null;
+  const m = (endMs - start) / 60000;
+  if (m < MEASURE_MIN_MINUTES || m > MEASURE_MAX_MINUTES) return null;
+  return Math.max(5, Math.round(m / 5) * 5);
 }

@@ -34,7 +34,8 @@ async function setDone(entry, done) {
   const item = state.items[id];
   if (!item) return;
   if (done) before.set(entry.id, item);
-  const next = done ? { ...item, ...checkOffPatch(item, toLocalDate(Date.now())) }
+  const now = Date.now();
+  const next = done ? { ...item, ...checkOffPatch(item, toLocalDate(now), toLocalDate(now), now) }
     : item.splitParts ? {
       ...item, manualDone: false, doneOn: null, partsDone: item.partsDone?.slice(0, -1).length ? item.partsDone.slice(0, -1) : null,
       splitDays: before.has(entry.id) ? before.get(entry.id).splitDays : item.splitDays,
@@ -47,7 +48,26 @@ async function setDone(entry, done) {
   else checked.delete(entry.id);
   render();
 }
-const pickUser = (old) => ({ manualDone: old.manualDone, doneOn: old.doneOn, partsDone: old.partsDone, splitDays: old.splitDays });
+const pickUser = (old) => ({
+  manualDone: old.manualDone, doneOn: old.doneOn, partsDone: old.partsDone, splitDays: old.splitDays,
+  openedAt: old.openedAt, measuredMinutes: old.measuredMinutes,
+});
+
+/**
+ * Open an assignment and remember when (to measure the time it takes). Saved before the
+ * tab opens: the popup closes as soon as it loses focus, which could cut a save short.
+ */
+async function openItem(ev, id, url) {
+  ev.preventDefault();
+  state = await loadState();
+  const item = state.items[id];
+  if (item && !item.manualDone) {
+    state.items = { ...state.items, [id]: { ...item, openedAt: new Date().toISOString() } };
+    await save({ items: state.items });
+  }
+  await browser.tabs.create({ url });
+  window.close();
+}
 
 function openPlanner() {
   browser.tabs.create({ url: browser.runtime.getURL('src/ui/planner.html') });
@@ -69,7 +89,7 @@ function render() {
         }),
         el('div', { className: 'popup-text' },
           e.item.url
-            ? el('a', { href: e.item.url, target: '_blank', rel: 'noopener noreferrer', className: 'popup-title' }, e.item.title)
+            ? el('a', { href: e.item.url, target: '_blank', rel: 'noopener noreferrer', className: 'popup-title', onclick: (ev) => openItem(ev, e.item.id, e.item.url) }, e.item.title)
             : el('span', { className: 'popup-title' }, e.item.title),
           e.part ? el('span', { className: 'popup-sub' }, `Part ${e.part.n} of ${e.part.of}`) : null,
           el('span', { className: 'popup-sub' },

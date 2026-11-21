@@ -150,6 +150,8 @@ function validateItem(id, raw) {
     plannedOn: dateOrNull(raw.plannedOn),
     notExam: raw.notExam === true,
     studyChoice: raw.studyChoice === 'yes' || raw.studyChoice === 'no' ? raw.studyChoice : null,
+    openedAt: isoOrNull(raw.openedAt),
+    measuredMinutes: raw.measuredMinutes == null ? null : int(raw.measuredMinutes, 1, MAX_MINUTES, null),
     ...validateSplit(raw),
   };
 }

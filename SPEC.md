@@ -411,6 +411,12 @@ Each one ends with `npm test` passing, a commit, and a short walkthrough.
   panel (with a "N need a time" count), never a pop-up; weekday stats use the day the
   item was finished/logged; difficulty is a 1-5 slider; a rule is suggested once a
   group has 3+ logs and its average differs from the current estimate by 5+ min.
+  Measured time (1.7, decided 2026-11-17/20): opening an assignment's title link in the
+  planner or the toolbar popup stores `openedAt` (the last open counts). Checking the
+  whole item off (not a split part) stores `measuredMinutes` (open to check-off, same
+  local day, 2 min to 6 h, rounded to 5, at least 5) and clears `openedAt`. Log time
+  starts with it, or, for an item submitted in Canvas, with open to `submittedAt` under
+  the same rules; otherwise the estimate. Nothing watches Canvas tabs.
 - **M6. Polish.** Done 2026-10-04: plain-language sync errors, first-run welcome,
   skip link, contrast-checked accents, due-today/tomorrow flags (by real due date,
   no reordering), version 1.0.0, `npm run sign` (unlisted; credentials in a gitignored

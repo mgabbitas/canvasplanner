@@ -1,7 +1,7 @@
 process.env.TZ = 'America/Denver';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { estimate, statedMinutes } from '../src/planner/estimate.js';
+import { estimate, statedMinutes, measuredMinutes } from '../src/planner/estimate.js';
 import { DEFAULT_SETTINGS as S } from '../src/storage/defaults.js';
 import { normalizeAssignment } from '../src/sync/normalize.js';
 import { fixture, needsFixture } from './helpers.js';
@@ -75,4 +75,19 @@ test('fixture: exactly the three stated-time assignments are found', needsFixtur
     ['Week 02 Participation: Q&A (Online)', 60],
     ['Week 02 Report: How LLMs Work', 150],
   ]);
+});
+
+test('measured time: same day, 2 min to 6 h, rounded to 5', () => {
+  const at = (hm) => new Date(`2026-11-20T${hm}:00`).getTime();
+  const opened = new Date(at('14:00')).toISOString();
+  assert.equal(measuredMinutes(opened, at('14:47')), 45);
+  assert.equal(measuredMinutes(opened, at('14:03')), 5); // short, but at least 5
+  assert.equal(measuredMinutes(opened, at('14:01')), null); // just peeking
+  assert.equal(measuredMinutes(opened, at('20:00')), 360);
+  assert.equal(measuredMinutes(opened, at('20:01')), null); // left open
+  assert.equal(measuredMinutes(opened, new Date('2026-11-21T09:00:00').getTime()), null); // next day
+  assert.equal(measuredMinutes(new Date(at('23:50')).toISOString(), new Date('2026-11-21T00:20:00').getTime()), null); // past midnight
+  assert.equal(measuredMinutes(null, at('14:30')), null);
+  assert.equal(measuredMinutes('garbage', at('14:30')), null);
+  assert.equal(measuredMinutes(opened, at('13:00')), null); // finished before it was opened
 });

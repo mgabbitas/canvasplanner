@@ -3,7 +3,7 @@
 import {
   toLocalDate, addDays, weekday, dateRange, minDate, maxDate, workDueDate, planningWeek, atNoon,
 } from './dates.js';
-import { estimate } from './estimate.js';
+import { estimate, measuredMinutes } from './estimate.js';
 import { isMissedRepeat, studyOff } from './tasks.js';
 
 const FORECAST_DAYS = 14;
@@ -18,8 +18,12 @@ export const MAX_PARTS = 8;
  * The change that checks an item off today. A split item gets one more part done,
  * and is done once every part is.
  */
-export function checkOffPatch(item, today, partDay = today) {
-  if (!item.splitParts) return { manualDone: true, doneOn: today };
+export function checkOffPatch(item, today, partDay = today, nowMs = null) {
+  // Finishing a whole item measures the time since you last opened it (see estimate.js).
+  if (!item.splitParts) {
+    const measured = item.openedAt ? { openedAt: null, measuredMinutes: measuredMinutes(item.openedAt, nowMs) } : {};
+    return { manualDone: true, doneOn: today, ...measured };
+  }
   const partsDone = [...(item.partsDone ?? []), today];
   // The part you checked off frees the day you chose for it (if you chose one), and
   // chosen days that have passed go (their parts are the planner's again anyway).

@@ -772,3 +772,14 @@ test('an exam due next week that is already open: on the card, and on this week 
   assert.equal(dateOf(next, exam.id), null);
   assert.ok(!next.exams.some((e) => e.id === exam.id));
 });
+
+test('checking off measures the time since you opened it, and clears the open', async () => {
+  const { checkOffPatch } = await import('../src/planner/plan.js');
+  const now = new Date('2026-09-28T15:30:00').getTime();
+  const opened = { splitParts: null, openedAt: new Date('2026-09-28T14:42:00').toISOString() };
+  assert.deepEqual(checkOffPatch(opened, '2026-09-28', '2026-09-28', now),
+    { manualDone: true, doneOn: '2026-09-28', openedAt: null, measuredMinutes: 50 });
+  // Opened yesterday: nothing believable to measure.
+  assert.deepEqual(checkOffPatch({ ...opened, openedAt: new Date('2026-09-27T20:00:00').toISOString() }, '2026-09-28', '2026-09-28', now),
+    { manualDone: true, doneOn: '2026-09-28', openedAt: null, measuredMinutes: null });
+});

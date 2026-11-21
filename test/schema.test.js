@@ -237,3 +237,12 @@ test('v4 -> v5: auto-sync 60 (the old default) becomes 30; other choices stay', 
   assert.equal(migrate({ schemaVersion: 5, settings: { autoSyncMinutes: 60 } }).settings.autoSyncMinutes, 60);
   assert.equal(migrate({}).settings.autoSyncMinutes, 30);
 });
+
+test('opened time and measured minutes are validated', () => {
+  const v = (raw) => validateItems({ 1: { courseId: '9', ...raw } })['1'];
+  assert.equal(v({ openedAt: '2026-11-20T21:00:00.000Z' }).openedAt, '2026-11-20T21:00:00.000Z');
+  assert.equal(v({ openedAt: 'yesterday' }).openedAt, null);
+  assert.equal(v({ measuredMinutes: 45 }).measuredMinutes, 45);
+  assert.equal(v({ measuredMinutes: 99999 }).measuredMinutes, 1440); // clamped like minutes you set
+  assert.equal(v({ measuredMinutes: 'lots' }).measuredMinutes, null);
+});

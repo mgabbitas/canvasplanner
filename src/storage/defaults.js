@@ -66,4 +66,6 @@ export const USER_FIELD_DEFAULTS = Object.freeze({
   splitParts: null, // split into this many parts (2-8), planned on different days
   partsDone: null, // ['YYYY-MM-DD', …]: the day each finished part was checked off, in order
   splitDays: null, // ['YYYY-MM-DD', …]: days you chose for the parts still to do (the rest the planner places)
+  openedAt: null, // ISO time you last opened it from the planner or popup (cleared when finished)
+  measuredMinutes: null, // minutes from that open to checking it off, when believable (starts Log time)
 });

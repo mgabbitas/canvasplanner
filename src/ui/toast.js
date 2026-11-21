@@ -67,7 +67,7 @@ const DIFFICULTY_WORDS = ['', 'very easy', 'easy', 'medium', 'hard', 'very hard'
  * Time + difficulty form. Both optional; difficulty only counts once you move it.
  * onSave({ minutes, difficulty }) / onCancel().
  */
-export function logForm({ title, minutes, difficulty, onSave, onCancel }) {
+export function logForm({ title, minutes, difficulty, note = null, onSave, onCancel }) {
   let touched = difficulty != null;
   const minutesInput = el('input', {
     // step 1: with min 1 a step of 5 would only accept 1, 6, 11... and block Save.
@@ -95,6 +95,7 @@ export function logForm({ title, minutes, difficulty, onSave, onCancel }) {
   },
     el('div', { className: 'log-title' }, `How did "${title}" go?`),
     el('label', {}, 'Time ', minutesInput, ' min'),
+    note ? el('div', { className: 'muted log-note', 'data-key': 'log-note' }, note) : null,
     el('label', { className: 'log-diff-label' }, 'Difficulty ', el('span', { className: 'muted' }, 'easy'), slider, el('span', { className: 'muted' }, 'hard'), value),
     el('div', { className: 'log-buttons' },
       el('button', { type: 'submit', className: 'primary' }, 'Save'),

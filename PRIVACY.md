@@ -24,6 +24,8 @@ the planner or refresh your data. It does not read anything on the page.
 ## What you add
 
 Your settings, time estimates, check-offs, times you log, tasks you add, and streaks.
+When you open an assignment from the planner or its toolbar button, it remembers when,
+to suggest how long it took once you check it off.
 
 ## Where it goes
 
