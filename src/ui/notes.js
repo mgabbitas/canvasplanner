@@ -10,6 +10,11 @@ import { app, plural } from './app.js';
 // What's new, by feature version ("1.2" covers 1.2.0, 1.2.1, …). Shown once after
 // updating into that version, so bug-fix releases don't hide it.
 export const WHATS_NEW = {
+  '1.7': [
+    'Your settings follow you to your other computers through your browser\'s sync (Settings → General).',
+    'Open an assignment from the planner, and Log time starts with how long it took.',
+    'Click the streak card to see your best streaks in Stats. New tabs can skip the planner (Settings → General).',
+  ],
   '1.6': [
     'Exams: pick the day you\'ll take it, and add study time the day before if you like.',
     'Split across days lets you pick the days, and each part moves like any item. +30m / +1h adds time to today.',

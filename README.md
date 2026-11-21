@@ -122,8 +122,15 @@ Requirements and design decisions are in [SPEC.md](SPEC.md). MIT licensed (see
 
 ## Changelog
 
-- **1.6.1**: An exam due next week that's already open shows in the Exams card, so you
-  can pick a day this week to take it early. Each exam shows when it opens and when it's due.
+- **1.7.0**: Your settings, class names and colors follow you to your other computers
+  through the browser's own sync (Settings → General). If you opened an assignment from
+  the planner, Log time starts with how long it's been. The streak card opens Stats,
+  with current and best streaks and which recent weeks and days counted. You can turn
+  off the planner on new tabs. An exam due next week that's already open shows in the
+  Exams card. "Clear all data" now clears this computer only, with a separate option for
+  every computer. A one-time invite to leave a review. Fixes from the 1.6 design review:
+  a "pick a day" chip on narrow screens, calmer Christmas and Patriotic reds, aligned top
+  row, shorter wording.
 - **1.6.0**: Exams: pick the day you'll take one, and add study time the day before
   (or spread it out); exams taken in class take no homework time. "Split across days"
   lets you pick the days, and each part moves like any item. Assignments worth 5% or

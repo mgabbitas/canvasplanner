@@ -101,7 +101,7 @@ Web Store. Text to paste is in "Listing text" at the bottom.
 **Short description** (Chrome reads it from the manifest; already set):
 > Plans self-assigned target dates for your Canvas assignments, so work gets done early.
 
-**Description** (both stores), current as of 1.6.0):
+**Description** (both stores), current as of 1.7.0):
 
 > Planner for Canvas turns your Canvas assignments into a weekly plan. Instead of
 > working to the official due dates, every assignment gets an earlier target day, and
@@ -126,14 +126,16 @@ Web Store. Text to paste is in "Listing text" at the bottom.
 > • Learns your pace: log how long things took, and Stats suggests better estimates.
 > • Streaks for weeks on target and days on plan.
 > • Toolbar button with today's list and a count of what's left.
+> • Same settings on your other computers, through your browser's own sync.
 > • Themes, dark mode, holiday looks, and a calendar (.ics) export.
 >
 > Heads up: the planner becomes your new tab page, and the first time you open Canvas
-> in a browser session it opens the planner and syncs (you can turn that off in
+> in a browser session it opens the planner and syncs (you can turn both off in
 > Settings → General).
 >
 > Private by design: it only reads your courses, assignments and scores from your
-> school's Canvas, using the login already in your browser. Everything stays in your browser.
+> school's Canvas, using the login already in your browser. Everything stays in your
+> browser; only your settings go to your browser's own sync, and you can turn that off.
 > No account, no server, no analytics. It never submits or changes anything in Canvas.
 >
 > Works with any school's Canvas at an instructure.com address (like
@@ -147,7 +149,9 @@ Web Store. Text to paste is in "Listing text" at the bottom.
 
 **Permission justifications** (Chrome):
 - **storage:** Saves the user's settings, synced assignments and progress in the
-  browser. Nothing is stored anywhere else.
+  browser. Settings (not assignments or progress) also go to the browser's own sync
+  storage so the user's other computers get them; the user can turn that off. Nothing
+  is stored anywhere else.
 - **Host permission `https://*.instructure.com/*`:** Canvas is hosted at a different
   instructure.com address for each school (e.g. byui.instructure.com). The extension
   reads the user's courses and assignments from the one address they enter, using GET
