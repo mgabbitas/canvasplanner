@@ -36,6 +36,12 @@ function shiftIso(iso) {
   return d.toISOString();
 }
 const shiftDate = (ymd) => shiftIso(`${ymd}T12:00:00`).slice(0, 10);
+// The page's clock: the Monday after the snapshot (moved by the same weeks), 10 AM, the
+// day the checks were written for (an exam is open, some work is overdue). A fixed
+// Monday leaves the whole week ahead whatever day the check runs; on the real date,
+// late in the week, splits and exam days had no room to test.
+const CHECK_DAY = '2026-10-05';
+const CHECK_NOW = new Date(`${shiftDate(CHECK_DAY)}T10:00:00`).getTime();
 
 // Stored state as a sync would leave it, plus a few logged times for Stats.
 function buildState() {
@@ -61,7 +67,7 @@ function buildState() {
   Object.keys(items).filter((id) => items[id].canvasDone).slice(0, 8).forEach((id, i) => {
     items[id].log = { minutes: 15 + i * 5, difficulty: (i % 5) + 1, finishedOn: shiftDate(`2026-09-2${i % 9}`) };
   });
-  return { ...migrate({ items, courses }), meta: { lastSyncAt: new Date().toISOString(), lastError: null } };
+  return { ...migrate({ items, courses }), meta: { lastSyncAt: new Date(CHECK_NOW - 60000).toISOString(), lastError: null }, checkNow: CHECK_NOW };
 }
 
 const work = mkdtempSync(join(tmpdir(), 'canvasplanner-ui-'));

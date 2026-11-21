@@ -14,11 +14,17 @@
     : q.has('noaccess') ? "Planner for Canvas isn't allowed to read Canvas yet" : null;
   const store = failed ? { meta: { lastSyncAt: null, lastError: failed } }
     : q.has('empty') ? {} : JSON.parse(xhr.responseText);
-  // ?date=2026-10-31: pretend it's that day (noon), for holiday screenshots.
-  if (q.get('date')) {
-    const shift = new Date(`${q.get('date')}T12:00:00`).getTime() - Date.now();
-    const realNow = Date.now.bind(Date);
-    Date.now = () => realNow() + shift;
+  // The page's clock: the check's fixed day (checkNow from run.mjs), or ?date=2026-10-31
+  // (noon) for holiday screenshots. Both Date.now() and new Date() follow it.
+  const pinTo = q.get('date') ? new Date(`${q.get('date')}T12:00:00`).getTime() : store.checkNow;
+  delete store.checkNow;
+  if (pinTo) {
+    const RealDate = Date;
+    const offset = pinTo - RealDate.now();
+    window.Date = class extends RealDate {
+      constructor(...a) { super(...(a.length ? a : [RealDate.now() + offset])); }
+      static now() { return RealDate.now() + offset; }
+    };
   }
   // ?look=fall&mode=dark: start in a theme (for screenshots).
   if (q.get('look') && store.settings) store.settings.look = q.get('look');
