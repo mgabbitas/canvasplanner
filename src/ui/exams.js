@@ -44,7 +44,7 @@ function removeStudy(exam) {
   saveState({ items });
 }
 
-function dayRow(e, days) {
+function dayRow(e, days, laterWeek) {
   const { item } = e;
   return el('div', { className: 'exam-row' },
     el('span', { className: 'exam-q' }, 'When will you take it?'),
@@ -56,7 +56,16 @@ function dayRow(e, days) {
         : !e.movedTo && e.date === d ? `Planner's pick (${dayLabel(d)}). Click to choose it.` : dayLabel(d),
       'data-key': `exam-day-${item.id}-${d}`,
       onclick: () => updateItem(item.id, { plannedOn: e.movedTo === d ? null : d, pinned: false }),
-    }, relativeDay(d) === 'Today' || relativeDay(d) === 'Tomorrow' ? relativeDay(d) : dayLabel(d, { weekday: 'short' })))));
+    }, relativeDay(d) === 'Today' || relativeDay(d) === 'Tomorrow' ? relativeDay(d) : dayLabel(d, { weekday: 'short' })))),
+    // Due next week and no day picked: it isn't on this week's plan yet.
+    laterWeek && !e.movedTo ? el('span', { className: 'hint' }, 'Planned for next week until you pick a day.') : null);
+}
+
+/** "Opens Sat, Nov 21, 7:00 AM · Due Tue, Nov 24, 11:59 PM" ("Open now" once it's open). */
+function windowLabel(item, nowMs) {
+  const due = `Due ${dueLabel(item.dueAt)}`;
+  if (!item.unlockAt) return due;
+  return `${Date.parse(item.unlockAt) > nowMs ? `Opens ${dueLabel(item.unlockAt)}` : 'Open now'} · ${due}`;
 }
 
 function studyRow(e, pickDay) {
@@ -92,12 +101,13 @@ function studyRow(e, pickDay) {
       el('button', { type: 'button', className: 'link', 'data-key': `study-no-${exam.id}`, onclick: () => updateItem(exam.id, { studyChoice: 'no' }) }, 'No thanks')));
 }
 
-export function renderExams(p, which) {
+export function renderExams(p) {
   if (!p.exams.length) return null;
   // Real dates: the Next week projection plans as if it were already next week.
-  const today = toLocalDate(Date.now());
+  const nowMs = Date.now();
+  const today = toLocalDate(nowMs);
   return el('section', { className: 'panel exams', 'data-key': 'exams' },
-    el('h2', {}, `Exams ${which}`),
+    el('h2', {}, 'Exams'),
     el('ul', { className: 'exam-list' }, p.exams.map((e) => {
       const { item } = e;
       const days = takeDays(e);
@@ -109,11 +119,12 @@ export function renderExams(p, which) {
           item.url
             ? el('a', { href: item.url, target: '_blank', rel: 'noopener noreferrer', className: 'exam-title' }, item.title)
             : el('span', { className: 'exam-title' }, item.title),
-          el('div', { className: 'muted' }, `${courseName(item.courseId)} · ${dueLabel(item.dueAt)}`,
+          el('div', { className: 'muted' }, courseName(item.courseId),
             e.inClass ? el('span', { className: 'chip' }, 'in class') : null,
             e.dueDay === today ? el('span', { className: 'chip bad' }, 'today')
               : e.dueDay === addDays(today, 1) ? el('span', { className: 'chip warn' }, 'tomorrow') : null),
-          days.length ? dayRow(e, days) : null,
+          el('div', { className: 'muted exam-window' }, windowLabel(item, nowMs)),
+          days.length ? dayRow(e, days, e.workDay > p.week.end) : null,
           studyRow(e, pickDay),
         ),
       );

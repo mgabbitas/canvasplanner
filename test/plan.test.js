@@ -749,3 +749,26 @@ test('logging a time never reshuffles the plan (scheduling uses the estimate)', 
   assert.equal(logged.days[0].doneMinutes, 40); // shown: the time you spent
   assert.equal(logged.days[0].load, 40);
 });
+
+test('an exam due next week that is already open: on the card, and on this week once you pick a day', () => {
+  const FRI = '2026-10-02 09:00';
+  const exam = mk({ title: 'Exam 03', type: 'quiz', unlock: '2026-10-02 07:00', due: '2026-10-06 23:59' }); // opens Fri, due Tue
+  const opensSun = mk({ title: 'Exam 04', type: 'quiz', unlock: '2026-10-04 07:00', due: '2026-10-07 23:59' });
+  const later = mk({ title: 'Final Exam', type: 'quiz', unlock: '2026-09-01 07:00', due: '2026-10-20 23:59' }); // open for weeks, due later
+  const paper = mk({ title: 'Midterm', nonSubmittable: true, minutesOverride: null, unlock: '2026-10-01 07:00', due: '2026-10-06 10:00' }); // in class
+  const items = [exam, opensSun, later, paper];
+  const p = run(items, { now: FRI });
+  assert.deepEqual(p.exams.map((e) => e.id), [exam.id, opensSun.id]);
+  // Not picked: it stays next week's work.
+  assert.equal(dateOf(p, exam.id), null);
+  assert.ok(dateOf(planNextWeek({ items, settings: S, now: iso(FRI) }), exam.id) >= '2026-10-05');
+  // Picked Saturday: on this week's plan, not next week's, and not offered to pull.
+  const picked = [{ ...exam, plannedOn: '2026-10-03' }, opensSun, later, paper];
+  const q = run(picked, { now: FRI });
+  assert.equal(dateOf(q, exam.id), '2026-10-03');
+  assert.ok(!q.pull.byAmount[Object.keys(q.pull.byAmount)[0]].some((e) => e.id === exam.id));
+  assert.ok(!q.pull.nextDay.entries.some((e) => e.id === exam.id));
+  const next = planNextWeek({ items: picked, settings: S, now: iso(FRI) });
+  assert.equal(dateOf(next, exam.id), null);
+  assert.ok(!next.exams.some((e) => e.id === exam.id));
+});

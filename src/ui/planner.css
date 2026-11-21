@@ -533,6 +533,7 @@ ul.suggestions li:first-child { border-top: none; }
 .exams .hint { font-size: 12px; margin: 10px 0 0; }
 .exam-row { margin-top: 8px; font-size: 13px; display: grid; gap: 4px; }
 .exam-q { color: var(--muted); }
+.exam-row .hint { margin: 0; }
 .exam-days, .exam-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .exam-day { padding: 3px 9px; font-size: 13px; }
 .exam-day.suggested { border-style: dashed; border-color: var(--accent); }

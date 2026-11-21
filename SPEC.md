@@ -206,8 +206,13 @@ overdue (past its due date it drops off), never in the pull gate, the due foreca
 Exams (decided 2026-10-06): unfinished items whose title contains "exam" or
 "midterm", or a quiz with "final" in the title, due from today through the end of the
 week, earliest first. A user field `notExam` removes a false match. Shown in the right
-column ("Exams this week", and "Exams next week" on the Next week view), hidden when
-there are none.
+column ("Exams", on This week and Next week), hidden when there are none. Each row shows
+when it opens ("Open now" once open) and when it's due.
+
+Open early (1.6.1, decided 2026-11-20): the card also lists an online exam due next week
+that opens by the end of this week, so you can take it early. Picking a day this week
+puts it on this week's plan (and off next week's and the pull list); with no day picked
+it stays next week's work, and the card says so.
 
 Exam day and study time (1.6, decided 2026-11-16). An exam you take online keeps its
 estimate (it still costs an evening, even at a testing center). If it's open for more

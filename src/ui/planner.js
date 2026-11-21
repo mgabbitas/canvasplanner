@@ -114,7 +114,7 @@ function render() {
       panel("Can't fit before it's due", p.atRisk.filter((e) => !e.date), 'next', true),
       panel('Extra credit', p.extraCredit, 'next', false, 'if you have time'),
     ]);
-    rail = [renderPullCard(), renderForecast(app.thisWeekPlan), renderExams(p, 'next week')];
+    rail = [renderPullCard(), renderForecast(app.thisWeekPlan), renderExams(p)];
   } else {
     // One friendly card at a time: What's new first, then a theme offer another day.
     const whatsNew = renderWhatsNew();
@@ -130,7 +130,7 @@ function render() {
     ]);
     rail = [
       renderForecast(p),
-      renderExams(p, 'this week'),
+      renderExams(p),
       panel('No due date', p.noDueDate, 'plan'),
       panel('Extra credit', p.extraCredit, 'plan', false, 'if you have time'),
       panel('Closed in Canvas', p.closed, 'closed', true),

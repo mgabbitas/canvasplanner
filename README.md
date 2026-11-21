@@ -117,6 +117,8 @@ Requirements and design decisions are in [SPEC.md](SPEC.md). MIT licensed (see
 
 ## Changelog
 
+- **1.6.1**: An exam due next week that's already open shows in the Exams card, so you
+  can pick a day this week to take it early. Each exam shows when it opens and when it's due.
 - **1.6.0**: Exams: pick the day you'll take one, and add study time the day before
   (or spread it out); exams taken in class take no homework time. "Split across days"
   lets you pick the days, and each part moves like any item. Assignments worth 5% or

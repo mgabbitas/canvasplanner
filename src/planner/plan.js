@@ -199,8 +199,10 @@ export function plan({ items, settings, weekState = {}, now, shares = {}, lookup
 
   const inWeek = (d) => d >= week.start && d <= week.end;
   // This week's items (work deadline in this week, e.g. Monday-morning items count as
-  // the week before's), carried-over overdue items from earlier weeks, and pulled items.
-  const scoped = entries.filter((e) => e.dueDay && (e.workDay <= week.end || e.pulledIn));
+  // the week before's), carried-over overdue items from earlier weeks, pulled items, and
+  // next week's items you put on a day this week (an exam that's already open).
+  const movedIn = (e) => e.movedTo != null && e.movedTo <= week.end;
+  const scoped = entries.filter((e) => e.dueDay && (e.workDay <= week.end || e.pulledIn || movedIn(e)));
   const noDueDate = entries.filter((e) => !e.dueDay);
 
   // --- scheduling ---
@@ -366,7 +368,7 @@ export function plan({ items, settings, weekState = {}, now, shares = {}, lookup
   const fitsOne = (minutes) => minutes <= remaining || pulledMinutes === 0;
 
   const candidates = entries
-    .filter((e) => e.dueDay && e.workDay > week.end && !e.pulledIn && !e.inClass)
+    .filter((e) => e.dueDay && e.workDay > week.end && !e.pulledIn && !e.inClass && !movedIn(e))
     .sort(byDueThenSizeAsc);
   const nextDue = candidates[0]?.dueDay ?? null;
   const nextDayEntries = candidates.filter((e) => e.dueDay === nextDue);
@@ -405,9 +407,12 @@ export function plan({ items, settings, weekState = {}, now, shares = {}, lookup
     return { date, count: due.length, minutes, over: minutes > capacity(date) };
   });
 
-  // --- exams still ahead this week (for the side panel) ---
+  // --- exams for the side panel: still ahead this week, or due next week and open by
+  // the end of this one (so you can pick a day this week to take it) ---
+  const opensInTime = (e) => !e.inClass && e.unlockDate != null && e.unlockDate <= week.end
+    && e.workDay <= addDays(week.end, 7);
   const exams = entries
-    .filter((e) => e.dueDay && e.dueDay >= today && e.workDay <= week.end && isExam(e.item))
+    .filter((e) => e.dueDay && e.dueDay >= today && isExam(e.item) && (e.workDay <= week.end || opensInTime(e)))
     .sort((a, b) => Date.parse(a.item.dueAt) - Date.parse(b.item.dueAt));
 
   // --- dismissed (so a dismissal can be undone) ---
@@ -463,7 +468,9 @@ export function planNextWeek({ items, settings, weekState = {}, now, shares = {}
   const thisWeek = planningWeek(toLocalDate(now), settings);
   const start = addDays(thisWeek.start, 7);
   const list = (Array.isArray(items) ? items : Object.values(items ?? {}))
-    .filter((i) => !i.pulledIn && !i.task?.floating && !(i.dueAt && workDueDate(i.dueAt) <= thisWeek.end));
+    .filter((i) => !i.pulledIn && !i.task?.floating && !(i.dueAt && workDueDate(i.dueAt) <= thisWeek.end)
+      // Put on a day this week (an open exam you'll take early): this week's work now.
+      && !(i.plannedOn && i.plannedOn >= toLocalDate(now) && i.plannedOn <= thisWeek.end));
   const lookup = Array.isArray(items) ? Object.fromEntries(items.map((i) => [i.id, i])) : items;
   return plan({ items: list, settings, weekState, now: atNoon(start), shares, lookup });
 }
