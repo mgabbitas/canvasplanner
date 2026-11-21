@@ -13,6 +13,7 @@ import { courseColor } from './theme.js';
 import { app, courseName, SOURCE_LABEL, updateItem, plural } from './app.js';
 import { openTaskForm } from './taskform.js';
 import { openSplitPicker } from './splitpicker.js';
+import { maybeInviteReview } from './review.js';
 
 // --- done, undo, and time logging -------------------------------------------------
 
@@ -68,6 +69,7 @@ export function markDone(item, partDay) {
   });
   const early = finished && !item.inClass ? daysEarly(item, patch.doneOn) : 0;
   if (early && app.state.settings.funMessages) celebrate(`${plural(early, 'day')} early!`);
+  if (finished) maybeInviteReview();
 }
 
 /** Uncheck a finished item; a split item gets its last part back. */

@@ -99,6 +99,13 @@ async function run() {
   box.checked = true; fire(box, 'change'); await wait(200);
   check('check-off toast', !!document.querySelector('.toast'), document.querySelector('.toast-msg')?.textContent);
   check('item marked done', window.__store.items[id]?.manualDone === true);
+  // The fixture has years of finished work, so the one-time review invite shows here.
+  const review = document.querySelector('[data-key="review-link"]');
+  check('review invite under the check-off', !!review && /^https:\/\/(addons\.mozilla\.org|chromewebstore\.google\.com)\//.test(review.href)
+    && review.target === '_blank' && !!document.querySelector('[data-key="toast-Undo"]'), review?.href);
+  check('review invite remembered once shown', window.__store.settings.reviewAsked === true);
+  document.querySelector('[data-key="review-no"]')?.click(); await wait(100);
+  check('No thanks hides the invite, keeps the toast', !document.querySelector('[data-key="review-invite"]') && !!document.querySelector('.toast'));
   document.querySelector('[data-key="toast-Undo"]')?.click(); await wait(200);
   check('undo restores', window.__store.items[id]?.manualDone === false && !document.querySelector('.toast'));
 
@@ -116,6 +123,7 @@ async function run() {
   const box2 = document.querySelector(`[data-key="done-${id}"]`);
   box2.checked = true; fire(box2, 'change'); await wait(200);
   window.Date = PinnedDate;
+  check('review invite never comes back', !document.querySelector('[data-key="review-invite"]'));
   check('check-off measures the time and clears the open', window.__store.items[id]?.measuredMinutes === 30 && window.__store.items[id]?.openedAt === null,
     `${window.__store.items[id]?.measuredMinutes} ${window.__store.items[id]?.openedAt}`);
   document.querySelector('[data-key="toast-Log time"]')?.click(); await wait(100);

@@ -750,6 +750,12 @@ dialog.task-dialog::backdrop { background: rgba(10, 14, 20, 0.45); }
 .whats-new-older { font-size: 14px; margin: 10px 0 0; }
 .whats-new ul { margin: 8px 0 4px; padding-left: 20px; display: grid; gap: 3px; font-size: 14px; }
 .toast-celebrate { font-weight: 700; margin-bottom: 6px; }
+.toast-review {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--bg) 25%, transparent);
+}
+.toast-review span { flex: 1 1 200px; }
+.toast-review a { color: var(--bg); font-weight: 600; }
 .tour { position: fixed; inset: 0; z-index: 60; }
 .tour-spot {
   position: fixed; border-radius: 10px; pointer-events: none;

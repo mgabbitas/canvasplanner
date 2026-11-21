@@ -246,3 +246,11 @@ test('opened time and measured minutes are validated', () => {
   assert.equal(v({ measuredMinutes: 99999 }).measuredMinutes, 1440); // clamped like minutes you set
   assert.equal(v({ measuredMinutes: 'lots' }).measuredMinutes, null);
 });
+
+test('review invite asked: only a real true counts, and an edit keeps it', () => {
+  assert.equal(validateSettings({}).reviewAsked, false);
+  assert.equal(validateSettings({ reviewAsked: 'yes' }).reviewAsked, false);
+  assert.equal(validateSettings({ reviewAsked: true }).reviewAsked, true);
+  const asked = validateSettings({ reviewAsked: true });
+  assert.equal(validateSettings({ accent: 'teal' }, asked).reviewAsked, true); // missing: keep it
+});

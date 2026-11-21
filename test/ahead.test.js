@@ -1,7 +1,7 @@
 process.env.TZ = 'America/Denver';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { daysAhead, isLateNight, daysEarly, progressCheer } from '../src/planner/ahead.js';
+import { daysAhead, isLateNight, daysEarly, progressCheer, reviewInviteDue } from '../src/planner/ahead.js';
 
 const day = (date, n = 0, blocked = false) => ({ date, blocked, items: Array.from({ length: n }, () => ({ inClass: false })) });
 const plan = (days, { doneToday = 1, done = 1 } = {}) => ({
@@ -64,4 +64,16 @@ test('progressCheer: going past your hours with finished work', () => {
   const base = { days: 0, weekDone: false, onTime: true, todayClear: true, doneToday: 3, bonus: false };
   assert.equal(progressCheer(base, { ...base, bonus: true }), 'extra');
   assert.equal(progressCheer({ ...base, bonus: true }, { ...base, bonus: true }), null);
+});
+
+test('review invite: 10+ items done, the first one 14+ days ago', () => {
+  const done = (doneOn) => ({ manualDone: true, doneOn });
+  const ten = (first) => [done(first), ...Array.from({ length: 9 }, () => done('2026-11-19'))];
+  assert.equal(reviewInviteDue(ten('2026-11-06'), '2026-11-20'), true); // exactly 14 days
+  assert.equal(reviewInviteDue(ten('2026-11-07'), '2026-11-20'), false); // 13 days
+  assert.equal(reviewInviteDue(ten('2026-11-06').slice(0, 9), '2026-11-20'), false); // only 9 done
+  // Submitted in Canvas counts too; unfinished items don't.
+  const submitted = { canvasDone: true, submittedAt: '2026-10-01T18:00:00Z' };
+  assert.equal(reviewInviteDue([submitted, ...ten('2026-11-19').slice(1), { manualDone: false }], '2026-11-20'), true);
+  assert.equal(reviewInviteDue([], '2026-11-20'), false);
 });

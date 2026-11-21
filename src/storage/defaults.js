@@ -37,6 +37,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   effects: 2, // falling snow and leaves: 0 off, 1 light, 2 normal, 3 lots (never with reduced motion)
   themeClassColors: false, // tint class colors toward the theme
   funMessages: true, // "days ahead" celebrations and the late-night note
+  reviewAsked: false, // the one-time "leave a review" invite has been shown (never again)
   includeNonSubmittable: true,
   openOnCanvasVisit: true, // first Canvas visit each browser session opens the planner
   newTabPlanner: true, // the planner is the new tab page (off: new tabs open nearly blank, with a link)

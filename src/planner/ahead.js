@@ -1,5 +1,6 @@
 // "You're N days ahead", "done early" and other cheers. Pure: works on a plan from plan().
 import { toLocalDate, daysBetween } from './dates.js';
+import { doneDay } from './plan.js';
 
 // Extra credit is optional, so it never stands between you and "ahead".
 const homework = (items) => items.filter((e) => !e.inClass && !e.optional);
@@ -48,3 +49,17 @@ export function progressCheer(before, now) {
   return null;
 }
 
+
+// Review invite (1.7): asked once ever, only after real use.
+export const REVIEW_AFTER = Object.freeze({ done: 10, days: 14 });
+
+/**
+ * True once you've finished at least REVIEW_AFTER.done items and the oldest of them was
+ * finished REVIEW_AFTER.days or more ago (there's no install date; this stands in for it).
+ */
+export function reviewInviteDue(items, today) {
+  const days = items.map(doneDay).filter(Boolean);
+  if (days.length < REVIEW_AFTER.done) return false;
+  const first = days.reduce((a, b) => (b < a ? b : a));
+  return daysBetween(first, today) >= REVIEW_AFTER.days;
+}

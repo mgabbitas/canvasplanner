@@ -108,6 +108,7 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     effects: s.effects != null ? int(s.effects, 0, 3, d.effects ?? 2) : s.decorations === false ? 0 : (d.effects ?? 2),
     themeClassColors: typeof s.themeClassColors === 'boolean' ? s.themeClassColors : (d.themeClassColors ?? false),
     funMessages: typeof s.funMessages === 'boolean' ? s.funMessages : (d.funMessages ?? true),
+    reviewAsked: s.reviewAsked === true || (s.reviewAsked !== false && d.reviewAsked === true),
     openOnCanvasVisit: typeof s.openOnCanvasVisit === 'boolean' ? s.openOnCanvasVisit : (d.openOnCanvasVisit ?? true),
     newTabPlanner: typeof s.newTabPlanner === 'boolean' ? s.newTabPlanner : (d.newTabPlanner ?? true),
     syncSettings: typeof s.syncSettings === 'boolean' ? s.syncSettings : (d.syncSettings ?? true),

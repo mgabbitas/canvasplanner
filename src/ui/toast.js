@@ -40,6 +40,7 @@ export function showToast({ message, actions = [], duration = 10_000 }) {
     setContent(...children) {
       toast.sticky = true;
       clearTimeout(toast.timer);
+      node.querySelector('.toast-review')?.remove(); // a form takes the whole toast
       body.replaceChildren(...children.flat());
     },
     close: () => current === toast && closeToast(),
@@ -59,6 +60,13 @@ export function celebrate(text) {
     return;
   }
   showToast({ message: text, duration: 6000 });
+}
+
+/** Add a line under the open toast's message. False if no toast is open. */
+export function addToToast(node) {
+  if (!current) return false;
+  current.node.append(node);
+  return true;
 }
 
 const DIFFICULTY_WORDS = ['', 'very easy', 'easy', 'medium', 'hard', 'very hard'];

@@ -90,7 +90,17 @@ writeFileSync(join(site, 'src/ui/shot-taskform.js'), `const t = setInterval(() =
   f.querySelector('[data-key="task-title"]').value = 'Study for the midterm';
   f.querySelector('textarea').value = 'Chapters 4-6, practice problems';
 }, 20);`);
-writeFileSync(join(site, 'src/ui/taskform-shot.html'), page.replace('<script type="module" src="clickthrough.js"></script>', '<script type="module" src="shot-taskform.js"></script>'));
+const SLOW = '<img src="/slow.gif" alt="" hidden>';
+writeFileSync(join(site, 'src/ui/taskform-shot.html'), page.replace('<script type="module" src="clickthrough.js"></script>', `<script type="module" src="shot-taskform.js"></script>${SLOW}`));
+// For screenshots of the review invite: check off the first item once the page has rendered.
+writeFileSync(join(site, 'src/ui/shot-review.js'), `const t = setInterval(() => {
+  const box = document.querySelector('.day .item input[type=checkbox]:not(:disabled)');
+  if (!box) return;
+  clearInterval(t);
+  box.checked = true;
+  box.dispatchEvent(new Event('change', { bubbles: true }));
+}, 20);`);
+writeFileSync(join(site, 'src/ui/review-shot.html'), page.replace('<script type="module" src="clickthrough.js"></script>', `<script type="module" src="shot-review.js"></script>${SLOW}`));
 cpSync(new URL('popupcheck.js', import.meta.url), join(site, 'src/popup/popupcheck.js'));
 writeFileSync(join(site, 'src/popup/popup-shot.html'), readFileSync(join(site, 'src/popup/popup.html'), 'utf8').replace(
   '<script type="module" src="popup.js"></script>',
@@ -111,6 +121,8 @@ const server = createServer(async (req, res) => {
     onReport?.(JSON.parse(body));
     return;
   }
+  // Holds a screenshot page's load event (Firefox --screenshot fires on load) so its script can act first.
+  if (req.url === '/slow.gif') { setTimeout(() => { res.statusCode = 404; res.end(); }, 1500); return; }
   const path = normalize(join(site, decodeURIComponent(req.url.split('?')[0].split('#')[0])));
   if (!path.startsWith(site)) { res.statusCode = 403; res.end(); return; }
   try {
@@ -167,6 +179,12 @@ if (process.argv.includes('--screenshot')) {
   await new Promise((r) => firefox(['--screenshot', formShot, '--window-size', '1400,1000',
     `http://127.0.0.1:${server.address().port}/src/ui/taskform-shot.html`]).on('exit', r));
   console.log(`Screenshot: ${formShot}`);
+  for (const [name, query] of [['review', ''], ['review-dark', '?mode=dark']]) {
+    const file = join(REPO, 'web-ext-artifacts', `ui-${name}.png`);
+    await new Promise((r) => firefox(['--screenshot', file, '--window-size', '1400,1000',
+      `http://127.0.0.1:${server.address().port}/src/ui/review-shot.html${query}`]).on('exit', r));
+    console.log(`Screenshot: ${file}`);
+  }
   const popupShot = join(REPO, 'web-ext-artifacts', 'ui-popup.png');
   await new Promise((r) => firefox(['--screenshot', popupShot, '--window-size', '368,560',
     `http://127.0.0.1:${server.address().port}/src/popup/popup-shot.html`]).on('exit', r));
