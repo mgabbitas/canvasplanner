@@ -1,6 +1,6 @@
 # Planner for Canvas privacy policy
 
-Last updated: November 16, 2026
+Last updated: November 20, 2026
 
 Planner for Canvas is a browser extension that turns your Canvas assignments into a weekly
 plan. It is not made by or affiliated with Instructure, the company behind Canvas.
@@ -46,12 +46,16 @@ never reads, logs or stores cookies or passwords.
 If you use **Export**, the extension saves a backup file where you choose. If you use
 **Download calendar**, it saves an `.ics` file. Those files go only where you put them.
 **Report a problem** opens a GitHub page in a new tab; nothing is sent unless you
-submit it there yourself.
+submit it there yourself. The one-time **Leave a review** link opens the add-on's store
+page; nothing is sent with it.
 
 ## Removing your data
 
-Settings → Data → **Clear all data** deletes everything the extension stored.
-Uninstalling the extension also deletes it.
+Settings → Data → **Clear this computer** deletes everything the extension stored on
+this computer and turns settings sync off here. **Clear every computer** also deletes the
+synced settings, and your other computers with settings sync on delete their planner
+data the next time they're opened. Uninstalling the extension deletes what it stored on
+that computer.
 
 ## Contact
 
