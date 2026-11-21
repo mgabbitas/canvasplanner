@@ -783,3 +783,12 @@ test('checking off measures the time since you opened it, and clears the open', 
   assert.deepEqual(checkOffPatch({ ...opened, openedAt: new Date('2026-09-27T20:00:00').toISOString() }, '2026-09-28', '2026-09-28', now),
     { manualDone: true, doneOn: '2026-09-28', openedAt: null, measuredMinutes: null });
 });
+
+test("a day reports the minutes you moved there yourself, so the banner doesn't count them as over", () => {
+  const mine = mk({ due: '2026-10-02 23:59', minutesOverride: 300, plannedOn: '2026-09-29' }); // 5 h moved to Tue
+  const p = run([mine]);
+  const tue = p.days.find((d) => d.date === '2026-09-29');
+  assert.equal(tue.chosenMinutes, 300);
+  assert.equal(tue.over, false);
+  assert.equal(p.days.find((d) => d.date === '2026-09-28').chosenMinutes, 0);
+});

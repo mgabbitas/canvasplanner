@@ -21,8 +21,8 @@ export const THEMES = {
   sunset: { label: 'Sunset', pick: true, tint: '#f97316', accent: '#be185d' },
   lavender: { label: 'Lavender', pick: true, tint: '#8b5cf6', accent: '#6d28d9' },
   fall: { label: 'Fall', pick: true, seasonal: true, tint: '#d97706', accent: '#b45309', accentDark: '#f59e0b' },
-  christmas: { label: 'Christmas', pick: true, seasonal: true, tint: '#15803d', accent: '#b91c1c', accentDark: '#f04848' },
-  patriotic: { label: 'Patriotic', pick: true, tint: '#1d4ed8', accent: '#b91c1c', accentDark: '#f87171' },
+  christmas: { label: 'Christmas', pick: true, seasonal: true, tint: '#15803d', accent: '#9b2335', accentDark: '#e57a86' }, // deep cranberry: red that doesn't read as an error
+  patriotic: { label: 'Patriotic', pick: true, tint: '#1d4ed8', accent: '#9b2335', accentDark: '#e57a86' },
   // Always dark, with its own deeper palette (a glow needs a dark background).
   neon: {
     label: 'Neon', pick: true, alwaysDark: true, tint: '#7c3aed', accent: '#22d3ee',

@@ -1,6 +1,7 @@
 // Item rows and what you can do to an item: check off (with undo), log time,
 // change minutes, the ⋮ menu (move to a day, pin, dismiss), pull, send back, restore.
-import { canPullItem, doneDay, looksLikeExam, checkOffPatch, withoutDay } from '../planner/plan.js';
+import { canPullItem, doneDay, looksLikeExam, isExam, checkOffPatch, withoutDay } from '../planner/plan.js';
+import { takeDays } from './exams.js';
 import { estimate, measuredMinutes } from '../planner/estimate.js';
 import { shareLabel, BIG_SHARE } from '../planner/grades.js';
 import { daysEarly } from '../planner/ahead.js';
@@ -247,6 +248,18 @@ export function itemRow(entry, kind = 'plan', { upNext = false, showCourse = tru
     : entry;
   const chips = [];
   if (upNext) chips.push(el('span', { className: 'chip next' }, 'up next'));
+  // An exam whose day you haven't picked: on narrow screens the Exams card is far below,
+  // so this jumps to it (hidden on wide screens, where the card is beside the list).
+  if ((kind === 'plan' || kind === 'next') && isExam(item) && !entry.movedTo && takeDays(entry).length) {
+    chips.push(el('button', {
+      type: 'button', className: 'chip pick-day', 'data-key': `pick-day-${item.id}`,
+      onclick: () => {
+        const first = document.querySelector(`[data-key^="exam-day-${item.id}-"]`);
+        first?.closest('li')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        first?.focus({ preventScroll: true });
+      },
+    }, 'pick a day'));
+  }
   if (entry.gradeShare >= BIG_SHARE) {
     chips.push(el('span', { className: 'chip grade', title: 'Share of your class grade, from Canvas points and group weights' }, `${shareLabel(entry.gradeShare)} of grade`));
   }

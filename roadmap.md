@@ -23,7 +23,7 @@ In this order:
 1. Fix `npm run check:ui` dates (dev only): run on a fixed weekday so it doesn't fail late in the week (10 split/exam checks fail on Fridays today). First, so every later step has a working check. **Done 2026-11-20:** the page runs on the Monday after the fixture snapshot; 191/191 pass.
 2. Measured time: from opening an assignment to checking it off, starts "Log time" (details under Rules). Decided 2026-11-17. **Done 2026-11-20** (planner and popup title links; last open counts).
 3. Stats catch-up: click the streak card to open Stats; same Week/Day flames; current and best streaks (see Cheers and streaks). **Done 2026-11-20.**
-4. Fixes from the 1.6 design review (list under Next update → layout pass): exam card on narrow screens, a picked day over its hours, stacked banners, red-accent themes, long class names, exam card wording.
+4. Fixes from the 1.6 design review (list under Next update → layout pass): exam card on narrow screens, a picked day over its hours, stacked banners, red-accent themes, long class names, exam card wording. **Done 2026-11-20:** "pick a day" chip below 1220px; banner "over" numbers leave out work you moved there (same rule as the day); the "target day has passed" banner hides when "don't fit" shows; full class name as tooltip; Christmas/Patriotic accent a deep cranberry (#9b2335 / dark #e57a86, your choice over swapping to green/blue); one name "Split across days"; shorter exam hint.
 5. Top row alignment: workshop 2-3 options as screenshots with the design-review agent, then pick together.
 6. Settings sync (`storage.sync`): settings, rules, class names and colors only.
 7. New tab on/off: check first what each browser allows; if "off" can only be a blank page, ask before building.

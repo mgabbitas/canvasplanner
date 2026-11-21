@@ -350,6 +350,7 @@ export function plan({ items, settings, weekState = {}, now, shares = {}, lookup
       capacityOverridden: override(date) != null,
       blocked: !usable(date),
       load: l,
+      chosenMinutes: chosen.get(date) ?? 0, // work you moved here yourself (never makes the day over)
       doneMinutes: date === today ? doneMinutes : 0,
       // Over: more than the day's hours with work still left (not counting work you moved
       // there yourself). Finished work alone going past the hours is extra effort

@@ -20,7 +20,8 @@ export function renderBanners(p) {
   const target = dayLabel(p.week.cutoff, { weekday: 'long' });
   // Overdue work needs no banner: the Catch up group and the header already say it.
   const workLeft = p.days.some((d) => required(d.items).length) || p.overflow.length || p.atRisk.length;
-  if (p.behind && workLeft) {
+  // With the "don't fit" banner below, this one only adds to the stack.
+  if (p.behind && workLeft && !p.atRisk.length) {
     out.push(el('div', { className: 'banner warn' },
       `${target} has passed. Remaining work is scheduled as soon as possible.`));
   }
@@ -33,7 +34,8 @@ export function renderBanners(p) {
   if (p.atRisk.length) {
     // Days holding work that doesn't fit in their hours but can't go later.
     const over = p.days.filter((d) => d.over && d.items.some((e) => e.tight))
-      .map((d) => `${dayLabel(d.date, { weekday: 'short' })} +${minutesLabel(d.load - d.capacity)}`);
+      // Same rule as the day: work you moved there yourself doesn't count as over.
+      .map((d) => `${dayLabel(d.date, { weekday: 'short' })} +${minutesLabel(d.load - d.chosenMinutes - d.capacity)}`);
     out.push(el('div', { className: 'banner bad' },
       `${plural(p.atRisk.length, 'item')} (${minutesLabel(p.atRiskMinutes)}) don't fit in your hours before they're due`,
       over.length ? `, so ${over.length === 1 ? 'a day goes' : 'some days go'} over: ${over.join(', ')}. Move something, or give ${over.length === 1 ? 'that day' : 'those days'} more time.` : '.'));

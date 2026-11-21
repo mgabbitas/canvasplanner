@@ -599,6 +599,11 @@ async function checkTasks() {
   // Exam card: pick the day you'll take it, then add study time the day before.
   await go('');
   const dayBtns = $$('.exams [data-key^="exam-day-"]');
+  // Its row has a "pick a day" chip (shown on narrow screens) that jumps to the card.
+  const pickChip = document.querySelector('[data-key^="pick-day-"]');
+  pickChip?.click(); await wait(100);
+  check('pick a day chip jumps to the exam card', !!pickChip && /^exam-day-/.test(document.activeElement?.getAttribute('data-key') ?? ''),
+    document.activeElement?.getAttribute('data-key'));
   check('exam asks which day', dayBtns.length >= 2, `${dayBtns.length} day buttons`);
   check('study question shows before a day is picked', !!document.querySelector('.exams [data-key^="study-add-"]'));
   check("planner's pick is marked on its day", $$('.exams .exam-day.suggested').length === 1 && !$$('.exams .exam-day.picked').length);

@@ -12,7 +12,7 @@ const MAX_DAY_BUTTONS = 8;
 const STUDY_PRESETS = [30, 60, 120];
 
 /** Days you could take it: online exams open for more than one day. */
-function takeDays(e) {
+export function takeDays(e) {
   if (e.inClass || !e.lastDay) return [];
   const days = dateRange(e.firstDay, e.lastDay).slice(0, MAX_DAY_BUTTONS);
   return days.length > 1 ? days : [];
@@ -78,7 +78,7 @@ function studyRow(e, pickDay) {
       el('span', {}, done ? `Studied ✓` : `Study: ${minutesLabel(task.minutesOverride)}, ${task.splitParts ? `in ${task.splitParts} parts` : relativeDay(toLocalDate(task.dueAt))}`),
       done ? null : el('div', { className: 'exam-actions' },
         where && !task.partsDone?.length && (task.splitParts || pickerDays(where.entry, where.kind).filter((o) => !o.disabled).length >= 2) ? el('button', { type: 'button', className: 'link', 'data-key': `study-spread-${exam.id}`, onclick: () => openSplitPicker(where.entry, where.kind) },
-          task.splitParts ? 'Change days' : 'Spread it out') : null,
+          task.splitParts ? 'Change split days' : 'Split across days') : null,
         el('button', { type: 'button', className: 'link', 'data-key': `study-remove-${exam.id}`, onclick: () => removeStudy(exam) }, 'Remove')));
   }
   if (exam.studyChoice === 'no') return null;
@@ -129,6 +129,6 @@ export function renderExams(p) {
         ),
       );
     })),
-    el('p', { className: 'hint' }, 'Found by title. Use ⋮ → Not an exam on an item to remove it.'),
+    el('p', { className: 'hint' }, 'Found by title. Not an exam? ', el('span', { className: 'nowrap' }, '⋮ → Not an exam'), '.'),
   );
 }

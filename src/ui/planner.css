@@ -144,8 +144,10 @@ input[type=number], input[type=text], input[type=search], select {
 .main { min-width: 0; }
 .rail { position: sticky; top: 28px; display: grid; gap: 14px; min-width: 0; }
 
+.chip.pick-day { display: none; cursor: pointer; }
 @media (max-width: 1220px) {
   .content, .content.no-rail { grid-template-columns: minmax(0, 1fr); max-width: 820px; }
+  .chip.pick-day { display: inline-flex; border-style: dashed; }
   .rail { position: static; }
 }
 @media (max-width: 820px) {

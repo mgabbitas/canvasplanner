@@ -224,7 +224,7 @@ Once the exam has a day (fixed, or the one you picked), the card asks once wheth
 plan study time; No thanks is stored as `studyChoice: 'no'` and never asked again.
 Study time is a task (`tx<examId>`, `task.examId`) pinned to the day before the exam
 day (today if that's past); the exam day is the one you picked, else its last work day.
-"Spread it out" opens the split picker. On each redraw `syncStudyTasks` moves it with the
+"Split across days" opens the split picker. On each redraw `syncStudyTasks` moves it with the
 exam and removes it (unless done or logged) once the exam is gone, not an exam, or its
 day has passed. While the exam is done or dismissed the study task is kept but not
 planned, so Undo or Restore brings it back.

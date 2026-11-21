@@ -81,7 +81,7 @@ export function renderSidebar() {
       el('ul', { className: 'legend' }, courses.map((id) => el('li', {}, el('a', {
         href: `#class/${id}`, className: `legend-link${classId() === id ? ' active' : ''}`,
         'aria-current': classId() === id ? 'page' : null, 'data-key': `class-${id}`,
-        title: 'Everything left in this class',
+        title: `${courseName(id)}: everything left in this class`,
         onclick: (e) => { e.preventDefault(); setNavOpen(false); location.hash = `class/${id}`; },
       },
         el('span', { className: 'dot', style: `--course:${courseColor(id, app.state.settings, app.state.courses)}`, 'aria-hidden': 'true' }),
