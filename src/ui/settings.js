@@ -13,7 +13,7 @@ import { showToast } from './toast.js';
 import { app } from './app.js';
 import { toLocalDate } from '../planner/dates.js';
 import { schoolForm } from './shell.js';
-import { clearSyncedSettings } from '../storage/store.js';
+import { clearThisComputer, clearEverywhere } from '../storage/store.js';
 
 // Rules being edited, including new and incomplete ones that aren't saved yet.
 let draftRules = null;
@@ -579,24 +579,39 @@ function dataSection(ctx) {
         el('button', {
           className: 'warn', 'data-key': 'reset',
           onclick: () => {
-            if (!confirm('Reset all settings to defaults? Your done checks and item minutes are kept.')) return;
+            const synced = ctx.state.settings.syncSettings ? ' With settings sync on, your other computers get the defaults too.' : '';
+            if (!confirm(`Reset all settings to defaults? Your done checks and item minutes are kept.${synced}`)) return;
             draftRules = null;
-            ctx.saveState({ settings: validateSettings(DEFAULT_SETTINGS) });
+            const { syncSettings, reviewAsked } = ctx.state.settings; // this computer's switch; asked stays asked
+            ctx.saveState({ settings: validateSettings({ ...DEFAULT_SETTINGS, syncSettings, reviewAsked }) });
             say('Settings reset to defaults.');
           },
         }, 'Reset settings')),
       el('div', { className: 'danger-row' },
-        el('div', {}, el('strong', {}, 'Clear all data'), el('small', {}, 'Deletes everything: settings, items, checks and history. Export first if you want a backup.')),
+        el('div', {}, el('strong', {}, 'Clear all data on this computer'),
+          el('small', {}, 'Deletes everything here: settings, items, checks and history. Settings sync is turned off here; your other computers keep theirs. Export first if you want a backup.')),
         el('button', {
           className: 'danger', 'data-key': 'clear',
           onclick: async () => {
-            if (!confirm('Delete ALL stored data (settings, items, done checks)? This can\'t be undone. Export first if you want a backup.')) return;
-            await clearSyncedSettings();
-            await browser.storage.local.clear();
+            if (!confirm('Delete ALL data on this computer (settings, items, done checks, history)? This can\'t be undone. Export first if you want a backup.')) return;
+            await clearThisComputer();
             resetSettingsDraft();
             ctx.afterClear();
           },
-        }, 'Clear all data')),
+        }, 'Clear this computer')),
+      el('div', { className: 'danger-row' },
+        el('div', {}, el('strong', {}, 'Clear all data on every computer'),
+          el('small', {}, 'Deletes everything here, and every computer with settings sync on (same browser account) deletes its planner data too the next time it\'s opened. Can\'t be undone.')),
+        el('button', {
+          className: 'danger', 'data-key': 'clear-everywhere',
+          onclick: async () => {
+            if (!confirm('Delete ALL planner data on EVERY computer with settings sync on? Settings, items, done checks and history, everywhere. This can\'t be undone.')) return;
+            if (!confirm('Are you sure? Your other computers lose their planner data too. Export first if you want a backup.')) return;
+            await clearEverywhere();
+            resetSettingsDraft();
+            ctx.afterClear();
+          },
+        }, 'Clear every computer')),
     ),
   );
 }

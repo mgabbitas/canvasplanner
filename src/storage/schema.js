@@ -391,7 +391,9 @@ export function migrate(raw) {
     taskSeries: validateTaskSeries(r.taskSeries),
     onboarding: validateOnboarding(r.onboarding),
     canvas: validateCanvas(r.canvas, r),
-    // When this computer's settings last matched the synced copy (ms), to tell which is newer.
+    // The stamp of the last synced copy this computer took or sent (settings sync), and
+    // this computer's random id there.
     settingsSyncedAt: Number.isFinite(r.settingsSyncedAt) && r.settingsSyncedAt > 0 ? r.settingsSyncedAt : null,
+    syncDevice: typeof r.syncDevice === 'string' && /^[0-9a-f-]{36}$/.test(r.syncDevice) ? r.syncDevice : null,
   };
 }

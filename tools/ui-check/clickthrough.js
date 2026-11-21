@@ -378,6 +378,7 @@ async function run() {
 
   // Turn the pull gate off, then pull an item and send it back.
   await go('#settings/data');
+  check('two clear buttons: this computer, every computer', !!document.querySelector('[data-key="clear"]') && !!document.querySelector('[data-key="clear-everywhere"]'));
   {
     let blob = null;
     const realCreate = URL.createObjectURL;

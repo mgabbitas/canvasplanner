@@ -72,5 +72,11 @@ export function applyImport(state, raw) {
     const valid = validateItems({ [id]: { ...base, ...userFields(u) } })[id];
     if (valid) items[id] = state.items[id] ? { ...items[id], ...userFields(valid) } : valid;
   }
-  return { settings, weekState, dayLog, items, taskSeries, canvas };
+  // Per computer: the settings sync switch stays as it is here; a review already asked stays asked.
+  const kept = {
+    ...settings,
+    syncSettings: state.settings?.syncSettings ?? settings.syncSettings,
+    reviewAsked: settings.reviewAsked || state.settings?.reviewAsked === true,
+  };
+  return { settings: kept, weekState, dayLog, items, taskSeries, canvas };
 }
