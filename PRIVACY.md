@@ -33,6 +33,13 @@ Everything is stored in your browser's extension storage on your computer. Nothi
 sent to the developer or anyone else. There is no server, no account, no analytics, no
 ads and no tracking. The only network requests go to your school's Canvas address.
 
+**Same settings on your other computers** (on by default, Settings → General): your
+settings, class names and colors, and school address are also saved to your browser's
+own sync storage. If you're signed in to Firefox or Chrome with sync on, your browser
+copies them to your other computers through Mozilla's or Google's sync service, under
+that service's privacy terms. Assignments, grades, check-offs and logged times are never
+synced. Turn the setting off to keep everything on this computer.
+
 Your Canvas login cookie is sent to Canvas by your browser as usual; the extension
 never reads, logs or stores cookies or passwords.
 

@@ -388,6 +388,11 @@ async function run() {
   }
   await go('#settings/general');
   check('fun messages toggle', !!document.querySelector('[data-key="funMessages"]'));
+  const syncBox = document.querySelector('[data-key="syncSettings"]');
+  check('settings sync on by default', syncBox?.checked === true);
+  syncBox.checked = false; fire(syncBox, 'change'); await wait(200);
+  check('settings sync switch saves', window.__store.settings.syncSettings === false);
+  syncBox.checked = true; fire(document.querySelector('[data-key="syncSettings"]'), 'change'); await wait(200);
   const report = document.querySelector('[data-key="report"]');
   check('report a problem link', report?.href.startsWith('https://github.com/mgabbitas/canvasplanner/issues/new?')
     && new URL(report.href).searchParams.get('body').includes('Planner for Canvas 1.3.0') && !report.href.includes('+') && report.target === '_blank', report?.href.slice(0, 80));

@@ -13,6 +13,7 @@ import { showToast } from './toast.js';
 import { app } from './app.js';
 import { toLocalDate } from '../planner/dates.js';
 import { schoolForm } from './shell.js';
+import { clearSyncedSettings } from '../storage/store.js';
 
 // Rules being edited, including new and incomplete ones that aren't saved yet.
 let draftRules = null;
@@ -489,6 +490,8 @@ function generalSection(ctx) {
       'The first Canvas visit in each browser session opens the planner and syncs. Visiting Canvas also syncs quietly whenever your data is stale.'),
     toggle('includeNonSubmittable', 'Plan items that can\'t be submitted online', 'e.g. "no submission" or "on paper" assignments.'),
     toggle('funMessages', 'Celebrations and late-night notes', 'A cheer when you get days ahead, and a nudge to sleep after midnight.'),
+    toggle('syncSettings', 'Same settings on my other computers',
+      'Your settings, class names and colors, and school go to your browser\'s own sync (Firefox account or Chrome profile), so another computer starts set up. Assignments and your progress stay on this computer. Works when you\'re signed in to the browser with add-on data syncing.'),
     el('div', { className: 'field' }, el('span', {}, 'School'),
       schoolForm({ value: ctx.state.canvas.host ?? '', button: 'Change', confirmChange: true }),
       el('small', {}, "Your school's Canvas address. Changing it clears everything tied to the current school's classes (including tasks you added to them); other settings and themes stay.")),
@@ -586,6 +589,7 @@ function dataSection(ctx) {
           className: 'danger', 'data-key': 'clear',
           onclick: async () => {
             if (!confirm('Delete ALL stored data (settings, items, done checks)? This can\'t be undone. Export first if you want a backup.')) return;
+            await clearSyncedSettings();
             await browser.storage.local.clear();
             resetSettingsDraft();
             ctx.afterClear();

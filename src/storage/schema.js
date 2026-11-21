@@ -109,6 +109,7 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     themeClassColors: typeof s.themeClassColors === 'boolean' ? s.themeClassColors : (d.themeClassColors ?? false),
     funMessages: typeof s.funMessages === 'boolean' ? s.funMessages : (d.funMessages ?? true),
     openOnCanvasVisit: typeof s.openOnCanvasVisit === 'boolean' ? s.openOnCanvasVisit : (d.openOnCanvasVisit ?? true),
+    syncSettings: typeof s.syncSettings === 'boolean' ? s.syncSettings : (d.syncSettings ?? true),
     includeNonSubmittable: bool('includeNonSubmittable'),
   };
 }
@@ -388,5 +389,7 @@ export function migrate(raw) {
     taskSeries: validateTaskSeries(r.taskSeries),
     onboarding: validateOnboarding(r.onboarding),
     canvas: validateCanvas(r.canvas, r),
+    // When this computer's settings last matched the synced copy (ms), to tell which is newer.
+    settingsSyncedAt: Number.isFinite(r.settingsSyncedAt) && r.settingsSyncedAt > 0 ? r.settingsSyncedAt : null,
   };
 }

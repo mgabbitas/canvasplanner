@@ -39,6 +39,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   funMessages: true, // "days ahead" celebrations and the late-night note
   includeNonSubmittable: true,
   openOnCanvasVisit: true, // first Canvas visit each browser session opens the planner
+  syncSettings: true, // copy settings, class settings and school to the browser's own sync (this computer's switch)
 });
 
 /** Fallback when nothing else gives an estimate. */

@@ -3,7 +3,7 @@
 // live in app.js (state), shell.js, week.js, items.js, settings.js and statsview.js.
 import '../browser.js';
 import { plan, planNextWeek } from '../planner/plan.js';
-import { loadState, save } from '../storage/store.js';
+import { loadState, save, pullSettings } from '../storage/store.js';
 import { syncSeries, syncStudyTasks } from '../planner/tasks.js';
 import { gradeShares } from '../planner/grades.js';
 import { toLocalDate } from '../planner/dates.js';
@@ -150,6 +150,7 @@ function render() {
 
 async function init() {
   watchIdle();
+  await pullSettings(); // newer settings from another computer, if any
   app.state = await loadState();
   await settleOnboarding();
   render();

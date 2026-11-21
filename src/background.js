@@ -2,7 +2,7 @@
 // session) or sync quietly if the data is stale. Also keeps the toolbar badge (today's
 // remaining homework) up to date.
 import './browser.js';
-import { loadState, save } from './storage/store.js';
+import { loadState, save, pullSettings } from './storage/store.js';
 import { runSync } from './sync/run.js';
 import { onSchool, normalizeHost } from './sync/school.js';
 import { todaySummary, badgeText } from './planner/today.js';
@@ -77,4 +77,10 @@ browser.action.setBadgeBackgroundColor({ color: '#2563c9' });
 browser.storage.onChanged.addListener((_changes, area) => { if (area === 'local') scheduleBadge(); });
 browser.runtime.onStartup.addListener(scheduleBadge);
 browser.runtime.onInstalled.addListener(scheduleBadge);
+
+// Settings sync: take another computer's newer settings when they arrive, and check at
+// startup and install (a new computer starts set up).
+browser.storage.onChanged.addListener((_changes, area) => { if (area === 'sync') pullSettings(); });
+browser.runtime.onStartup.addListener(() => pullSettings());
+browser.runtime.onInstalled.addListener(() => pullSettings());
 scheduleBadge();

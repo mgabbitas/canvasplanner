@@ -337,6 +337,16 @@ below are guesses, not measurements: I'll edit them.
 | Most unfinished pulled work allowed (minutes) | 180 |
 | Forecast strip open (remembered from the strip's toggle) | on |
 | Include non-submittable items (`none`, `on_paper`) | on |
+| Same settings on my other computers (`syncSettings`, this computer only) | on |
+
+Settings sync (1.7, decided 2026-11-20): with `syncSettings` on, every save of settings or
+the school also writes them to `browser.storage.sync` (keys `cp_*`: settings without
+rules or the switch, rules in chunks under 8 KB, school, `updatedAt` in ms) and stamps
+`settingsSyncedAt` locally. The planner on load, and the background on startup, install
+and any sync change, takes the synced copy when its `updatedAt` is newer, validated like
+an import; the switch stays per computer, and a synced school only fills in a computer
+with none. With nothing synced yet, a computer that has a school sends its own. Clear all
+data removes the synced copy too. Never synced: items, logs, week state, streak history.
 
 Estimate rules replace plain title keyword rules. Each rule has an optional course,
 an optional type and an optional title keyword (at least one), and gives either a size
