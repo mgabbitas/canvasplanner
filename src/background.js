@@ -16,7 +16,7 @@ async function openPlannerOnce(query) {
   const { openedThisSession } = await browser.storage.session.get('openedThisSession');
   if (openedThisSession) return false;
   await browser.storage.session.set({ openedThisSession: true });
-  await browser.tabs.create({ url: browser.runtime.getURL(`src/ui/planner.html${query}`) });
+  await browser.tabs.create({ url: browser.runtime.getURL(`src/ui/planner.html?open=1${query.replace(/^\?/, '&')}`) });
   return true;
 }
 

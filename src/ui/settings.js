@@ -490,6 +490,8 @@ function generalSection(ctx) {
       'The first Canvas visit in each browser session opens the planner and syncs. Visiting Canvas also syncs quietly whenever your data is stale.'),
     toggle('includeNonSubmittable', 'Plan items that can\'t be submitted online', 'e.g. "no submission" or "on paper" assignments.'),
     toggle('funMessages', 'Celebrations and late-night notes', 'A cheer when you get days ahead, and a nudge to sleep after midnight.'),
+    toggle('newTabPlanner', 'Show the planner on new tabs',
+      "Off: new tabs open nearly blank, with a link to the planner (browsers don't let an add-on give their own new tab page back). The toolbar button always opens the planner."),
     toggle('syncSettings', 'Same settings on my other computers',
       'Your settings, class names and colors, and school go to your browser\'s own sync (Firefox account or Chrome profile), so another computer starts set up. Assignments and your progress stay on this computer. Works when you\'re signed in to the browser with add-on data syncing.'),
     el('div', { className: 'field' }, el('span', {}, 'School'),

@@ -109,6 +109,7 @@ export function validateSettings(raw, base = DEFAULT_SETTINGS) {
     themeClassColors: typeof s.themeClassColors === 'boolean' ? s.themeClassColors : (d.themeClassColors ?? false),
     funMessages: typeof s.funMessages === 'boolean' ? s.funMessages : (d.funMessages ?? true),
     openOnCanvasVisit: typeof s.openOnCanvasVisit === 'boolean' ? s.openOnCanvasVisit : (d.openOnCanvasVisit ?? true),
+    newTabPlanner: typeof s.newTabPlanner === 'boolean' ? s.newTabPlanner : (d.newTabPlanner ?? true),
     syncSettings: typeof s.syncSettings === 'boolean' ? s.syncSettings : (d.syncSettings ?? true),
     includeNonSubmittable: bool('includeNonSubmittable'),
   };

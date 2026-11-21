@@ -337,7 +337,15 @@ below are guesses, not measurements: I'll edit them.
 | Most unfinished pulled work allowed (minutes) | 180 |
 | Forecast strip open (remembered from the strip's toggle) | on |
 | Include non-submittable items (`none`, `on_paper`) | on |
+| Show the planner on new tabs (`newTabPlanner`) | on |
 | Same settings on my other computers (`syncSettings`, this computer only) | on |
+
+New tab (1.7, decided 2026-11-20): neither browser lets an add-on hand the new tab back
+(Chrome has no optional override; Firefox blocks tabs.update to about:newtab/about:home),
+so with `newTabPlanner` off a new tab shows a nearly blank page with an "Open planner"
+link. The planner opened on purpose carries `?open=1` (toolbar popup, Canvas visit,
+options page) and always shows. First run always shows the welcome card, which says the
+planner is the new tab page and where to turn it off.
 
 Settings sync (1.7, decided 2026-11-20): with `syncSettings` on, every save of settings or
 the school also writes them to `browser.storage.sync` (keys `cp_*`: settings without

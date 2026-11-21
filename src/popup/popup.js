@@ -70,7 +70,7 @@ async function openItem(ev, id, url) {
 }
 
 function openPlanner() {
-  browser.tabs.create({ url: browser.runtime.getURL('src/ui/planner.html') });
+  browser.tabs.create({ url: browser.runtime.getURL('src/ui/planner.html?open=1') });
   window.close();
 }
 

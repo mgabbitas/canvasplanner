@@ -393,6 +393,11 @@ async function run() {
   syncBox.checked = false; fire(syncBox, 'change'); await wait(200);
   check('settings sync switch saves', window.__store.settings.syncSettings === false);
   syncBox.checked = true; fire(document.querySelector('[data-key="syncSettings"]'), 'change'); await wait(200);
+  const ntBox = document.querySelector('[data-key="newTabPlanner"]');
+  check('new tab switch on by default', ntBox?.checked === true);
+  ntBox.checked = false; fire(ntBox, 'change'); await wait(200);
+  check('new tab switch saves, and this page stays (it was opened on purpose)', window.__store.settings.newTabPlanner === false && !!document.querySelector('#sidebar'));
+  const ntBox2 = document.querySelector('[data-key="newTabPlanner"]'); ntBox2.checked = true; fire(ntBox2, 'change'); await wait(200);
   const report = document.querySelector('[data-key="report"]');
   check('report a problem link', report?.href.startsWith('https://github.com/mgabbitas/canvasplanner/issues/new?')
     && new URL(report.href).searchParams.get('body').includes('Planner for Canvas 1.3.0') && !report.href.includes('+') && report.target === '_blank', report?.href.slice(0, 80));

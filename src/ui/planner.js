@@ -148,15 +148,32 @@ function render() {
 
 // --- startup -----------------------------------------------------------------------
 
+/**
+ * New tab page switched off (Settings → General): a browser add-on can't give the new tab
+ * back, so a new tab shows a nearly blank page with a link instead. The planner opened
+ * any other way (toolbar, Canvas visit, Settings) carries ?open=1.
+ */
+function blankNewTab() {
+  const q = new URLSearchParams(location.search);
+  if (app.state.settings.newTabPlanner || q.has('open') || q.has('sync') || location.hash || firstRun()) return false;
+  app.blank = true;
+  applyTheme(app.state.settings, toLocalDate(Date.now()));
+  document.title = 'New Tab';
+  document.body.replaceChildren(el('main', { className: 'blank-tab' },
+    el('a', { href: '?open=1', className: 'blank-open', 'data-key': 'blank-open' }, 'Open planner')));
+  return true;
+}
+
 async function init() {
   watchIdle();
   await pullSettings(); // newer settings from another computer, if any
   app.state = await loadState();
+  if (blankNewTab()) return;
   await settleOnboarding();
   render();
   // Opened by the background script after a Canvas visit (?sync=1): always sync.
   const forced = new URLSearchParams(location.search).has('sync');
-  if (forced) history.replaceState(null, '', location.pathname + location.hash);
+  if (forced) history.replaceState(null, '', `${location.pathname}?open=1${location.hash}`);
   if (forced) await sync();
   else await syncIfStale();
 }
@@ -200,7 +217,7 @@ window.addEventListener('hashchange', () => {
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => render());
 
 browser.storage.onChanged.addListener(async (_changes, area) => {
-  if (area !== 'local' || app.syncing || app.editingDay) return;
+  if (area !== 'local' || app.syncing || app.editingDay || app.blank) return;
   app.state = await loadState();
   app.seriesDay = null; // an import or another tab may have changed repeating tasks
   render();

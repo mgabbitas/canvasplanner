@@ -160,7 +160,8 @@ export function renderWelcome() {
         ' The planner picks up your school from there and brings in your assignments.'),
       el('p', { className: 'hint' }, "Or type your school's Canvas address (what you see in the address bar on Canvas):"),
       schoolForm({ value: suggested, button: 'Save and sync' }),
-      el('p', { className: 'hint' }, 'The planner uses your existing Canvas login in this browser and only reads your assignments.'));
+      el('p', { className: 'hint' }, 'The planner uses your existing Canvas login in this browser and only reads your assignments.'),
+      el('p', { className: 'hint' }, 'The planner is also your new tab page. You can turn that off in Settings → General.'));
   }
   return el('section', { className: 'panel welcome' },
     el('h2', {}, app.syncing ? 'Getting your assignments from Canvas…' : 'Welcome to Planner for Canvas'),

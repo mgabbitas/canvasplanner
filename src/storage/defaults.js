@@ -39,6 +39,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   funMessages: true, // "days ahead" celebrations and the late-night note
   includeNonSubmittable: true,
   openOnCanvasVisit: true, // first Canvas visit each browser session opens the planner
+  newTabPlanner: true, // the planner is the new tab page (off: new tabs open nearly blank, with a link)
   syncSettings: true, // copy settings, class settings and school to the browser's own sync (this computer's switch)
 });
 
