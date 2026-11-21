@@ -44,7 +44,7 @@ const settingsContext = () => ({
 app.render = render;
 
 function render() {
-  if (!app.state) return;
+  if (!app.state || app.blank) return; // the nearly blank new tab has nothing to draw
   // Re-rendering replaces the DOM; put keyboard focus back where it was.
   const focusKey = document.activeElement?.getAttribute?.('data-key');
 
@@ -180,7 +180,7 @@ async function init() {
 
 /** Sync when the last one is older than the auto-sync interval. */
 async function syncIfStale() {
-  if (!app.state?.canvas.host || app.syncing) return; // no school yet: the welcome card asks first
+  if (!app.state?.canvas.host || app.syncing || app.blank) return; // no school yet: the welcome card asks first
   const last = app.state.meta.lastSyncAt ? Date.parse(app.state.meta.lastSyncAt) : 0;
   if (Date.now() - last > app.state.settings.autoSyncMinutes * 60_000) await sync();
 }
